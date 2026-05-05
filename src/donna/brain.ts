@@ -4,14 +4,16 @@ import type {
   ContentBlock,
   ToolResultBlockParam,
 } from "@anthropic-ai/sdk/resources/messages";
-import { tool_definitions, tool_handlers } from "./tools/index.js";
+import { tool_definitions, tool_handlers, TERMINATORS } from "./tools/index.js";
 import { SYSTEM_PROMPT } from "./prompt.js";
 
 const MODEL = "claude-sonnet-4-6";
 const MAX_TOKENS = 2048;
 const MAX_LOOP_ITERATIONS = 10;
+const CAP_HIT_FALLBACK = "sorry, got stuck in a loop. try again.";
 
 export type BrainMode = "reactive" | "proactive" | "proactive_tier3";
+export type TerminatorReason = "send_burst" | "cap_hit";
 
 export interface RunTurnArgs {
   mode: BrainMode;
@@ -20,11 +22,25 @@ export interface RunTurnArgs {
 }
 
 export interface RunTurnResult {
-  messages: MessageParam[];
-  reply: string;
+  messages: MessageParam[];      // full updated history (including userInput + everything added this turn)
+  newMessages: MessageParam[];   // just the messages added this turn (for persistence)
+  sends: string[];               // visible sends emitted this turn (cap_hit fallback if loop exhausted)
+  terminator: TerminatorReason;
 }
 
 const client = new Anthropic();
+
+function extractSends(content: ContentBlock[]): string[] {
+  for (const block of content) {
+    if (block.type === "tool_use" && block.name === "send_burst") {
+      const input = block.input as { messages?: unknown };
+      if (Array.isArray(input.messages)) {
+        return input.messages.filter((s): s is string => typeof s === "string");
+      }
+    }
+  }
+  return [];
+}
 
 export async function runTurn({
   mode,
@@ -42,7 +58,8 @@ export async function runTurn({
   ];
 
   let iterations = 0;
-  let finalContent: ContentBlock[] = [];
+  let terminatorHit = false;
+  let lastAssistantContent: ContentBlock[] = [];
 
   while (iterations < MAX_LOOP_ITERATIONS) {
     iterations++;
@@ -62,15 +79,21 @@ export async function runTurn({
     });
 
     working.push({ role: "assistant", content: resp.content });
-    finalContent = resp.content;
+    lastAssistantContent = resp.content;
 
     if (resp.stop_reason !== "tool_use") {
+      // model produced text without calling a terminator. break and let the
+      // post-loop logic decide between fallback and (no-op) extracted sends.
       break;
     }
 
     const toolResults: ToolResultBlockParam[] = [];
+    let sawTerminator = false;
+
     for (const block of resp.content) {
       if (block.type !== "tool_use") continue;
+
+      if (TERMINATORS.has(block.name)) sawTerminator = true;
 
       const handler = tool_handlers[block.name];
       if (!handler) {
@@ -103,28 +126,34 @@ export async function runTurn({
     }
 
     working.push({ role: "user", content: toolResults });
+
+    if (sawTerminator) {
+      terminatorHit = true;
+      break;
+    }
   }
 
-  if (iterations >= MAX_LOOP_ITERATIONS) {
+  let sends: string[];
+  let terminator: TerminatorReason;
+
+  if (terminatorHit) {
+    sends = extractSends(lastAssistantContent);
+    if (sends.length === 0) {
+      console.warn("[brain] send_burst called with empty messages array");
+      sends = [CAP_HIT_FALLBACK];
+      terminator = "cap_hit";
+    } else {
+      terminator = "send_burst";
+    }
+  } else {
     console.warn(
-      `[brain] hit max iterations (${MAX_LOOP_ITERATIONS}) — returning last text`,
+      `[brain] hit max iterations (${MAX_LOOP_ITERATIONS}) without terminator`,
     );
+    sends = [CAP_HIT_FALLBACK];
+    terminator = "cap_hit";
   }
 
-  const reply = finalContent
-    .filter(
-      (b): b is Extract<ContentBlock, { type: "text" }> => b.type === "text",
-    )
-    .map((b) => b.text)
-    .join("\n")
-    .trim();
+  const newMessages = working.slice(messages.length);
 
-  // cap-hit fallback: if we exhausted iterations and the model never produced
-  // text, return an in-voice message so the user sees something.
-  const safeReply =
-    reply || (iterations >= MAX_LOOP_ITERATIONS
-      ? "sorry, got stuck in a loop. try again."
-      : "");
-
-  return { messages: working, reply: safeReply };
+  return { messages: working, newMessages, sends, terminator };
 }
