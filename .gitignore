@@ -13,3 +13,7 @@ dist/
 # Editor
 .vscode/
 .idea/
+
+# supabase
+supabase/.temp/
+supabase/.branches/
