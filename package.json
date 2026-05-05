@@ -1,0 +1,24 @@
+{
+  "name": "donna",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "donna v2 — whatsapp-native personal ai. v0: cli tool-loop bootstrap.",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.93.0",
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}
