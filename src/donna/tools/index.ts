@@ -9,19 +9,13 @@ type ToolWithCache = Tool & {
   cache_control?: CacheControlEphemeral | null;
 };
 
-const tools: ToolWithCache[] = [getCurrentTimeTool];
-
-// mark the LAST tool definition with cache_control: ephemeral.
-// per anthropic docs, this caches the entire tools block up to and
-// including this tool. as we add tools, the cache_control assignment
-// stays on the last entry — this loop keeps it correct.
-const lastIdx = tools.length - 1;
-tools[lastIdx] = {
-  ...tools[lastIdx]!,
-  cache_control: { type: "ephemeral" },
-};
-
-export const tool_definitions: ToolWithCache[] = tools;
+// the LAST tool definition gets cache_control: ephemeral so the entire tools
+// block participates in prompt caching (anthropic api caches up-to-and-including
+// the marked block). when a second tool is added, move the cache_control marker
+// to that new last entry.
+export const tool_definitions: ToolWithCache[] = [
+  { ...getCurrentTimeTool, cache_control: { type: "ephemeral" } },
+];
 
 export const tool_handlers: Record<
   string,
