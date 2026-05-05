@@ -119,5 +119,12 @@ export async function runTurn({
     .join("\n")
     .trim();
 
-  return { messages: working, reply };
+  // cap-hit fallback: if we exhausted iterations and the model never produced
+  // text, return an in-voice message so the user sees something.
+  const safeReply =
+    reply || (iterations >= MAX_LOOP_ITERATIONS
+      ? "sorry, got stuck in a loop. try again."
+      : "");
+
+  return { messages: working, reply: safeReply };
 }
