@@ -10,13 +10,15 @@ type ToolWithCache = Tool & {
   cache_control?: CacheControlEphemeral | null;
 };
 
-// the LAST tool definition gets cache_control: ephemeral so the entire tools
-// block participates in prompt caching (anthropic api caches up-to-and-including
-// the marked block). when a tool is added, move the cache_control marker to that
-// new last entry.
+// no cache_control here. the system block in brain.ts carries cache_control,
+// which (per anthropic prefix-match rules) caches tools + system together —
+// a strict superset of what a tool-level breakpoint would cover. brain.ts
+// also adds a message-level breakpoint per turn, which is where the real
+// caching win lives once the conversation prefix exceeds the model's
+// minimum cacheable size (2048 tokens on sonnet 4.6).
 export const tool_definitions: ToolWithCache[] = [
   getCurrentTimeTool,
-  { ...sendBurstTool, cache_control: { type: "ephemeral" } },
+  sendBurstTool,
 ];
 
 export const tool_handlers: Record<
