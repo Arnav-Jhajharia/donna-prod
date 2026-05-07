@@ -4,10 +4,14 @@ import type {
   ContentBlock,
   ToolResultBlockParam,
 } from "@anthropic-ai/sdk/resources/messages";
+import { wrapAnthropic } from "langsmith/wrappers/anthropic";
+import { traceable } from "langsmith/traceable";
 import { tool_definitions, tool_handlers, TERMINATORS } from "./tools/index.js";
 import { SYSTEM_PROMPT } from "./prompt.js";
+import { filterSends } from "./voice_filter.js";
+import { recordExecutionEvent } from "./observability/execution.js";
 
-const MODEL = "claude-sonnet-4-6";
+export const MODEL = "claude-sonnet-4-6";
 const MAX_TOKENS = 2048;
 const MAX_LOOP_ITERATIONS = 10;
 const CAP_HIT_FALLBACK = "sorry, got stuck in a loop. try again.";
@@ -19,6 +23,7 @@ export interface RunTurnArgs {
   mode: BrainMode;
   messages: MessageParam[];
   userInput: string;
+  runId?: string | null;
 }
 
 export interface RunTurnResult {
@@ -26,9 +31,14 @@ export interface RunTurnResult {
   newMessages: MessageParam[];   // just the messages added this turn (for persistence)
   sends: string[];               // visible sends emitted this turn (cap_hit fallback if loop exhausted)
   terminator: TerminatorReason;
+  voiceViolations: string[];
+  model: string;
+  iterations: number;
 }
 
-const client = new Anthropic();
+// wrapAnthropic auto-traces every messages.create call when LANGSMITH_TRACING=true.
+// no-ops cleanly when tracing is off — same client, no overhead.
+const client = wrapAnthropic(new Anthropic());
 
 function extractSends(content: ContentBlock[]): string[] {
   for (const block of content) {
@@ -42,10 +52,11 @@ function extractSends(content: ContentBlock[]): string[] {
   return [];
 }
 
-export async function runTurn({
+async function _runTurn({
   mode,
   messages,
   userInput,
+  runId = null,
 }: RunTurnArgs): Promise<RunTurnResult> {
   if (mode !== "reactive") {
     throw new Error(`brain mode '${mode}' not implemented yet`);
@@ -64,6 +75,13 @@ export async function runTurn({
   while (iterations < MAX_LOOP_ITERATIONS) {
     iterations++;
 
+    await recordExecutionEvent(runId, "model_start", "anthropic.messages.create", {
+      iteration: iterations,
+      model: MODEL,
+      message_count: working.length,
+      tool_count: tool_definitions.length,
+    });
+    const modelStartedAt = Date.now();
     const resp = await client.messages.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
@@ -76,6 +94,13 @@ export async function runTurn({
       ],
       tools: tool_definitions,
       messages: working,
+    });
+    await recordExecutionEvent(runId, "model_end", "anthropic.messages.create", {
+      iteration: iterations,
+      stop_reason: resp.stop_reason,
+      duration_ms: Date.now() - modelStartedAt,
+      input_tokens: resp.usage.input_tokens,
+      output_tokens: resp.usage.output_tokens,
     });
 
     working.push({ role: "assistant", content: resp.content });
@@ -97,6 +122,10 @@ export async function runTurn({
 
       const handler = tool_handlers[block.name];
       if (!handler) {
+        await recordExecutionEvent(runId, "tool_error", block.name, {
+          tool_use_id: block.id,
+          error: "unknown_tool",
+        });
         toolResults.push({
           type: "tool_result",
           tool_use_id: block.id,
@@ -107,7 +136,21 @@ export async function runTurn({
       }
 
       try {
+        await recordExecutionEvent(runId, "tool_start", block.name, {
+          tool_use_id: block.id,
+          input: block.input,
+          terminator: TERMINATORS.has(block.name),
+        });
+        const toolStartedAt = Date.now();
         const output = await handler(block.input);
+        await recordExecutionEvent(runId, "tool_end", block.name, {
+          tool_use_id: block.id,
+          duration_ms: Date.now() - toolStartedAt,
+          output_preview:
+            typeof output === "string"
+              ? output.slice(0, 500)
+              : JSON.stringify(output).slice(0, 500),
+        });
         toolResults.push({
           type: "tool_result",
           tool_use_id: block.id,
@@ -116,6 +159,10 @@ export async function runTurn({
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
+        await recordExecutionEvent(runId, "tool_error", block.name, {
+          tool_use_id: block.id,
+          error: msg,
+        });
         toolResults.push({
           type: "tool_result",
           tool_use_id: block.id,
@@ -135,6 +182,7 @@ export async function runTurn({
 
   let sends: string[];
   let terminator: TerminatorReason;
+  let voiceViolations: string[] = [];
 
   if (terminatorHit) {
     sends = extractSends(lastAssistantContent);
@@ -153,7 +201,31 @@ export async function runTurn({
     terminator = "cap_hit";
   }
 
+  const filtered = filterSends(sends);
+  sends = filtered.messages;
+  voiceViolations = filtered.violations;
+  if (voiceViolations.length > 0) {
+    console.warn(`[brain] voice filter repaired: ${voiceViolations.join(",")}`);
+  }
+
   const newMessages = working.slice(messages.length);
 
-  return { messages: working, newMessages, sends, terminator };
+  return {
+    messages: working,
+    newMessages,
+    sends,
+    terminator,
+    voiceViolations,
+    model: MODEL,
+    iterations,
+  };
 }
+
+// public entry point. langsmith parent trace per turn — children are the LLM
+// calls (auto-traced via wrapAnthropic). callers may pass a RunnableConfigLike
+// as a first arg to attach metadata/tags (server.ts uses this for user_id +
+// phone). when LANGSMITH_TRACING is unset, the wrapper is a pass-through.
+export const runTurn = traceable(_runTurn, {
+  name: "runTurn",
+  run_type: "chain",
+});

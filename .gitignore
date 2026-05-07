@@ -17,3 +17,7 @@ dist/
 # supabase
 supabase/.temp/
 supabase/.branches/
+
+# scratch / local notes
+insights.md
+borrow-from-old.md
