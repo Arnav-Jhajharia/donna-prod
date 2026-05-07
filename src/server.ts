@@ -148,10 +148,15 @@ async function dispatchPayload(payload: IngressPayload): Promise<void> {
 
   let result;
   try {
-    // langsmith config as first arg — attaches user_id/phone/source/wa_id to
-    // the parent trace. no-op when LANGSMITH_TRACING is unset.
-    result = await runTurn(
-      {
+    // langsmith metadata/tags travel via `langsmithExtra` — the brain's
+    // traceable wrapper extracts and strips this field before invoking
+    // _runTurn. no-op when LANGSMITH_TRACING is unset.
+    result = await runTurn({
+      mode: "reactive",
+      messages,
+      userInput: text,
+      runId,
+      langsmithExtra: {
         tags: ["whatsapp", "reactive"],
         metadata: {
           user_id: user.id,
@@ -161,13 +166,7 @@ async function dispatchPayload(payload: IngressPayload): Promise<void> {
           wa_message_id: payload.platformMessageId,
         },
       },
-      {
-        mode: "reactive",
-        messages,
-        userInput: text,
-        runId,
-      },
-    );
+    });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`[wa] brain failed: ${msg}`);
