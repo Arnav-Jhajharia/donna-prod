@@ -8,6 +8,7 @@
     "dev": "tsx src/index.ts",
     "wa": "tsx watch --clear-screen=false src/server.ts",
     "wa:once": "tsx src/server.ts",
+    "inspect": "tsx scripts/inspect-context.ts",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "build": "tsc",
