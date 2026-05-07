@@ -6,7 +6,8 @@
   "description": "donna v2 — whatsapp-native personal ai. v0: cli tool-loop bootstrap.",
   "scripts": {
     "dev": "tsx src/index.ts",
-    "wa": "tsx src/server.ts",
+    "wa": "tsx watch --clear-screen=false src/server.ts",
+    "wa:once": "tsx src/server.ts",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "build": "tsc",
