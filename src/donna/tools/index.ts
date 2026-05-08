@@ -30,6 +30,7 @@ import {
 import { doNothingTool, doNothingHandler } from "./do_nothing.js";
 import { deferTool, deferHandler } from "./defer.js";
 import { createScheduleTool, createScheduleHandler } from "./create_schedule.js";
+import { recallTool, recallHandler } from "./recall.js";
 
 // Tool already carries cache_control?: CacheControlEphemeral | null | undefined.
 // We alias it here to make the intent explicit without narrowing out null (which
@@ -70,6 +71,7 @@ export const tool_definitions: Array<ToolWithModes | CodeExecutionTool20250825> 
   integrationConnectTool,
   integrationSetModeTool,
   integrationDisconnectTool,
+  recallTool,
   sendBurstTool,
   doNothingTool,
   deferTool,
@@ -95,6 +97,7 @@ export const tool_handlers: Record<
   integration_connect: integrationConnectHandler,
   integration_set_mode: integrationSetModeHandler,
   integration_disconnect: integrationDisconnectHandler,
+  recall: recallHandler,
   do_nothing: doNothingHandler,
   defer: deferHandler,
   create_schedule: createScheduleHandler,

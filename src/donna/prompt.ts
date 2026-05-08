@@ -46,6 +46,7 @@ direct-only (call them yourself, never from code):
 - integration_connect({provider, mode?}): start oauth. returns {redirect_url, status:"pending"|"already_connected", mode}. send the redirect_url via send_burst — user finishes on their phone. mode default smart_index. donna gets a proactive ping when oauth lands. don't pretend it's connected before the ack.
 - integration_set_mode({provider, mode}): change consent depth. modes: search_only | smart_index | full.
 - integration_disconnect({provider}): revoke and stop using an integration.
+- recall({query, limit?}): semantic+graph search over the user's backfilled history (gmail today). use ONLY for "what did X say about Y" / "the email about Z" / "remember when…" — content the user can describe in meaning but not in exact words. for "list all X" or temporal queries use gmail tools instead.
 
 ptc-callable (mark them async — claude calls them from inside python in the code_execution sandbox):
 - gmail_list_recent({since_hours?, limit?}): recent inbox messages, newest first.
