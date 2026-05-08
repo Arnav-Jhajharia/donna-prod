@@ -28,6 +28,7 @@ import {
   integrationDisconnectHandler,
 } from "./integrations.js";
 import { doNothingTool, doNothingHandler } from "./do_nothing.js";
+import { deferTool, deferHandler } from "./defer.js";
 
 // Tool already carries cache_control?: CacheControlEphemeral | null | undefined.
 // We alias it here to make the intent explicit without narrowing out null (which
@@ -70,6 +71,7 @@ export const tool_definitions: Array<ToolWithModes | CodeExecutionTool20250825> 
   integrationDisconnectTool,
   sendBurstTool,
   doNothingTool,
+  deferTool,
 ];
 
 // satisfy MessageCreateParams["tools"] (which is a union including the server
@@ -92,9 +94,10 @@ export const tool_handlers: Record<
   integration_set_mode: integrationSetModeHandler,
   integration_disconnect: integrationDisconnectHandler,
   do_nothing: doNothingHandler,
+  defer: deferHandler,
 };
 
-export const TERMINATORS = new Set<string>(["send_burst", "do_nothing"]);
+export const TERMINATORS = new Set<string>(["send_burst", "do_nothing", "defer"]);
 
 // names of tools opted into PTC. used by the brain to tag observability
 // events so we can split direct vs ptc-driven invocations in metrics.

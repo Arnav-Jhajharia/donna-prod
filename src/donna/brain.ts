@@ -20,6 +20,7 @@ import {
 } from "./tools/index.js";
 import { REACTIVE_SYSTEM_PROMPT, PROACTIVE_SYSTEM_PROMPT } from "./prompt.js";
 import { filterSends } from "./voice_filter.js";
+import type { DeferInput } from "./tools/defer.js";
 import { recordExecutionEvent } from "./observability/execution.js";
 import { withTurnContext } from "./context.js";
 
@@ -35,8 +36,13 @@ const CAP_HIT_FALLBACK = "sorry, got stuck in a loop. try again.";
 const ANTHROPIC_BETA_HEADER = "advanced-tool-use-2025-11-20";
 
 export type BrainMode = "reactive" | "proactive" | "proactive_tier3";
-export type TerminatorReason = "send_burst" | "cap_hit";
+export type TerminatorReason = "send_burst" | "do_nothing" | "defer" | "cap_hit";
 export type CallerKind = "direct" | "code_execution";
+
+export interface NextScheduleSpec {
+  fire_at: string;
+  cause: DeferInput["cause"];
+}
 
 function selectSystemPromptForMode(mode: BrainMode): string {
   return mode === "proactive" ? PROACTIVE_SYSTEM_PROMPT : REACTIVE_SYSTEM_PROMPT;
@@ -71,6 +77,7 @@ export interface RunTurnResult {
   model: string;
   iterations: number;
   ptcInvocations: number;        // # of code_execution server-tool blocks observed this turn
+  nextSchedule?: NextScheduleSpec; // populated when terminator === "defer"
 }
 
 // wrapAnthropic auto-traces every messages.create call when LANGSMITH_TRACING=true.
@@ -92,6 +99,21 @@ function extractSends(content: ContentBlock[]): string[] {
     }
   }
   return [];
+}
+
+function extractDeferSpec(content: ContentBlock[]): NextScheduleSpec | null {
+  for (const block of content) {
+    if (block.type === "tool_use" && block.name === "defer") {
+      const input = block.input as Partial<DeferInput>;
+      if (typeof input.fire_at === "string" && input.cause && typeof input.cause === "object") {
+        return {
+          fire_at: input.fire_at,
+          cause: input.cause as DeferInput["cause"],
+        };
+      }
+    }
+  }
+  return null;
 }
 
 function callerKind(block: ToolUseBlock): CallerKind {
@@ -439,13 +461,30 @@ async function _runTurnInner({
   let voiceViolations: string[] = [];
 
   if (terminatorHit) {
-    sends = extractSends(lastAssistantContent);
-    if (sends.length === 0) {
-      console.warn("[brain] send_burst called with empty messages array");
+    // identify which terminator fired
+    const firedBlock = lastAssistantContent.find(
+      (b) => b.type === "tool_use" && TERMINATORS.has((b as ToolUseBlock).name),
+    ) as ToolUseBlock | undefined;
+    const firedName = firedBlock?.name ?? "send_burst";
+
+    if (firedName === "send_burst") {
+      sends = extractSends(lastAssistantContent);
+      if (sends.length === 0) {
+        console.warn("[brain] send_burst called with empty messages array");
+        sends = [CAP_HIT_FALLBACK];
+        terminator = "cap_hit";
+      } else {
+        terminator = "send_burst";
+      }
+    } else if (firedName === "do_nothing") {
+      sends = [];
+      terminator = "do_nothing";
+    } else if (firedName === "defer") {
+      sends = [];
+      terminator = "defer";
+    } else {
       sends = [CAP_HIT_FALLBACK];
       terminator = "cap_hit";
-    } else {
-      terminator = "send_burst";
     }
   } else {
     console.warn(
@@ -455,7 +494,8 @@ async function _runTurnInner({
     terminator = "cap_hit";
   }
 
-  const filtered = filterSends(sends);
+  // voice filter only applies when there are user-facing sends
+  const filtered = sends.length > 0 ? filterSends(sends) : { messages: [], violations: [] };
   sends = filtered.messages;
   voiceViolations = filtered.violations;
   if (voiceViolations.length > 0) {
@@ -463,6 +503,10 @@ async function _runTurnInner({
   }
 
   const newMessages = working.slice(messages.length);
+
+  const nextSchedule = terminator === "defer"
+    ? extractDeferSpec(lastAssistantContent) ?? undefined
+    : undefined;
 
   return {
     messages: working,
@@ -473,6 +517,7 @@ async function _runTurnInner({
     model: MODEL,
     iterations,
     ptcInvocations,
+    nextSchedule,
   };
 }
 
