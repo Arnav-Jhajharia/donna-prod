@@ -6,8 +6,13 @@ import { loadRecentMessages, saveMessages } from "./donna/memory/chat.js";
 import { closeDb, getSql } from "./donna/db.js";
 import { getConfig } from "./donna/config.js";
 import { parseWebhook } from "./donna/ingress/whatsapp.js";
+import {
+  parseWebhook as parseImessageWebhook,
+  verifyWebhookSignature as verifyImessageSignature,
+} from "./donna/ingress/imessage.js";
 import type { IngressPayload } from "./donna/ingress/payload.js";
 import { WhatsAppChannel } from "./donna/delivery/whatsapp.js";
+import { IMessageChannel } from "./donna/delivery/imessage.js";
 import type { TextMessage } from "./donna/delivery/messages.js";
 import { getOrCreateUser } from "./donna/memory/users.js";
 import {
@@ -19,13 +24,24 @@ import {
 } from "./donna/observability/execution.js";
 
 const wa = new WhatsAppChannel();
+// imessage channel constructed lazily — IMessageChannel reads getLinqConfig()
+// only on send, so the wa-only deployment path keeps working without LINQ_*.
+let _imessage: IMessageChannel | null = null;
+function getImessage(): IMessageChannel {
+  if (!_imessage) _imessage = new IMessageChannel();
+  return _imessage;
+}
 
-async function readJson(req: IncomingMessage): Promise<unknown> {
+async function readBody(req: IncomingMessage): Promise<string> {
   const chunks: Buffer[] = [];
   for await (const chunk of req) {
     chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
   }
-  const raw = Buffer.concat(chunks).toString("utf8");
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+async function readJson(req: IncomingMessage): Promise<unknown> {
+  const raw = await readBody(req);
   if (!raw) return {};
   return JSON.parse(raw);
 }
@@ -155,6 +171,8 @@ async function dispatchPayload(payload: IngressPayload): Promise<void> {
       mode: "reactive",
       messages,
       userInput: text,
+      userId: user.id,
+      source: "whatsapp",
       runId,
       langsmithExtra: {
         tags: ["whatsapp", "reactive"],
@@ -238,6 +256,266 @@ async function dispatchPayload(payload: IngressPayload): Promise<void> {
     voiceViolations: result.voiceViolations,
     error: deliveryError,
   });
+}
+
+// ── imessage dispatcher ─────────────────────────────────────────────────────
+//
+// runs the brain on an inbound iMessage payload and delivers each visible
+// send via the linq partner api. parallel to dispatchPayload (whatsapp).
+
+async function dispatchImessagePayload(payload: IngressPayload): Promise<void> {
+  let user;
+  try {
+    user = await getOrCreateUser(payload.phone, payload.platformProfileName);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[imessage] user resolution failed for ${payload.phone}: ${msg}`);
+    return;
+  }
+
+  const runId = await createExecutionRun({
+    userId: user.id,
+    channel: "imessage",
+    mode: "reactive",
+    inboundMessageId: payload.platformMessageId,
+    model: MODEL,
+    metadata: {
+      phone: user.phone,
+      profile_name: user.profileName,
+      message_type: payload.messageType,
+      source: payload.source,
+      chat_id: payload.chatId ?? null,
+    },
+  });
+  await recordExecutionEvent(runId, "inbound_received", "imessage", {
+    message_type: payload.messageType,
+    has_text: Boolean(payload.message?.trim()),
+    chat_id: payload.chatId ?? null,
+  });
+
+  const ch = getImessage();
+  // typing indicator (best-effort, fire-and-forget)
+  if (payload.chatId) {
+    void ch.sendTyping(payload.chatId).catch(() => undefined);
+  }
+
+  const text = payload.message?.trim();
+  if (!text) {
+    if (payload.platformMessageId) {
+      await recordExecutionEvent(runId, "delivery_start", "imessage.reaction", {
+        reaction: "wave",
+      });
+      void ch
+        .sendReaction(payload.platformMessageId, "👋")
+        .then(() =>
+          recordExecutionEvent(runId, "delivery_end", "imessage.reaction", {
+            ok: true,
+          }),
+        )
+        .catch((err) =>
+          recordExecutionEvent(runId, "delivery_error", "imessage.reaction", {
+            error: err instanceof Error ? err.message : String(err),
+          }),
+        );
+    }
+    console.info(
+      `[imessage] non-text payload (${payload.messageType}) from ${user.id.slice(0, 8)} — acked, brain skipped`,
+    );
+    await recordExecutionEvent(runId, "brain_skipped", "non_text_payload", {
+      message_type: payload.messageType,
+    });
+    await finishExecutionRun(runId, {
+      status: "completed",
+      terminator: "brain_skipped",
+      finalSends: [],
+    });
+    return;
+  }
+
+  let messages: MessageParam[];
+  try {
+    await recordExecutionEvent(runId, "memory_start", "loadRecentMessages", {
+      limit: 50,
+    });
+    messages = await loadRecentMessages(user.id, 50);
+    await recordExecutionEvent(runId, "memory_end", "loadRecentMessages", {
+      message_count: messages.length,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[imessage] couldn't load history: ${msg}`);
+    await recordExecutionEvent(runId, "memory_error", "loadRecentMessages", {
+      error: msg,
+    });
+    await finishExecutionRun(runId, { status: "failed", error: msg });
+    return;
+  }
+
+  let result;
+  try {
+    result = await runTurn({
+      mode: "reactive",
+      messages,
+      userInput: text,
+      userId: user.id,
+      source: "imessage",
+      runId,
+      langsmithExtra: {
+        tags: ["imessage", "reactive"],
+        metadata: {
+          user_id: user.id,
+          phone: user.phone,
+          profile_name: user.profileName,
+          source: "imessage",
+          linq_message_id: payload.platformMessageId,
+          linq_chat_id: payload.chatId,
+        },
+      },
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[imessage] brain failed: ${msg}`);
+    await recordExecutionEvent(runId, "brain_error", "runTurn", { error: msg });
+    await finishExecutionRun(runId, { status: "failed", error: msg });
+    return;
+  }
+
+  try {
+    await recordExecutionEvent(runId, "memory_start", "saveMessages", {
+      message_count: result.newMessages.length,
+    });
+    await saveMessages(user.id, result.newMessages, "reactive");
+    await recordExecutionEvent(runId, "memory_end", "saveMessages", {
+      message_count: result.newMessages.length,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[imessage] couldn't persist messages: ${msg}`);
+    await recordExecutionEvent(runId, "memory_error", "saveMessages", {
+      error: msg,
+    });
+  }
+
+  // first send threads as a reply to the inbound message; subsequent sends
+  // chain into the same chat without reply-context. linq dedupes via the
+  // optional idempotency_key below.
+  let deliveryError: string | null = null;
+  let chatId = payload.chatId ?? null;
+  for (const [i, body] of result.sends.entries()) {
+    try {
+      await recordExecutionEvent(runId, "delivery_start", "imessage.send", {
+        index: i,
+        total: result.sends.length,
+        chat_id: chatId,
+        body_preview: body.slice(0, 500),
+      });
+      const sent = await ch.send({
+        toPhone: payload.phone,
+        body,
+        chatId,
+        replyToMessageId:
+          i === 0 ? payload.platformMessageId : null,
+        idempotencyKey: `${runId}:${i}`,
+      });
+      chatId = sent.chatId;
+      await recordExecutionEvent(runId, "delivery_end", "imessage.send", {
+        index: i,
+        ok: true,
+        message_id: sent.messageId,
+        chat_id: sent.chatId,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[imessage] send failed (${i + 1}/${result.sends.length}): ${msg}`);
+      deliveryError = msg;
+      await recordExecutionEvent(runId, "delivery_error", "imessage.send", {
+        index: i,
+        error: msg,
+      });
+      break;
+    }
+  }
+
+  if (payload.chatId) {
+    void ch.stopTyping(payload.chatId).catch(() => undefined);
+  }
+
+  if (result.terminator === "cap_hit") {
+    console.error("[imessage] cap_hit");
+  }
+  await finishExecutionRun(runId, {
+    status: deliveryError ? "failed" : "completed",
+    terminator: result.terminator,
+    finalSends: result.sends,
+    voiceViolations: result.voiceViolations,
+    error: deliveryError,
+  });
+}
+
+async function handleImessageWebhook(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  // raw body required for HMAC verification — re-serialized JSON breaks it.
+  let rawBody: string;
+  try {
+    rawBody = await readBody(req);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[imessage] body read failed: ${msg}`);
+    sendJson(res, 400, { status: "bad_request" });
+    return;
+  }
+
+  const secret = process.env.LINQ_WEBHOOK_SECRET;
+  if (!secret) {
+    console.error("[imessage] LINQ_WEBHOOK_SECRET not set — rejecting webhook");
+    sendJson(res, 500, { status: "not_configured" });
+    return;
+  }
+
+  const sigHeader = req.headers["x-webhook-signature"];
+  const tsHeader = req.headers["x-webhook-timestamp"];
+  const signature =
+    (Array.isArray(sigHeader) ? sigHeader[0] : sigHeader) ?? null;
+  const timestamp =
+    (Array.isArray(tsHeader) ? tsHeader[0] : tsHeader) ?? null;
+
+  const ok = verifyImessageSignature({
+    secret,
+    rawBody,
+    signature,
+    timestamp,
+  });
+  if (!ok) {
+    console.warn("[imessage] webhook signature verification failed");
+    sendJson(res, 401, { status: "invalid_signature" });
+    return;
+  }
+
+  let body: unknown;
+  try {
+    body = rawBody ? JSON.parse(rawBody) : {};
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[imessage] bad json body: ${msg}`);
+    sendJson(res, 400, { status: "bad_request" });
+    return;
+  }
+
+  // ack within linq's 10s budget — process async after responding.
+  sendJson(res, 200, { status: "ok" });
+
+  let parsed: Awaited<ReturnType<typeof parseImessageWebhook>>;
+  try {
+    parsed = await parseImessageWebhook(body);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[imessage] parse_webhook failed: ${msg}`);
+    return;
+  }
+  if (!parsed || !parsed.payload) return;
+  await dispatchImessagePayload(parsed.payload);
 }
 
 async function handleVerify(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -341,6 +619,10 @@ async function main(): Promise<void> {
     }
     if (req.method === "POST" && url === "/webhook") {
       void handleWebhook(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.startsWith("/imessage/webhook")) {
+      void handleImessageWebhook(req, res);
       return;
     }
     send(res, 404, "not found");

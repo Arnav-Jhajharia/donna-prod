@@ -19,7 +19,7 @@ export interface VoicePayload {
 }
 
 export type MessageType = "text" | "voice" | "image" | "document";
-export type Source = "whatsapp" | "web" | "api";
+export type Source = "whatsapp" | "web" | "api" | "imessage";
 
 export interface IngressPayload {
   userId: string; // resolved before payload is built
@@ -31,7 +31,8 @@ export interface IngressPayload {
   voice?: VoicePayload;
   source: Source;
   // platform metadata (opaque to brain, passed through for delivery)
-  platformMessageId: string | null; // wa_message_id, etc.
+  platformMessageId: string | null; // wa_message_id, linq message id, etc.
   platformProfileName: string | null;
   replyToId: string | null; // swipe-reply context
+  chatId?: string | null; // linq chat id when source = "imessage"
 }

@@ -5,7 +5,7 @@
 
 import { getSql } from "../db.js";
 
-export type InboundSource = "whatsapp" | "web" | "api";
+export type InboundSource = "whatsapp" | "web" | "api" | "imessage";
 
 interface ClaimArgs {
   waMessageId: string;
