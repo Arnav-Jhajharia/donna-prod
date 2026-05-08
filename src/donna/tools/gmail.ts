@@ -1,5 +1,6 @@
 import type { Tool } from "@anthropic-ai/sdk/resources/messages";
 import { executeForUser } from "../integrations/service.js";
+import type { BrainMode } from "../brain.js";
 
 const PTC_CALLER = "code_execution_20250825" as const;
 const PROVIDER = "gmail";
@@ -82,7 +83,7 @@ function normalize(raw: RawGmailMessage): NormalizedMessage {
 // gmail_list_recent — recent inbox, optional since_hours window
 // ---------------------------------------------------------------------------
 
-export const gmailListRecentTool: Tool = {
+export const gmailListRecentTool: Tool & { modes: ReadonlySet<BrainMode> } = {
   name: "gmail_list_recent",
   description: `list recent inbox messages, newest first.
 
@@ -112,6 +113,7 @@ defaults: since_hours=24, limit=20. cap is 100.`,
     { since_hours: 168, limit: 100 },
     { limit: 20 },
   ],
+  modes: new Set<BrainMode>(["reactive", "proactive"]),
 };
 
 export async function gmailListRecentHandler(
@@ -132,7 +134,7 @@ export async function gmailListRecentHandler(
 // gmail_search — arbitrary gmail query syntax
 // ---------------------------------------------------------------------------
 
-export const gmailSearchTool: Tool = {
+export const gmailSearchTool: Tool & { modes: ReadonlySet<BrainMode> } = {
   name: "gmail_search",
   description: `search gmail with full gmail query syntax.
 
@@ -170,6 +172,7 @@ defaults: limit=20. cap is 100.`,
     { query: "in:sent newer_than:14d", limit: 100 },
     { query: "label:starred is:unread" },
   ],
+  modes: new Set<BrainMode>(["reactive", "proactive"]),
 };
 
 export async function gmailSearchHandler(
@@ -192,7 +195,7 @@ export async function gmailSearchHandler(
 // gmail_list_sent — emails YOU sent (typed wrapper around search)
 // ---------------------------------------------------------------------------
 
-export const gmailListSentTool: Tool = {
+export const gmailListSentTool: Tool & { modes: ReadonlySet<BrainMode> } = {
   name: "gmail_list_sent",
   description: `list emails you sent, newest first. typed wrapper for "in:sent" searches.
 
@@ -221,6 +224,7 @@ defaults: since_hours=336 (14d), limit=50. cap is 100.`,
     { since_hours: 336, limit: 100 },
     {},
   ],
+  modes: new Set<BrainMode>(["reactive", "proactive"]),
 };
 
 export async function gmailListSentHandler(
@@ -264,7 +268,7 @@ interface RawGmailThread {
   messages?: RawGmailMessage[];
 }
 
-export const gmailReadThreadTool: Tool = {
+export const gmailReadThreadTool: Tool & { modes: ReadonlySet<BrainMode> } = {
   name: "gmail_read_thread",
   description: `fetch the full body of a thread by id. returns every message in the thread.
 
@@ -285,6 +289,7 @@ many thread ids to fan out reads.`,
   },
   allowed_callers: [PTC_CALLER],
   input_examples: [{ thread_id: "18c0a1b2c3d4e5f6" }],
+  modes: new Set<BrainMode>(["reactive", "proactive"]),
 };
 
 export async function gmailReadThreadHandler(

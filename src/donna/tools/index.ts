@@ -4,6 +4,7 @@ import type {
   MessageCreateParams,
 } from "@anthropic-ai/sdk/resources/messages";
 import type { CacheControlEphemeral } from "@anthropic-ai/sdk/resources/index.js";
+import type { BrainMode } from "../brain.js";
 import { getCurrentTimeTool, getCurrentTimeHandler } from "./time.js";
 import { sendBurstTool, sendBurstHandler } from "./send_burst.js";
 import {
@@ -34,6 +35,10 @@ type ToolWithCache = Tool & {
   cache_control?: CacheControlEphemeral | null;
 };
 
+export type ToolWithModes = ToolWithCache & {
+  modes: ReadonlySet<BrainMode>;
+};
+
 // the code_execution server tool. anthropic runs the python sandbox; we only
 // see (a) the python claude wrote, (b) any tool_use blocks our handlers must
 // answer (now carrying a `caller` field), (c) the final stdout.
@@ -51,7 +56,7 @@ export const codeExecutionTool: CodeExecutionTool20250825 = {
 // also adds a message-level breakpoint per turn, which is where the real
 // caching win lives once the conversation prefix exceeds the model's
 // minimum cacheable size (2048 tokens on sonnet 4.6).
-export const tool_definitions: Array<ToolWithCache | CodeExecutionTool20250825> = [
+export const tool_definitions: Array<ToolWithModes | CodeExecutionTool20250825> = [
   codeExecutionTool,
   getCurrentTimeTool,
   gmailListRecentTool,

@@ -1,6 +1,7 @@
 import type { Tool } from "@anthropic-ai/sdk/resources/messages";
+import type { BrainMode } from "../brain.js";
 
-export const getCurrentTimeTool: Tool = {
+export const getCurrentTimeTool: Tool & { modes: ReadonlySet<BrainMode> } = {
   name: "get_current_time",
   description: `returns the current wall-clock time in the requested IANA timezone.
 
@@ -22,6 +23,7 @@ when NOT to use:
       },
     },
   },
+  modes: new Set<BrainMode>(["reactive", "proactive"]),
 };
 
 interface GetCurrentTimeInput {

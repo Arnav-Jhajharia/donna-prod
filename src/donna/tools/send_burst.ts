@@ -1,6 +1,7 @@
 import type { Tool } from "@anthropic-ai/sdk/resources/messages";
+import type { BrainMode } from "../brain.js";
 
-export const sendBurstTool: Tool = {
+export const sendBurstTool: Tool & { modes: ReadonlySet<BrainMode> } = {
   name: "send_burst",
   description: `the only way to talk to the user. pass an array of strings; each becomes a separate message the user sees. one message is fine. multiple is fine when you have distinct thoughts that should land separately.
 
@@ -21,6 +22,7 @@ when NOT to use:
     },
     required: ["messages"],
   },
+  modes: new Set<BrainMode>(["reactive", "proactive"]),
 };
 
 export async function sendBurstHandler(input: unknown): Promise<string> {

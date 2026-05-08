@@ -3,6 +3,7 @@
 // the python sandbox. donna calls them directly when the user asks.
 
 import type { Tool } from "@anthropic-ai/sdk/resources/messages";
+import type { BrainMode } from "../brain.js";
 import { getTurnContext } from "../context.js";
 import { getComposio } from "../integrations/composio.js";
 import {
@@ -22,7 +23,7 @@ const CONNECT_TIMEOUT_MS = 10 * 60 * 1000;
 // integration_status — list configured integrations for the current user
 // ---------------------------------------------------------------------------
 
-export const integrationStatusTool: Tool = {
+export const integrationStatusTool: Tool & { modes: ReadonlySet<BrainMode> } = {
   name: "integration_status",
   description: `list the user's configured integrations: provider, status (connected | expired | revoked | error), mode (search_only | smart_index | full), composio_account_id, when connected, when last synced.
 
@@ -41,6 +42,7 @@ returns: { integrations: [{provider, status, mode, exclusions, composio_account_
       },
     },
   },
+  modes: new Set<BrainMode>(["reactive", "proactive"]),
 };
 
 interface IntegrationStatusInput {
@@ -62,7 +64,7 @@ export async function integrationStatusHandler(input: unknown): Promise<unknown>
 // integration_set_mode — change consent depth for a provider
 // ---------------------------------------------------------------------------
 
-export const integrationSetModeTool: Tool = {
+export const integrationSetModeTool: Tool & { modes: ReadonlySet<BrainMode> } = {
   name: "integration_set_mode",
   description: `change how deeply donna processes data from an integration.
 
@@ -89,6 +91,7 @@ returns the updated state row. fails if the provider isn't configured.`,
     },
     required: ["provider", "mode"],
   },
+  modes: new Set<BrainMode>(["reactive"]),
 };
 
 interface IntegrationSetModeInput {
@@ -117,7 +120,7 @@ export async function integrationSetModeHandler(input: unknown): Promise<unknown
 // integration_disconnect — revoke + mark row revoked
 // ---------------------------------------------------------------------------
 
-export const integrationDisconnectTool: Tool = {
+export const integrationDisconnectTool: Tool & { modes: ReadonlySet<BrainMode> } = {
   name: "integration_disconnect",
   description: `disconnect an integration: revoke the oauth grant at composio, mark the integration row revoked. donna will not be able to call provider tools afterward.
 
@@ -136,6 +139,7 @@ returns: { ok, composio_account_id, error? }`,
     },
     required: ["provider"],
   },
+  modes: new Set<BrainMode>(["reactive"]),
 };
 
 interface IntegrationDisconnectInput {
@@ -154,7 +158,7 @@ export async function integrationDisconnectHandler(input: unknown): Promise<unkn
 // the background completion handler that flips state and acks proactively.
 // ---------------------------------------------------------------------------
 
-export const integrationConnectTool: Tool = {
+export const integrationConnectTool: Tool & { modes: ReadonlySet<BrainMode> } = {
   name: "integration_connect",
   description: `kick off oauth for a provider. returns { provider, redirect_url, status, mode }.
 
@@ -186,6 +190,7 @@ after calling: send a short send_burst with the redirect url and a one-liner tha
     },
     required: ["provider"],
   },
+  modes: new Set<BrainMode>(["reactive"]),
 };
 
 interface IntegrationConnectInput {
