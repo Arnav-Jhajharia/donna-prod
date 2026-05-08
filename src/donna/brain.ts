@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type {
   MessageParam,
+  MessageCreateParams,
   ContentBlock,
   ToolResultBlockParam,
   ToolUseBlock,
@@ -11,6 +12,7 @@ import { wrapAnthropic } from "langsmith/wrappers/anthropic";
 import { traceable } from "langsmith/traceable";
 import {
   sdk_tools,
+  selectToolsForMode,
   tool_definitions,
   tool_handlers,
   PTC_ELIGIBLE,
@@ -223,10 +225,13 @@ export async function runProactiveTurn(args: {
 }
 
 async function _runTurnInner({
+  mode,
   messages,
   userInput,
   runId = null,
 }: RunTurnArgs): Promise<RunTurnResult> {
+  const toolsForMode = selectToolsForMode(mode) as MessageCreateParams["tools"];
+
   // never mutate the caller's messages array. work on a fresh copy.
   const working: MessageParam[] = [
     ...messages,
@@ -245,7 +250,7 @@ async function _runTurnInner({
       iteration: iterations,
       model: MODEL,
       message_count: working.length,
-      tool_count: tool_definitions.length,
+      tool_count: (toolsForMode as unknown[]).length,
     });
     const modelStartedAt = Date.now();
 
@@ -267,7 +272,7 @@ async function _runTurnInner({
           cache_control: { type: "ephemeral" },
         },
       ],
-      tools: sdk_tools,
+      tools: toolsForMode,
       messages: messagesForApi,
     });
     await recordExecutionEvent(runId, "model_end", "anthropic.messages.create", {

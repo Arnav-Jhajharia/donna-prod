@@ -101,3 +101,18 @@ export const PTC_ELIGIBLE = new Set<string>([
   "gmail_list_sent",
   "gmail_read_thread",
 ]);
+
+function isCodeExecutionTool(
+  t: ToolWithModes | CodeExecutionTool20250825,
+): t is CodeExecutionTool20250825 {
+  return "type" in t && typeof t.type === "string" && t.type.startsWith("code_execution");
+}
+
+export function selectToolsForMode(
+  mode: BrainMode,
+): Array<ToolWithModes | CodeExecutionTool20250825> {
+  return tool_definitions.filter((t) => {
+    if (isCodeExecutionTool(t)) return true;
+    return t.modes.has(mode);
+  });
+}
