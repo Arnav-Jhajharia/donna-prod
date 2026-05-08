@@ -23,6 +23,8 @@ import { filterSends } from "./voice_filter.js";
 import type { DeferInput } from "./tools/defer.js";
 import { recordExecutionEvent } from "./observability/execution.js";
 import { withTurnContext } from "./context.js";
+import type { ProactiveCause } from "./proactive/cause.js";
+import { synthesizeCauseMessage } from "./proactive/cause.js";
 
 export const MODEL = "claude-sonnet-4-6";
 const MAX_TOKENS = 2048;
@@ -48,16 +50,15 @@ function selectSystemPromptForMode(mode: BrainMode): string {
   return mode === "proactive" ? PROACTIVE_SYSTEM_PROMPT : REACTIVE_SYSTEM_PROMPT;
 }
 
-export interface RunTurnArgs {
-  mode: BrainMode;
+// Base fields shared by all turn variants.
+export interface RunTurnArgsBase {
   messages: MessageParam[];
-  userInput: string;
   // donna's user_id (uuid). required so handlers can resolve per-user
   // integration state, audit, slabs. flows via AsyncLocalStorage.
   userId: string;
   // where the turn originated. cli runs and channel webhook runs differ
   // in their downstream side effects (egress, dedup, etc).
-  source?: "cli" | "whatsapp" | "imessage";
+  source?: "cli" | "whatsapp" | "imessage" | "proactive_worker";
   runId?: string | null;
   // optional langsmith RunTreeConfig (tags, metadata, etc.). when LANGSMITH_TRACING
   // is set, these flow into the parent trace. the traceable wrapper extracts and
@@ -67,6 +68,31 @@ export interface RunTurnArgs {
     metadata?: Record<string, unknown>;
   };
 }
+
+// Reactive turn: driven by a real user message.
+export interface RunTurnArgsReactive extends RunTurnArgsBase {
+  mode: "reactive";
+  userInput: string;
+  cause?: never;
+}
+
+// Proactive turn: driven by a ProactiveCause (schedule / scan / watch).
+// synthesizeCauseMessage converts cause → an xml-tagged MessageParam that
+// donna sees as her trigger and preserves in chat_messages history.
+export interface RunTurnArgsProactive extends RunTurnArgsBase {
+  mode: "proactive";
+  cause: ProactiveCause;
+  userInput?: never;
+}
+
+// Tier-3 proactive (not implemented yet — kept for future type safety).
+export interface RunTurnArgsTier3 extends RunTurnArgsBase {
+  mode: "proactive_tier3";
+  userInput?: string;
+  cause?: ProactiveCause;
+}
+
+export type RunTurnArgs = RunTurnArgsReactive | RunTurnArgsProactive | RunTurnArgsTier3;
 
 export interface RunTurnResult {
   messages: MessageParam[];      // full updated history (including userInput + everything added this turn)
@@ -200,68 +226,71 @@ function withTrailingCacheControl(messages: MessageParam[]): MessageParam[] {
   ];
 }
 
-async function _runTurn({
-  mode,
-  messages,
-  userInput,
-  userId,
-  source = "cli",
-  runId = null,
-}: RunTurnArgs): Promise<RunTurnResult> {
+async function _runTurn(args: RunTurnArgs): Promise<RunTurnResult> {
+  const { mode, userId, source = "cli", runId = null } = args;
+
   if (mode === "proactive_tier3") {
     throw new Error(`brain mode 'proactive_tier3' not implemented yet`);
   }
-  // 'reactive' and 'proactive' share the loop below. proactive turns differ
-  // only in WHO triggered them: caller passes a synthetic userInput
-  // describing the runtime trigger, optionally with empty messages.
+  // 'reactive' and 'proactive' share the loop below. they differ only in how
+  // the initial user message is built: reactive uses userInput directly;
+  // proactive synthesizes an xml-tagged cause message via synthesizeCauseMessage.
 
   return withTurnContext({ userId, runId, source }, () =>
-    _runTurnInner({ mode, messages, userInput, userId, source, runId }),
+    _runTurnInner(args),
   );
 }
 
-// helper for runtime-triggered proactive bursts (oauth completed, commitment
-// overdue, backfill done, etc). caller provides a human-readable trigger
-// description; donna composes a single short burst acknowledging it.
+// helper for runtime-triggered proactive bursts (scheduled, scan, watch, etc).
+// caller provides a ProactiveCause; synthesizeCauseMessage converts it to an
+// xml-tagged user message that donna sees and that is preserved in chat_messages.
 //
-// for cli: caller prints result.sends. for whatsapp: caller delivers via
-// WhatsAppChannel.send (when the proactive lane lands). messages defaults
-// to [] — proactive notifications don't need conversation history unless
-// the caller explicitly passes recent context.
+// for cli: caller prints result.sends. for whatsapp/imessage: caller delivers
+// via the appropriate channel. messages defaults to [] — proactive turns don't
+// need conversation history unless the caller explicitly passes recent context.
 export async function runProactiveTurn(args: {
   userId: string;
-  source: "cli" | "whatsapp" | "imessage";
-  trigger: string;
+  source: "cli" | "whatsapp" | "imessage" | "proactive_worker";
+  cause: ProactiveCause;
   messages?: MessageParam[];
   runId?: string | null;
+  langsmithExtra?: {
+    tags?: string[];
+    metadata?: Record<string, unknown>;
+  };
 }): Promise<RunTurnResult> {
-  const synthetic =
-    `[runtime trigger, not from the user]: ${args.trigger}\n\n` +
-    `respond in one short burst (1-2 bubbles) acknowledging the trigger and ` +
-    `offering exactly one next move. do not greet. stay in voice. do not narrate ` +
-    `that this was an automated trigger.`;
   return runTurn({
     mode: "proactive",
     messages: args.messages ?? [],
-    userInput: synthetic,
+    cause: args.cause,
     userId: args.userId,
     source: args.source,
     runId: args.runId ?? null,
+    langsmithExtra: args.langsmithExtra,
   });
 }
 
-async function _runTurnInner({
-  mode,
-  messages,
-  userInput,
-  runId = null,
-}: RunTurnArgs): Promise<RunTurnResult> {
+async function _runTurnInner(args: RunTurnArgs): Promise<RunTurnResult> {
+  const { mode, messages, runId = null } = args;
   const toolsForMode = selectToolsForMode(mode) as MessageCreateParams["tools"];
+
+  // build the initial user message based on turn mode.
+  // reactive: real user text passed directly.
+  // proactive: xml-tagged cause synthesized by synthesizeCauseMessage — this
+  //   appears in chat_messages permanently so donna's future reactive turns see
+  //   her own past triggers in history.
+  // tier3: fallback to userInput if present (currently unreachable — _runTurn throws first).
+  const initialMessage: MessageParam =
+    args.mode === "reactive"
+      ? { role: "user", content: args.userInput }
+      : args.mode === "proactive"
+      ? synthesizeCauseMessage(args.cause)
+      : { role: "user", content: args.userInput ?? "" };
 
   // never mutate the caller's messages array. work on a fresh copy.
   const working: MessageParam[] = [
     ...messages,
-    { role: "user", content: userInput },
+    initialMessage,
   ];
 
   let iterations = 0;

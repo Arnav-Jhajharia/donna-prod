@@ -7,7 +7,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 export interface TurnContext {
   userId: string;
   runId: string | null;
-  source: "cli" | "whatsapp" | "imessage";
+  source: "cli" | "whatsapp" | "imessage" | "proactive_worker";
 }
 
 const als = new AsyncLocalStorage<TurnContext>();

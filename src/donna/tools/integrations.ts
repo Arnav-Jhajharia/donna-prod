@@ -258,7 +258,7 @@ interface ComposioAuthHandle {
 
 async function completeConnectionInBackground(args: {
   userId: string;
-  source: "cli" | "whatsapp" | "imessage";
+  source: "cli" | "whatsapp" | "imessage" | "proactive_worker";
   provider: string;
   mode: IntegrationMode;
   cr: ComposioAuthHandle;
@@ -280,14 +280,22 @@ async function completeConnectionInBackground(args: {
     }
 
     // proactive ack: brain composes a short burst, we deliver to the user's channel
-    const [{ runProactiveTurn }, { deliverBurstToUser }] = await Promise.all([
+    const [{ runProactiveTurn }, { deliverBurstToUser }, { randomUUID }] = await Promise.all([
       import("../brain.js"),
       import("../delivery/proactive.js"),
+      import("node:crypto"),
     ]);
+    const cause = {
+      kind: "scheduled" as const,
+      payload: { provider, mode } as Record<string, unknown>,
+      set_at: new Date().toISOString(),
+      schedule_id: randomUUID(),
+      instruction: `${provider} just finished oauth and is now connected (mode=${mode}). this is the user's first connection of this provider — or a reconnect.`,
+    };
     const result = await runProactiveTurn({
       userId,
       source,
-      trigger: `${provider} just finished oauth and is now connected (mode=${mode}). this is the user's first connection of this provider — or a reconnect.`,
+      cause,
     });
     await deliverBurstToUser(userId, result.sends);
   } catch (err) {

@@ -21,7 +21,9 @@ import {
 } from "../src/donna/integrations/service.js";
 import { closeDb } from "../src/donna/db.js";
 import { runProactiveTurn } from "../src/donna/brain.js";
+import type { ProactiveCause } from "../src/donna/proactive/cause.js";
 import { deliverBurstToUser } from "../src/donna/delivery/proactive.js";
+import { randomUUID } from "node:crypto";
 
 interface CliArgs {
   provider: string;
@@ -107,10 +109,17 @@ async function main(): Promise<void> {
   // the next reactive turn sees the same conversation the user just received.
   console.log("\nasking donna to acknowledge...\n");
   try {
+    const cause: ProactiveCause = {
+      kind: "scheduled",
+      payload: { provider, mode },
+      set_at: new Date().toISOString(),
+      schedule_id: randomUUID(),
+      instruction: `${provider} just finished oauth and is now connected (mode=${mode}). this is the user's first integration of this provider — or a reconnect.`,
+    };
     const result = await runProactiveTurn({
       userId,
       source: "whatsapp",
-      trigger: `${provider} just finished oauth and is now connected (mode=${mode}). this is the user's first integration of this provider — or a reconnect.`,
+      cause,
     });
 
     if (result.sends.length === 0) {
