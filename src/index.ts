@@ -76,6 +76,8 @@ async function main(): Promise<void> {
         mode: "reactive",
         messages,
         userInput: line,
+        userId,
+        source: "cli",
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
