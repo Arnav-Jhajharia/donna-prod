@@ -9,7 +9,7 @@
 
 import "dotenv/config";
 import { tool_definitions } from "../src/donna/tools/index.ts";
-import { SYSTEM_PROMPT } from "../src/donna/prompt.ts";
+import { REACTIVE_SYSTEM_PROMPT as SYSTEM_PROMPT } from "../src/donna/prompt.ts";
 import { loadRecentMessages } from "../src/donna/memory/chat.ts";
 import { closeDb } from "../src/donna/db.ts";
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";

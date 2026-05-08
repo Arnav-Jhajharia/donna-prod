@@ -18,7 +18,7 @@ import {
   PTC_ELIGIBLE,
   TERMINATORS,
 } from "./tools/index.js";
-import { SYSTEM_PROMPT } from "./prompt.js";
+import { REACTIVE_SYSTEM_PROMPT, PROACTIVE_SYSTEM_PROMPT } from "./prompt.js";
 import { filterSends } from "./voice_filter.js";
 import { recordExecutionEvent } from "./observability/execution.js";
 import { withTurnContext } from "./context.js";
@@ -37,6 +37,10 @@ const ANTHROPIC_BETA_HEADER = "advanced-tool-use-2025-11-20";
 export type BrainMode = "reactive" | "proactive" | "proactive_tier3";
 export type TerminatorReason = "send_burst" | "cap_hit";
 export type CallerKind = "direct" | "code_execution";
+
+function selectSystemPromptForMode(mode: BrainMode): string {
+  return mode === "proactive" ? PROACTIVE_SYSTEM_PROMPT : REACTIVE_SYSTEM_PROMPT;
+}
 
 export interface RunTurnArgs {
   mode: BrainMode;
@@ -268,7 +272,7 @@ async function _runTurnInner({
       system: [
         {
           type: "text",
-          text: SYSTEM_PROMPT,
+          text: selectSystemPromptForMode(mode),
           cache_control: { type: "ephemeral" },
         },
       ],
