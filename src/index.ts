@@ -2,9 +2,14 @@ import "dotenv/config";
 import * as readline from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
-import { runTurn } from "./donna/brain.js";
+import { MODEL, runTurn } from "./donna/brain.js";
 import { loadRecentMessages, saveMessages } from "./donna/memory/chat.js";
 import { getSql, closeDb } from "./donna/db.js";
+import {
+  createExecutionRun,
+  finishExecutionRun,
+  recordExecutionEvent,
+} from "./donna/observability/execution.js";
 
 async function main(): Promise<void> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -70,6 +75,17 @@ async function main(): Promise<void> {
     if (!line) continue;
     if (line === "/quit") break;
 
+    const runId = await createExecutionRun({
+      userId,
+      channel: "cli",
+      mode: "reactive",
+      model: MODEL,
+      metadata: { input_preview: line.slice(0, 200) },
+    });
+    await recordExecutionEvent(runId, "inbound_received", "cli", {
+      length: line.length,
+    });
+
     let result;
     try {
       result = await runTurn({
@@ -78,12 +94,14 @@ async function main(): Promise<void> {
         userInput: line,
         userId,
         source: "cli",
+        runId,
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(
         `\ndonna couldn't reach the model. try again. (${msg})\n`,
       );
+      await finishExecutionRun(runId, { status: "failed", error: msg });
       // do NOT mutate messages on failure
       continue;
     }
@@ -97,6 +115,14 @@ async function main(): Promise<void> {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(`couldn't write to memory: ${msg}`);
     }
+
+    await finishExecutionRun(runId, {
+      status: "completed",
+      terminator: result.terminator,
+      finalSends: result.sends,
+      voiceViolations: result.voiceViolations,
+    });
+    console.log(`\n[run ${runId.slice(0, 8)}] terminator=${result.terminator} iterations=${result.iterations} ptc=${result.ptcInvocations}`);
 
     // print each visible send on its own line, separated by a blank line
     for (const send of result.sends) {
