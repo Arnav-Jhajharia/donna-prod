@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "../src/donna/env.js";
 import { closeDb, getSql } from "../src/donna/db.js";
 import { insertSchedule } from "../src/donna/proactive/schedule.js";
 import type { ProactiveCauseKind } from "../src/donna/proactive/cause.js";

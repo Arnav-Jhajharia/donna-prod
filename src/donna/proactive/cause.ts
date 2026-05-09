@@ -1,6 +1,13 @@
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
 
-export type ProactiveCauseKind = "scheduled" | "scan_gmail" | "watch_fired" | "world_tick";
+export type ProactiveCauseKind =
+  | "scheduled"
+  | "scan_gmail"
+  | "gmail_event"
+  | "watch_fired"
+  | "world_tick"
+  | "subscriptions_onboarding"
+  | "subscription_detected";
 
 export interface ProactiveCause {
   kind: ProactiveCauseKind;

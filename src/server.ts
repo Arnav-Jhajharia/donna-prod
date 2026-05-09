@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./donna/env.js";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
 import { MODEL, runTurn } from "./donna/brain.js";
@@ -22,6 +22,10 @@ import {
   listExecutionRuns,
   recordExecutionEvent,
 } from "./donna/observability/execution.js";
+import {
+  verifyComposioWebhook,
+  dispatchComposioWebhook,
+} from "./donna/integrations/composio_webhook.js";
 
 const wa = new WhatsAppChannel();
 // imessage channel constructed lazily — IMessageChannel reads getLinqConfig()
@@ -518,6 +522,46 @@ async function handleImessageWebhook(
   await dispatchImessagePayload(parsed.payload);
 }
 
+async function handleComposioWebhook(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  // raw body required for hmac verification — re-serialized JSON breaks it.
+  let rawBody: string;
+  try {
+    rawBody = await readBody(req);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[composio] body read failed: ${msg}`);
+    sendJson(res, 400, { status: "bad_request" });
+    return;
+  }
+
+  const sigHeader = req.headers["webhook-signature"];
+  const idHeader = req.headers["webhook-id"];
+  const tsHeader = req.headers["webhook-timestamp"];
+  const headers = {
+    signature: (Array.isArray(sigHeader) ? sigHeader[0] : sigHeader) ?? null,
+    webhookId: (Array.isArray(idHeader) ? idHeader[0] : idHeader) ?? null,
+    webhookTimestamp:
+      (Array.isArray(tsHeader) ? tsHeader[0] : tsHeader) ?? null,
+  };
+
+  const verified = await verifyComposioWebhook({ rawBody, headers });
+  if (!verified) {
+    sendJson(res, 401, { status: "invalid_signature" });
+    return;
+  }
+
+  // ack fast — composio retries on slow/missing 2xx. process async.
+  sendJson(res, 200, { status: "ok" });
+
+  void dispatchComposioWebhook(verified).catch((err) => {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[composio] dispatch failed: ${msg}`);
+  });
+}
+
 async function handleVerify(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const cfg = getConfig().whatsapp;
   const url = new URL(req.url ?? "/", "http://localhost");
@@ -623,6 +667,10 @@ async function main(): Promise<void> {
     }
     if (req.method === "POST" && url.startsWith("/imessage/webhook")) {
       void handleImessageWebhook(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.startsWith("/composio/webhook")) {
+      void handleComposioWebhook(req, res);
       return;
     }
     send(res, 404, "not found");

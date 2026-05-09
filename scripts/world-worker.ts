@@ -8,7 +8,7 @@
 // stops on SIGINT/SIGTERM. on shutdown, in-flight rows are left as 'claimed'
 // and the next worker reclaims them via sweepStuckClaimed.
 
-import "dotenv/config";
+import "../src/donna/env.js";
 import { closeDb } from "../src/donna/db.js";
 import { runProactiveWorker } from "../src/donna/world/worker.js";
 

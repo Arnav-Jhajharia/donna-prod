@@ -5,7 +5,11 @@
 import type { Tool } from "@anthropic-ai/sdk/resources/messages";
 import type { BrainMode } from "../brain.js";
 import { getTurnContext } from "../context.js";
-import { getComposio } from "../integrations/composio.js";
+import {
+  getComposio,
+  enableProviderTrigger,
+  GMAIL_TRIGGER_SLUG,
+} from "../integrations/composio.js";
 import {
   listForUser,
   readState,
@@ -274,9 +278,66 @@ async function completeConnectionInBackground(args: {
       composio_account_id: account.id,
     });
 
+    // enable provider push triggers so future events arrive via /composio/webhook
+    // rather than polling. v1: gmail "new message" only.
+    if (provider === "gmail") {
+      const triggerResult = await enableProviderTrigger({
+        composioUserId: userId,
+        triggerSlug: GMAIL_TRIGGER_SLUG,
+        connectedAccountId: account.id,
+      });
+      if ("triggerId" in triggerResult) {
+        const { getSql } = await import("../db.js");
+        const sql = getSql();
+        type JsonArg = Parameters<typeof sql.json>[0];
+        const patch = { gmail_trigger_id: triggerResult.triggerId } as unknown as JsonArg;
+        await sql`
+          update integrations
+          set config = config || ${sql.json(patch)},
+              updated_at = now()
+          where user_id = ${userId} and provider = ${provider}
+        `;
+        console.info(
+          `[integrations] gmail trigger enabled for ${userId.slice(0, 8)}: ${triggerResult.triggerId}`,
+        );
+      } else {
+        console.warn(
+          `[integrations] gmail trigger enable failed for ${userId.slice(0, 8)}: ${triggerResult.error}`,
+        );
+      }
+    }
+
     if (source === "cli") {
       console.log(`[integrations] ${provider} connected for ${userId.slice(0, 8)} (cli — no proactive ack)`);
       return;
+    }
+
+    // gmail-specific: open the subscriptions onboarding agenda so donna's first
+    // burst becomes the start of the multi-turn flow.
+    let agendaId: string | null = null;
+    if (provider === "gmail") {
+      try {
+        const { getSql } = await import("../db.js");
+        const sql = getSql();
+        type JsonArg = Parameters<typeof sql.json>[0];
+        const payload = { provider, mode } as unknown as JsonArg;
+        const inserted = await sql<{ id: string }[]>`
+          insert into donna_state_agendas (user_id, kind, step, payload)
+          values (
+            ${userId},
+            'subscriptions_onboarding',
+            'ask_install',
+            ${sql.json(payload)}
+          )
+          returning id
+        `;
+        agendaId = inserted[0]?.id ?? null;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(
+          `[integrations] could not open subscriptions agenda for ${userId.slice(0, 8)}: ${msg}`,
+        );
+      }
     }
 
     // proactive ack: brain composes a short burst, we deliver to the user's channel
@@ -285,13 +346,23 @@ async function completeConnectionInBackground(args: {
       import("../delivery/proactive.js"),
       import("node:crypto"),
     ]);
-    const cause = {
-      kind: "scheduled" as const,
-      payload: { provider, mode } as Record<string, unknown>,
-      set_at: new Date().toISOString(),
-      schedule_id: randomUUID(),
-      instruction: `${provider} just finished oauth and is now connected (mode=${mode}). this is the user's first connection of this provider — or a reconnect.`,
-    };
+    const cause =
+      provider === "gmail" && agendaId
+        ? {
+            kind: "subscriptions_onboarding" as const,
+            payload: { provider, mode, agenda_id: agendaId, step: "ask_install" } as Record<string, unknown>,
+            set_at: new Date().toISOString(),
+            schedule_id: randomUUID(),
+            instruction:
+              `gmail just finished oauth (mode=${mode}). you're starting the subscriptions onboarding agenda (id=${agendaId}, step=ask_install). ack the connection briefly, then offer to track recurring subscriptions/auto-pays. one short burst (1-2 bubbles). do NOT call agendas_advance — wait for the user's yes/no in the next reactive turn.`,
+          }
+        : {
+            kind: "scheduled" as const,
+            payload: { provider, mode } as Record<string, unknown>,
+            set_at: new Date().toISOString(),
+            schedule_id: randomUUID(),
+            instruction: `${provider} just finished oauth and is now connected (mode=${mode}). this is the user's first connection of this provider — or a reconnect.`,
+          };
     const result = await runProactiveTurn({
       userId,
       source,

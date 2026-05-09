@@ -96,6 +96,18 @@ export async function disconnectIntegration(
   const state = await readState(userId, provider);
   if (!state) return { ok: false, composioAccountId: null, error: "not_configured" };
 
+  // tear down any active triggers we registered. ignored failures — composio's
+  // delete is idempotent and we'd rather mark revoked locally than block.
+  const triggerId = (state.config as { gmail_trigger_id?: string } | null)?.gmail_trigger_id;
+  if (triggerId) {
+    try {
+      await getComposio().triggers.delete(triggerId);
+    } catch (err) {
+      const m = err instanceof Error ? err.message : String(err);
+      console.warn(`[integrations] composio trigger delete failed (${triggerId}): ${m}`);
+    }
+  }
+
   let composioError: string | null = null;
   if (state.composio_account_id) {
     try {

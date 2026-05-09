@@ -7,7 +7,7 @@
 //     [SUPERMEMORY_API_KEY=...] \
 //     npm run world:tick
 
-import "dotenv/config";
+import "../src/donna/env.js";
 import { closeDb } from "../src/donna/db.js";
 import { driveWorldTick } from "../src/donna/world/runner.js";
 

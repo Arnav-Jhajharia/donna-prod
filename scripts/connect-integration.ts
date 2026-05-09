@@ -12,17 +12,21 @@
 //   4. waitForConnection() blocks until composio reports the account is linked
 //   5. write integrations row with the resulting connected_account.id
 
-import "dotenv/config";
+import "../src/donna/env.js";
 import { Composio } from "@composio/core";
 import {
   upsertState,
   readState,
   type IntegrationMode,
 } from "../src/donna/integrations/service.js";
-import { closeDb } from "../src/donna/db.js";
+import { closeDb, getSql } from "../src/donna/db.js";
 import { runProactiveTurn } from "../src/donna/brain.js";
 import type { ProactiveCause } from "../src/donna/proactive/cause.js";
 import { deliverBurstToUser } from "../src/donna/delivery/proactive.js";
+import {
+  enableProviderTrigger,
+  GMAIL_TRIGGER_SLUG,
+} from "../src/donna/integrations/composio.js";
 import { randomUUID } from "node:crypto";
 
 interface CliArgs {
@@ -99,9 +103,61 @@ async function main(): Promise<void> {
     composio_account_id: account.id,
   });
 
+  // enable provider push triggers so future events arrive via /composio/webhook.
+  if (provider === "gmail") {
+    const triggerResult = await enableProviderTrigger({
+      composioUserId: userId,
+      triggerSlug: GMAIL_TRIGGER_SLUG,
+      connectedAccountId: account.id,
+    });
+    if ("triggerId" in triggerResult) {
+      const sql = getSql();
+      type JsonArg = Parameters<typeof sql.json>[0];
+      const patch = { gmail_trigger_id: triggerResult.triggerId } as unknown as JsonArg;
+      await sql`
+        update integrations
+        set config = config || ${sql.json(patch)},
+            updated_at = now()
+        where user_id = ${userId} and provider = ${provider}
+      `;
+      console.log(`gmail trigger enabled: ${triggerResult.triggerId}`);
+    } else {
+      console.warn(`(gmail trigger enable failed: ${triggerResult.error})`);
+    }
+  }
+
   const after = await readState(userId, provider);
   console.log("\nintegration row:");
   console.log(JSON.stringify(after, null, 2));
+
+  // for gmail (and only gmail today), open the subscriptions onboarding agenda
+  // so donna's post-oauth burst becomes the start of a thoughtful flow:
+  // "want me to track your subscriptions?" → ask for sources → backfill → confirm.
+  // composer surfaces this row to donna on every reactive turn so she remembers
+  // where she is. tools: agendas_advance updates step/status as the user replies.
+  let agendaId: string | null = null;
+  if (provider === "gmail") {
+    try {
+      const sql = getSql();
+      type JsonArg = Parameters<typeof sql.json>[0];
+      const payload = { provider, mode } as unknown as JsonArg;
+      const inserted = await sql<{ id: string }[]>`
+        insert into donna_state_agendas (user_id, kind, step, payload)
+        values (
+          ${userId},
+          'subscriptions_onboarding',
+          'ask_install',
+          ${sql.json(payload)}
+        )
+        returning id
+      `;
+      agendaId = inserted[0]?.id ?? null;
+      if (agendaId) console.log(`opened subscriptions onboarding agenda: ${agendaId}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`(could not open onboarding agenda: ${msg}) — falling back to plain ack.`);
+    }
+  }
 
   // fire a proactive turn so donna acknowledges the connection in her voice.
   // print to stdout AND deliver to whatsapp if the user has a phone on file.
@@ -109,13 +165,23 @@ async function main(): Promise<void> {
   // the next reactive turn sees the same conversation the user just received.
   console.log("\nasking donna to acknowledge...\n");
   try {
-    const cause: ProactiveCause = {
-      kind: "scheduled",
-      payload: { provider, mode },
-      set_at: new Date().toISOString(),
-      schedule_id: randomUUID(),
-      instruction: `${provider} just finished oauth and is now connected (mode=${mode}). this is the user's first integration of this provider — or a reconnect.`,
-    };
+    const isGmailWithAgenda = provider === "gmail" && agendaId !== null;
+    const cause: ProactiveCause = isGmailWithAgenda
+      ? {
+          kind: "subscriptions_onboarding",
+          payload: { provider, mode, agenda_id: agendaId, step: "ask_install" },
+          set_at: new Date().toISOString(),
+          schedule_id: randomUUID(),
+          instruction:
+            `gmail just finished oauth (mode=${mode}). you're starting the subscriptions onboarding agenda (id=${agendaId}, step=ask_install). ack the connection briefly, then offer to track recurring subscriptions/auto-pays. one short burst (1-2 bubbles). do NOT call agendas_advance — wait for the user's yes/no in the next reactive turn.`,
+        }
+      : {
+          kind: "scheduled",
+          payload: { provider, mode },
+          set_at: new Date().toISOString(),
+          schedule_id: randomUUID(),
+          instruction: `${provider} just finished oauth and is now connected (mode=${mode}). this is the user's first integration of this provider — or a reconnect.`,
+        };
     const result = await runProactiveTurn({
       userId,
       source: "whatsapp",

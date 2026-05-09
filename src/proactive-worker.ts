@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./donna/env.js";
 import { closeDb, getSql } from "./donna/db.js";
 import { startScheduleTicker } from "./donna/proactive/executor.js";
 

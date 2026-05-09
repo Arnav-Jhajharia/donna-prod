@@ -7,7 +7,7 @@
 // prints the signing_secret. copy it into LINQ_WEBHOOK_SECRET in .env. linq
 // returns the secret exactly once — there is no retrieval endpoint.
 
-import "dotenv/config";
+import "../src/donna/env.js";
 import {
   createWebhookSubscription,
   listWebhookSubscriptions,

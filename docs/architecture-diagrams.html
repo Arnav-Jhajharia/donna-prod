@@ -163,6 +163,18 @@ tr:hover td { background: rgba(123,85,68,0.04); }
 .pill.reactive { background: rgba(74,47,35,0.10);   color: var(--umber); }
 .pill.proactive{ background: rgba(123,85,68,0.20);  color: var(--umber); }
 .pill.term     { background: var(--ink);            color: var(--ivory); }
+section.dark .pill.both     { background: rgba(232,201,183,0.18); color: #F4D9C7; }
+section.dark .pill.reactive { background: rgba(232,201,183,0.10); color: #E8C9B7; }
+section.dark .pill.proactive{ background: rgba(232,201,183,0.28); color: #FBF2EA; }
+section.dark .pill.term     { background: var(--ivory);           color: var(--ink); }
+.diagram .mermaid .nodeLabel,
+.diagram .mermaid .edgeLabel,
+.diagram .mermaid .cluster-label,
+.diagram .mermaid foreignObject div { color: var(--ink) !important; }
+section.dark .diagram .mermaid .nodeLabel,
+section.dark .diagram .mermaid .edgeLabel,
+section.dark .diagram .mermaid .cluster-label,
+section.dark .diagram .mermaid foreignObject div { color: var(--ink) !important; }
 ul.tight li { margin-bottom: 4px; }
 hr { border: none; border-top: 1px solid var(--rule); margin: 56px 0; }
 nav.toc {
@@ -196,6 +208,93 @@ nav.toc a:hover { border-bottom-color: var(--rust); color: var(--rust); }
 }
 .kvgrid > dt { color: var(--rust); font-weight: 500; padding-top: 4px; }
 .kvgrid > dd { margin: 0; padding-top: 4px; }
+
+/* --- new: stat cards + domain cards for the user data inventory --- */
+.statgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 24px 0 36px;
+}
+.stat {
+  background: var(--tan);
+  border-left: 3px solid var(--rust);
+  padding: 16px 18px;
+  border-radius: 2px;
+}
+.stat .num {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 36px;
+  line-height: 1.05;
+  color: var(--ink);
+  display: block;
+  margin-bottom: 4px;
+}
+.stat .lbl {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rust);
+  font-weight: 600;
+}
+.stat .sub {
+  font-size: 12.5px;
+  color: var(--soft);
+  display: block;
+  margin-top: 6px;
+}
+section.dark .stat { background: rgba(251,247,245,0.06); border-left-color: #E8C9B7; }
+section.dark .stat .num { color: var(--ivory); }
+section.dark .stat .lbl { color: #E8C9B7; }
+section.dark .stat .sub { color: rgba(251,247,245,0.55); }
+
+.domaincard {
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 22px 24px 8px;
+  margin: 18px 0;
+  background: var(--ivory);
+}
+.domaincard h4 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.domaincard h4 .tag {
+  font-family: 'Inter', sans-serif;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--rust);
+  font-weight: 600;
+}
+.domaincard p.purpose {
+  font-size: 14.5px;
+  color: var(--soft);
+  margin: 0 0 14px;
+}
+.domaincard table { margin: 8px 0 16px; }
+.domaincard th { font-size: 11px; }
+.domaincard td code { font-size: 12.5px; }
+.domaincard .surface {
+  font-size: 13px;
+  color: var(--soft);
+  font-style: italic;
+  padding: 8px 0 0;
+  border-top: 1px dashed var(--rule);
+  margin-top: 4px;
+}
+section.dark .domaincard {
+  background: rgba(251,247,245,0.04);
+  border-color: rgba(251,247,245,0.16);
+}
+section.dark .domaincard p.purpose { color: rgba(251,247,245,0.7); }
+section.dark .domaincard .surface {
+  color: rgba(251,247,245,0.55);
+  border-top-color: rgba(251,247,245,0.16);
+}
 </style>
 </head>
 
@@ -223,6 +322,12 @@ nav.toc a:hover { border-bottom-color: var(--rust); color: var(--rust); }
     <li>12. <a href="#turns">turn sequences (reactive vs proactive)</a></li>
     <li>13. <a href="#world">world engine (sibling)</a></li>
     <li>14. <a href="#deployment">deployment shape</a></li>
+    <li>15. <a href="#userdata">what donna stores about you</a></li>
+    <li>16. <a href="#subscriptions">subscriptions feature</a></li>
+    <li>17. <a href="#calories">calorie tracker</a></li>
+    <li>18. <a href="#agendas">multi-turn agendas</a></li>
+    <li>19. <a href="#composio-webhook">composio webhooks (push, not poll)</a></li>
+    <li>20. <a href="#gmail-intelligence">gmail intelligence (threads + people)</a></li>
   </ol>
 </nav>
 
@@ -380,6 +485,14 @@ flowchart LR
     A7[integration_connect]
     A8[integration_set_mode]
     A9[integration_disconnect]
+    A10[recall]
+    A11[agendas_advance]
+    A12[subscriptions_summary]
+    A13[subscriptions_record]
+    A14[subscriptions_update]
+    A15[subscriptions_merge]
+    A16[log_meal · update_meal · delete_meal]
+    A17[set_food_goal · save_meal_alias · log_meal_from_alias]
   end
   subgraph B["B · code_execution (PTC)"]
     B0[code_execution<br/>server tool]
@@ -387,6 +500,13 @@ flowchart LR
     B2[gmail_search]
     B3[gmail_list_sent]
     B4[gmail_read_thread]
+    B5[subscriptions_list]
+    B6[parse_food_text]
+    B7[lookup_food]
+    B8[get_food_goal]
+    B9[get_daily_summary]
+    B10[get_meal_history]
+    B11[list_meal_aliases]
   end
   subgraph C["C · native (anthropic-side, deferred)"]
     C1[web_search]
@@ -398,6 +518,13 @@ flowchart LR
   B0 -.python sandbox calls.- B2
   B0 -.python sandbox calls.- B3
   B0 -.python sandbox calls.- B4
+  B0 -.python sandbox calls.- B5
+  B0 -.python sandbox calls.- B6
+  B0 -.python sandbox calls.- B7
+  B0 -.python sandbox calls.- B8
+  B0 -.python sandbox calls.- B9
+  B0 -.python sandbox calls.- B10
+  B0 -.python sandbox calls.- B11
 </pre>
 </div>
 
@@ -418,10 +545,25 @@ flowchart LR
 <tr><td><code>gmail_list_sent</code></td><td>B PTC</td><td><span class="pill both">both</span></td><td>—</td></tr>
 <tr><td><code>gmail_read_thread</code></td><td>B PTC</td><td><span class="pill both">both</span></td><td>—</td></tr>
 <tr><td><code>code_execution</code> (server)</td><td>B</td><td><span class="pill both">both</span></td><td>—</td></tr>
+<tr><td><code>recall</code></td><td>A direct</td><td><span class="pill both">both</span></td><td>—</td></tr>
+<tr><td><code>agendas_advance</code></td><td>A direct</td><td><span class="pill reactive">reactive</span></td><td>—</td></tr>
+<tr><td><code>subscriptions_list</code></td><td>B PTC</td><td><span class="pill both">both</span></td><td>—</td></tr>
+<tr><td><code>subscriptions_summary</code></td><td>A direct</td><td><span class="pill both">both</span></td><td>—</td></tr>
+<tr><td><code>subscriptions_record</code></td><td>A direct</td><td><span class="pill reactive">reactive</span></td><td>—</td></tr>
+<tr><td><code>subscriptions_update</code></td><td>A direct</td><td><span class="pill reactive">reactive</span></td><td>—</td></tr>
+<tr><td><code>subscriptions_merge</code></td><td>A direct</td><td><span class="pill reactive">reactive</span></td><td>—</td></tr>
+<tr><td><code>log_meal</code> · <code>update_meal</code> · <code>delete_meal</code></td><td>A direct</td><td><span class="pill reactive">reactive</span></td><td>—</td></tr>
+<tr><td><code>set_food_goal</code> · <code>save_meal_alias</code> · <code>log_meal_from_alias</code></td><td>A direct</td><td><span class="pill reactive">reactive</span></td><td>—</td></tr>
+<tr><td><code>parse_food_text</code> · <code>lookup_food</code></td><td>B PTC</td><td><span class="pill both">both</span></td><td>—</td></tr>
+<tr><td><code>get_food_goal</code> · <code>get_daily_summary</code> · <code>get_meal_history</code> · <code>list_meal_aliases</code></td><td>B PTC</td><td><span class="pill both">both</span></td><td>—</td></tr>
 </tbody>
 </table>
 
 <p class="caption">PTC = "tools-callable from code execution." <code>allowed_callers: ["code_execution_20250825"]</code> opts a tool into being invoked from inside the python sandbox. claude writes python; tool calls come back as ordinary <code>tool_use</code> blocks carrying a <code>caller</code> field. the brain logs caller="direct" vs "code_execution" so we can split telemetry.</p>
+
+<div class="aside">
+  <strong>tool count today:</strong> 30 user-defined + 1 server tool (code_execution). well under the ~20-tool selection-accuracy cliff per mode (reactive ≈ 28 visible, proactive ≈ 24). once a domain breaks ~30, switch on tool search to keep per-turn context flat.
+</div>
 </section>
 
 <section id="cause">
@@ -434,6 +576,20 @@ flowchart LR
   schedule_id="11111111-1111-1111-1111-111111111111"
   payload="{&amp;quot;since_hours&amp;quot;:4}"
 &gt;remind nikhil about workout&lt;/proactive_cause&gt;</pre>
+
+<h3>cause kinds today</h3>
+<table>
+<thead><tr><th>kind</th><th>fired by</th><th>donna's job when she sees it</th></tr></thead>
+<tbody>
+<tr><td><code>scheduled</code></td><td>generic <code>create_schedule</code> rows or one-shot dev triggers</td><td>read the instruction and act on the named intent</td></tr>
+<tr><td><code>scan_gmail</code></td><td>scheduled inbox-hygiene sweep (now narrowed — arrivals fire <code>gmail_event</code>)</td><td>fan out gmail tools via code_execution; surface stale follow-ups, unanswered threads</td></tr>
+<tr><td><code>gmail_event</code></td><td>composio push trigger (gmail watch + pub/sub) — see <a href="#composio-webhook">§19</a></td><td>read from / subject; only ping for time-sensitive personal mail; default do_nothing</td></tr>
+<tr><td><code>watch_fired</code></td><td>future per-user watchers</td><td>react to the specific event payload (e.g. new msg from boss)</td></tr>
+<tr><td><code>world_tick</code></td><td>world engine sibling effort (§13)</td><td>compose a world-summary burst if the day's count of relevant signals crossed threshold</td></tr>
+<tr><td><code>subscriptions_onboarding</code></td><td>post-oauth completion of gmail (the connect script + integration_connect tool)</td><td>open / advance the subscriptions setup agenda — see §18</td></tr>
+<tr><td><code>subscription_detected</code></td><td>(future) continuous gmail sync flagging a new recurring charge</td><td>ping the user to confirm the new subscription</td></tr>
+</tbody>
+</table>
 
 <div class="diagram">
 <pre class="mermaid">
@@ -693,7 +849,17 @@ erDiagram
   users ||--o{ integrations : has
   users ||--o{ integration_audit : audited
   users ||--o{ donna_state_drafts : drafted
+  users ||--o{ donna_state_agendas : agenda
+  users ||--o{ subscriptions : tracks
+  users ||--o{ subscription_charges : charged
+  users ||--o{ food_goals : goal
+  users ||--o{ meals : ate
+  users ||--o{ meal_aliases : aliases
+  users ||--o{ world_ledger : signals
+  users ||--o{ world_daily_count : daily
   users ||--o{ execution_observability : ran
+  subscriptions ||--o{ subscription_charges : "of"
+  meals ||--o{ meal_items : "items"
 
   users {
     uuid id PK
@@ -773,6 +939,114 @@ erDiagram
     text intent
     text status "pending_preview|previewed|sent|discarded"
     text external_draft_id
+  }
+
+  donna_state_agendas {
+    uuid id PK
+    uuid user_id FK
+    text kind "subscriptions_onboarding|..."
+    text step "ask_install|ask_sources|scanning|ask_confirm|done"
+    jsonb payload
+    text status "active|completed|abandoned"
+  }
+
+  subscriptions {
+    uuid id PK
+    uuid user_id FK
+    text merchant_canonical
+    text_array merchant_raw
+    text category
+    int amount_cents
+    text currency
+    text recurrence "monthly|yearly|weekly|quarterly|unknown"
+    text status "active|cancelled|paused|uncertain"
+    bool user_confirmed
+    real confidence
+    timestamptz first_seen_at
+    timestamptz last_charged_at
+    timestamptz next_estimated_at
+  }
+
+  subscription_charges {
+    uuid id PK
+    uuid user_id FK
+    uuid subscription_id FK
+    int amount_cents
+    text currency
+    timestamptz charged_at
+    text source_channel "gmail|user_volunteered|bank|paypal|imessage"
+    text source_ref
+    text evidence_quote
+    jsonb meta
+  }
+
+  food_goals {
+    uuid user_id PK
+    text goal_kind "cut|bulk|maintain|custom"
+    int daily_kcal
+    int daily_protein_g
+    int daily_carbs_g
+    int daily_fat_g
+    int daily_fiber_g
+    bool proactive_nudges
+    text timezone
+  }
+
+  meals {
+    uuid id PK
+    uuid user_id FK
+    timestamptz occurred_at
+    text meal_type "breakfast|lunch|dinner|snack"
+    text source_kind "text|photo|voice|alias|edit"
+    numeric total_kcal
+    numeric total_protein_g
+    numeric total_carbs_g
+    numeric total_fat_g
+    numeric total_fiber_g
+    text confidence "high|medium|low"
+    text parser "nutritionix|llm|mixed"
+    bool is_deleted
+  }
+
+  meal_items {
+    uuid id PK
+    uuid meal_id FK
+    int position
+    text name
+    numeric quantity
+    text unit
+    numeric serving_grams
+    numeric kcal
+    numeric protein_g
+    text nix_id
+    text fdc_id
+  }
+
+  meal_aliases {
+    uuid id PK
+    uuid user_id FK
+    text alias
+    jsonb template
+  }
+
+  food_cache {
+    text query_normalized PK
+    text source "nutritionix"
+    jsonb raw_response
+    timestamptz ttl_until
+    int hit_count
+  }
+
+  world_ledger {
+    uuid user_id FK
+    text dedup_key
+    timestamptz fired_at
+  }
+
+  world_daily_count {
+    uuid user_id FK
+    date local_date
+    int count
   }
 
   execution_observability {
@@ -1102,8 +1376,671 @@ flowchart LR
   <li><code>20260507000100_execution_observability.sql</code></li>
   <li><code>20260507202012_integrations.sql</code> (integrations + integration_audit + donna_state_drafts)</li>
   <li><code>20260508120000_donnaschedule.sql</code> (donnaschedule + chat_messages.metadata)</li>
-  <li><code>20260508140000_world_engine.sql</code> (world signal store, sibling effort)</li>
+  <li><code>20260508130000_calorie_tracker.sql</code> (food_goals + meals + meal_items + meal_aliases + food_cache)</li>
+  <li><code>20260508140000_world_engine.sql</code> (world_ledger + world_daily_count, sibling effort)</li>
+  <li><code>20260509120000_world_tick_cause_kind.sql</code> (extends ProactiveCauseKind enum)</li>
+  <li><code>20260509143748_subscriptions.sql</code> (subscriptions + subscription_charges + donna_state_agendas)</li>
+  <li><code>20260509161404_gmail_threads.sql</code> (gmail_threads + gmail_people)</li>
 </ol>
+</section>
+
+<section id="userdata">
+<h2>15. what donna stores about you</h2>
+<p>every byte donna keeps, grouped by purpose. one card per domain — name, why it exists, the postgres tables behind it, and where it surfaces back to you. this is the inventory the dashboard renders later, today read it as the contract.</p>
+
+<div class="statgrid">
+  <div class="stat"><b>10</b><span>domains</span></div>
+  <div class="stat"><b>17</b><span>typed tables</span></div>
+  <div class="stat"><b>7</b><span>cause kinds</span></div>
+  <div class="stat"><b>34</b><span>tools</span></div>
+  <div class="stat"><b>2</b><span>brains (reactive + proactive)</span></div>
+  <div class="stat"><b>1</b><span>chat log of record</span></div>
+</div>
+
+<h3>identity &amp; routing</h3>
+<div class="domaincard">
+  <h4>who you are <span class="tag">core</span></h4>
+  <p class="purpose">the bridge between donna's <code>user_id</code> and your delivery channels. without this row no proactive turn knows where to send a burst.</p>
+  <table>
+    <thead><tr><th>table</th><th>fields that matter</th></tr></thead>
+    <tbody>
+      <tr><td><code>users</code></td><td><code>id</code>, <code>display_name</code>, <code>phone_e164</code>, <code>imessage_handle</code>, <code>timezone</code>, <code>created_at</code></td></tr>
+    </tbody>
+  </table>
+  <p class="surface">surfaces: every burst (delivery picks channel from this row) · every prompt (timezone steers <code>get_current_time</code>)</p>
+</div>
+
+<h3>conversation</h3>
+<div class="domaincard">
+  <h4>everything that has been said <span class="tag">core</span></h4>
+  <p class="purpose">single source of truth across reactive + proactive. composer rebuilds the prompt from this on every turn, so anything not in here is invisible to donna next message.</p>
+  <table>
+    <thead><tr><th>table</th><th>fields that matter</th></tr></thead>
+    <tbody>
+      <tr><td><code>chat_messages</code></td><td><code>role</code>, <code>content</code>, <code>mode</code> (reactive/proactive), <code>source</code>, <code>cause_kind</code>, <code>cause_payload</code>, <code>metadata</code>, <code>created_at</code></td></tr>
+      <tr><td><code>inbound_messages</code></td><td>raw provider payloads · idempotency &amp; debugging trail</td></tr>
+    </tbody>
+  </table>
+  <p class="surface">surfaces: every prompt (last N turns) · /inspect-context · langsmith traces</p>
+</div>
+
+<h3>integrations runtime</h3>
+<div class="domaincard">
+  <h4>what's connected, in what mode, with what audit trail <span class="tag">core</span></h4>
+  <p class="purpose">stateful third-party integration store. every read against gmail (or future provider) flows through <code>executeForUser</code> — which writes an audit row before returning. mode + exclusions enforced server-side, never trusted from the model.</p>
+  <table>
+    <thead><tr><th>table</th><th>fields that matter</th></tr></thead>
+    <tbody>
+      <tr><td><code>integrations</code></td><td><code>provider</code>, <code>status</code>, <code>mode</code> (search_only/smart_index/full), <code>exclusions</code>, <code>composio_account_id</code>, <code>connected_at</code>, <code>last_sync_at</code></td></tr>
+      <tr><td><code>integration_audit</code></td><td><code>provider</code>, <code>action</code>, <code>tool_name</code>, <code>args</code>, <code>result_summary</code>, <code>occurred_at</code></td></tr>
+      <tr><td><code>donna_state_drafts</code></td><td>in-flight drafts donna prepared but hasn't sent (gmail compose, etc.)</td></tr>
+    </tbody>
+  </table>
+  <p class="surface">surfaces: <code>integration_status</code> tool · post-oauth proactive ack · audit cross-ref by support</p>
+</div>
+
+<h3>subscriptions</h3>
+<div class="domaincard">
+  <h4>what you're paying for, on autopay <span class="tag">domain</span></h4>
+  <p class="purpose">every recurring obligation, with the per-charge ledger that proves it. classifier (heuristic + haiku) ingests gmail receipts; <code>subscriptions_record</code> ingests user-volunteered ("i pay $5/mo for grok"). same canonical merchant store, same recurrence inference.</p>
+  <table>
+    <thead><tr><th>table</th><th>fields that matter</th></tr></thead>
+    <tbody>
+      <tr><td><code>subscriptions</code></td><td><code>merchant_canonical</code>, <code>merchant_raw[]</code>, <code>amount_cents</code>, <code>currency</code>, <code>recurrence</code>, <code>status</code>, <code>user_confirmed</code>, <code>confidence</code>, <code>last_charged_at</code>, <code>next_estimated_at</code></td></tr>
+      <tr><td><code>subscription_charges</code></td><td>per-instance ledger · <code>source_channel</code> (gmail/user_volunteered/bank/...) · <code>source_ref</code> · <code>evidence_quote</code></td></tr>
+    </tbody>
+  </table>
+  <p class="surface">surfaces: <code>subscriptions_summary</code> ("$73/mo, top: netflix $15.99…") · <code>subscriptions_list</code> in PTC ("things that started this quarter") · proactive "spotted a new charge" pings</p>
+</div>
+
+<h3>calorie tracker</h3>
+<div class="domaincard">
+  <h4>what you ate, vs what you said you'd eat <span class="tag">domain</span></h4>
+  <p class="purpose">food-log for the people who do not want to open a separate app. parser turns "two eggs and toast" into typed items; aliases let "the usual breakfast" log in one shot; cache shortcuts repeat lookups.</p>
+  <table>
+    <thead><tr><th>table</th><th>fields that matter</th></tr></thead>
+    <tbody>
+      <tr><td><code>food_goals</code></td><td>daily kcal &amp; macros target</td></tr>
+      <tr><td><code>meals</code></td><td><code>logged_at</code>, <code>meal_type</code> (breakfast/lunch/dinner/snack), per-meal totals</td></tr>
+      <tr><td><code>meal_items</code></td><td>per-item rows: <code>name</code>, <code>quantity</code>, <code>unit</code>, <code>kcal</code>, macros</td></tr>
+      <tr><td><code>meal_aliases</code></td><td>"usual breakfast" → frozen item list</td></tr>
+      <tr><td><code>food_cache</code></td><td>memoized parser/lookup results · cuts haiku calls</td></tr>
+    </tbody>
+  </table>
+  <p class="surface">surfaces: <code>get_daily_summary</code> ("you're 1820/2200, low on protein") · <code>get_meal_history</code> in PTC ("kcal trend last 14d")</p>
+</div>
+
+<h3>multi-turn agendas</h3>
+<div class="domaincard">
+  <h4>conversations donna hasn't finished with you <span class="tag">primitive</span></h4>
+  <p class="purpose">tiny working-memory layer for flows that span multiple replies (e.g. subscriptions onboarding: ask install → ask sources → scan → ask confirm → done). composer surfaces active rows on every reactive turn so donna remembers where she left off.</p>
+  <table>
+    <thead><tr><th>table</th><th>fields that matter</th></tr></thead>
+    <tbody>
+      <tr><td><code>donna_state_agendas</code></td><td><code>kind</code> (subscriptions_onboarding…), <code>step</code>, <code>payload</code>, <code>status</code> (active/completed/abandoned)</td></tr>
+    </tbody>
+  </table>
+  <p class="surface">surfaces: <code>&lt;active_agendas&gt;</code> block in reactive prompt · <code>agendas_advance</code> tool · proactive re-engage when long ops finish</p>
+</div>
+
+<h3>scheduling &amp; deferral</h3>
+<div class="domaincard">
+  <h4>future donna-actions, queued <span class="tag">primitive</span></h4>
+  <p class="purpose">the only durable timer in the system. <code>create_schedule</code> + <code>defer</code> tools write here; the executor tick (every 30s in the worker) drains due rows and fires proactive turns with the saved <code>cause</code>.</p>
+  <table>
+    <thead><tr><th>table</th><th>fields that matter</th></tr></thead>
+    <tbody>
+      <tr><td><code>donnaschedule</code></td><td><code>fire_at</code>, <code>cause_kind</code>, <code>cause_payload</code>, <code>status</code>, <code>fired_at</code></td></tr>
+    </tbody>
+  </table>
+  <p class="surface">surfaces: every "remind me at 6" / "circle back if i don't reply" / scheduled morning briefing</p>
+</div>
+
+<h3>world engine (sibling)</h3>
+<div class="domaincard">
+  <h4>what's happening around you that might matter <span class="tag">domain</span></h4>
+  <p class="purpose">a separate effort that watches public/external signals and writes a daily count. donna can ask it via the <code>world_tick</code> cause, but it has its own ingest loop; not part of the conversation substrate.</p>
+  <table>
+    <thead><tr><th>table</th><th>fields that matter</th></tr></thead>
+    <tbody>
+      <tr><td><code>world_ledger</code></td><td>per-event rows · <code>topic</code>, <code>summary</code>, <code>relevance</code></td></tr>
+      <tr><td><code>world_daily_count</code></td><td>per-day rollup powering the <code>world_tick</code> proactive cause</td></tr>
+    </tbody>
+  </table>
+  <p class="surface">surfaces: opportunistic proactive bursts when something hits a salience threshold</p>
+</div>
+
+<h3>memory (semantic + graph)</h3>
+<div class="domaincard">
+  <h4>everything else worth recalling later <span class="tag">external</span></h4>
+  <p class="purpose">supermemory holds the long-tail: per-charge bodies, free-text user notes, anything we'd otherwise stuff into a slab. <code>recall</code> tool wraps semantic + graph search. nothing else lives here that has its own typed table — when in doubt, type it.</p>
+  <table>
+    <thead><tr><th>store</th><th>what's in it</th></tr></thead>
+    <tbody>
+      <tr><td>supermemory <code>episodes</code></td><td>raw email bodies (filtered, not promotions/social), user-volunteered notes, conversation snippets worth surfacing</td></tr>
+    </tbody>
+  </table>
+  <p class="surface">surfaces: <code>recall</code> tool (both modes) · graph traversal for "find related" follow-ups</p>
+</div>
+
+<h3>telemetry</h3>
+<div class="domaincard">
+  <h4>what donna actually did, when, with what tokens <span class="tag">ops</span></h4>
+  <p class="purpose">paired with langsmith traces. langsmith is the source of truth for prompts/tools/timings; the local table is the durable join key + cost rollup.</p>
+  <table>
+    <thead><tr><th>table</th><th>fields that matter</th></tr></thead>
+    <tbody>
+      <tr><td><code>execution_observability</code></td><td><code>run_id</code>, <code>mode</code>, <code>cause_kind</code>, <code>tool_calls[]</code>, <code>tokens_in/out</code>, <code>latency_ms</code></td></tr>
+    </tbody>
+  </table>
+  <p class="surface">surfaces: cost dashboards · /inspect-context · slow-turn forensics</p>
+</div>
+
+</section>
+
+<section id="subscriptions" class="dark">
+<h2>16. subscriptions feature — end to end</h2>
+<p>standalone domain. lives independently of gmail, even though gmail is the only source we ship in v1. the schema, classifier, aggregator, tools and onboarding agenda are all designed so adding "bank" or "paypal" later is a new file in <code>extractors/subscriptions/</code> and nothing else changes.</p>
+
+<h3>16.1 detector pipeline</h3>
+<div class="diagram">
+<pre class="mermaid">
+flowchart TB
+  subgraph SRC["source adapters (one per channel)"]
+    direction LR
+    SG["source_gmail.ts<br/>fetch via executeForUser<br/>receipt-shaped query"]
+    SU["source_user.ts<br/>subscriptions_record<br/>user-volunteered"]
+    SB["source_bank.ts<br/>(future — plaid)"]
+    SP["source_paypal.ts<br/>(future)"]
+  end
+
+  CAND["Candidate{<br/>source_channel, source_ref,<br/>raw{from,subject,body,ts}}"]
+
+  subgraph CLF["classify.ts"]
+    direction TB
+    H1["stage 1: heuristic<br/>regex amount/currency<br/>sender + subject scoring<br/>known-merchant dict"]
+    H2{"confidence<br/>in [0.3, 0.7]?"}
+    HJ["stage 2: haiku judge<br/>batched 25/call<br/>'is this recurring? extract...'"]
+  end
+
+  DC["DetectedCharge{<br/>merchant_raw, amount_cents,<br/>currency, charged_at,<br/>evidence_quote, confidence,<br/>recurrence_hint, category_hint}"]
+
+  subgraph AGG["aggregate.ts"]
+    direction TB
+    CN["canonical.ts<br/>merchant map<br/>(netflix.com → 'Netflix')"]
+    UPS["upsert subscriptions<br/>(user_id, lower(canonical))<br/>merge merchant_raw[]"]
+    INS["insert subscription_charges<br/>(user, source, ref) unique"]
+    REC["recurrence inference<br/>median gap → snap to<br/>weekly/monthly/quarterly/yearly"]
+    AUD["integration_audit<br/>scan_started → candidate_seen<br/>→ classified → upserted<br/>→ scan_completed"]
+  end
+
+  SG --> CAND
+  SU --> CAND
+  SB -.future.-> CAND
+  SP -.future.-> CAND
+  CAND --> H1 --> H2
+  H2 -- "yes" --> HJ --> DC
+  H2 -- "no (high or low)" --> DC
+  DC --> CN --> UPS --> INS --> REC --> AUD
+</pre>
+</div>
+<p class="caption">multi-source by design from day one. v1 ships gmail + user_volunteered; the union of source adapters grows without touching downstream.</p>
+
+<h3>16.2 the five tools (durable surface)</h3>
+<table>
+  <thead><tr><th>tool</th><th>modes</th><th>ptc</th><th>what donna does with it</th></tr></thead>
+  <tbody>
+    <tr><td><code>subscriptions_list</code></td><td><span class="pill both">both</span></td><td>yes</td><td>cross-cuts inside python: "things you signed up for in march", "anything in usd".</td></tr>
+    <tr><td><code>subscriptions_summary</code></td><td><span class="pill both">both</span></td><td>—</td><td>single-shot for "where does my money go". returns total monthly + yearly + top 5 + uncertain count.</td></tr>
+    <tr><td><code>subscriptions_record</code></td><td><span class="pill reactive">reactive</span></td><td>—</td><td>user-volunteered write: "i pay $5/mo for grok" → confidence 1.0 + <code>source=user_volunteered</code>.</td></tr>
+    <tr><td><code>subscriptions_update</code></td><td><span class="pill reactive">reactive</span></td><td>—</td><td>"i cancelled netflix" / "actually it's yearly" / "yep that's right" (<code>user_confirmed=true</code>).</td></tr>
+    <tr><td><code>subscriptions_merge</code></td><td><span class="pill reactive">reactive</span></td><td>—</td><td>canonicalization-miss case: two rows for the same merchant. moves charges, marks dupe cancelled.</td></tr>
+  </tbody>
+</table>
+
+<h3>16.3 the onboarding agenda</h3>
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant U as you (whatsapp)
+  participant W as web (reactive brain)
+  participant K as worker (proactive brain + executor)
+  participant DB as supabase
+  participant C as composio (gmail oauth)
+
+  Note over W,C: gmail oauth completes — existing flow
+  W->>DB: insert donna_state_agendas{kind=subscriptions_onboarding, step=ask_install}
+  W->>K: runProactiveTurn(cause=subscriptions_onboarding, step=ask_install)
+  K-->>U: "ok gmail's in. want me to scan for recurring subs?"
+
+  U-->>W: "yeah, and i pay $20/mo for openai + $5 for grok"
+  Note over W: composer surfaces active agenda → prompt knows what to do
+  W->>DB: subscriptions_record (×2) + agendas_advance(step=scanning)
+  W-->>U: "got those. starting the gmail scan, give me a minute."
+  W-)K: void runSubscriptionsBackfill (fire-and-forget)
+
+  Note over K: detector pipeline runs<br/>(heuristic → haiku batched → aggregate)
+  K->>DB: upsert subscriptions + subscription_charges + audit
+  K->>K: runProactiveTurn(cause=subscriptions_onboarding, step=ask_confirm,<br/>payload={count, total, top_5})
+  K-->>U: "found 7 active, $73/mo. top: netflix $15.99, spotify $9.99…"
+
+  U-->>W: "looks right" / "you missed claude" / "amazon prime is yearly"
+  W->>DB: subscriptions_update / subscriptions_record / subscriptions_merge as needed
+  W->>DB: agendas_advance(step=done, status=completed)
+  W-->>U: "good. i'll watch for new ones and ping you."
+</pre>
+</div>
+
+<h3>16.4 audit trail (cross-ref any time)</h3>
+<pre><code>select action, count(*), max(occurred_at)
+from integration_audit
+where user_id = $user
+  and action like 'subscriptions.%'
+group by action;
+-- subscriptions.scan_started
+-- subscriptions.candidate_seen
+-- subscriptions.classified
+-- subscriptions.upserted
+-- subscriptions.scan_completed</code></pre>
+
+</section>
+
+<section id="calories">
+<h2>17. calorie tracker — end to end</h2>
+<p>second domain on the per-domain pattern subscriptions established. concrete typed tools, not a generic "log_anything" abstraction. parser turns natural language into items, aliases shortcut repeats, cache cuts haiku spend.</p>
+
+<h3>17.1 data model</h3>
+<div class="diagram">
+<pre class="mermaid">
+erDiagram
+  food_goals ||--o{ meals : "vs target"
+  meals ||--o{ meal_items : "contains"
+  meal_aliases }o--|| meals : "expands to"
+  food_cache }o--o{ meal_items : "memoizes lookups"
+
+  food_goals {
+    uuid user_id PK
+    int kcal_target
+    int protein_g_target
+    int carbs_g_target
+    int fat_g_target
+  }
+  meals {
+    uuid id PK
+    uuid user_id
+    timestamptz logged_at
+    text meal_type
+    int total_kcal
+  }
+  meal_items {
+    uuid id PK
+    uuid meal_id FK
+    text name
+    real quantity
+    text unit
+    int kcal
+    real protein_g
+  }
+  meal_aliases {
+    uuid id PK
+    uuid user_id
+    text alias
+    jsonb item_template
+  }
+  food_cache {
+    text key PK
+    jsonb result
+    timestamptz expires_at
+  }
+</pre>
+</div>
+
+<h3>17.2 the twelve tools</h3>
+<table>
+  <thead><tr><th>tool</th><th>modes</th><th>ptc</th><th>purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>log_meal</code></td><td><span class="pill reactive">reactive</span></td><td>—</td><td>direct write — committed meal with items.</td></tr>
+    <tr><td><code>update_meal</code></td><td><span class="pill reactive">reactive</span></td><td>—</td><td>edit a logged meal (forgot the toast).</td></tr>
+    <tr><td><code>delete_meal</code></td><td><span class="pill reactive">reactive</span></td><td>—</td><td>"actually didn't eat that".</td></tr>
+    <tr><td><code>set_food_goal</code></td><td><span class="pill reactive">reactive</span></td><td>—</td><td>kcal + macros target.</td></tr>
+    <tr><td><code>save_meal_alias</code></td><td><span class="pill reactive">reactive</span></td><td>—</td><td>"call this 'usual breakfast'".</td></tr>
+    <tr><td><code>log_meal_from_alias</code></td><td><span class="pill reactive">reactive</span></td><td>—</td><td>"usual breakfast" → expand + log.</td></tr>
+    <tr><td><code>parse_food_text</code></td><td><span class="pill both">both</span></td><td>yes</td><td>"two eggs and toast" → typed items. cached.</td></tr>
+    <tr><td><code>lookup_food</code></td><td><span class="pill both">both</span></td><td>yes</td><td>nutrition lookup for a specific food.</td></tr>
+    <tr><td><code>get_food_goal</code></td><td><span class="pill both">both</span></td><td>yes</td><td>read target.</td></tr>
+    <tr><td><code>get_daily_summary</code></td><td><span class="pill both">both</span></td><td>yes</td><td>today vs target — kcal + macros.</td></tr>
+    <tr><td><code>get_meal_history</code></td><td><span class="pill both">both</span></td><td>yes</td><td>range read for trend questions ("how's my last 14d").</td></tr>
+    <tr><td><code>list_meal_aliases</code></td><td><span class="pill both">both</span></td><td>yes</td><td>so donna can suggest "use your saved 'usual lunch'".</td></tr>
+  </tbody>
+</table>
+
+<h3>17.3 typical flow</h3>
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant U as you
+  participant W as reactive brain
+  participant DB as supabase
+  participant H as haiku (parser)
+
+  U-->>W: "logged: two eggs, toast and an oat latte"
+  W->>DB: food_cache lookup (key = normalized text)
+  alt cache hit
+    DB-->>W: cached items
+  else miss
+    W->>H: parse_food_text (haiku)
+    H-->>W: items[{name, qty, unit, kcal, macros}]
+    W->>DB: food_cache upsert
+  end
+  W->>DB: log_meal + meal_items
+  W-->>U: "logged. ~520 kcal. 1820/2200 today, low on protein."
+
+  Note over U,W: later
+  U-->>W: "how's my week looking"
+  W->>DB: get_meal_history(range=7d)<br/>(via PTC, inside python)
+  W-->>U: rolled-up summary in donna's voice
+</pre>
+</div>
+
+</section>
+
+<section id="agendas" class="dark">
+<h2>18. multi-turn agendas — the primitive</h2>
+<p>donna's working-memory for conversations that span replies. one tiny table, one tool, one composer block. subscriptions onboarding is the first user; future flows (calorie goal-setting, integration mode-walkthrough, anything that asks then waits) reuse the exact same shape.</p>
+
+<h3>18.1 state machine</h3>
+<div class="diagram">
+<pre class="mermaid">
+stateDiagram-v2
+  [*] --> active: insert (kind, step=initial)
+  state active {
+    [*] --> step1
+    step1 --> step2: agendas_advance
+    step2 --> step3: agendas_advance
+    step3 --> [*]: agendas_advance(status=completed)
+  }
+  active --> abandoned: timeout / user explicitly cancels
+  active --> completed: terminal step reached
+  abandoned --> [*]
+  completed --> [*]
+
+  note right of active
+    composer renders &lt;active_agendas&gt; on
+    every reactive turn — donna sees:
+    "kind=subscriptions_onboarding,
+     step=ask_sources, payload={...}"
+  end note
+</pre>
+</div>
+
+<h3>18.2 mechanism — three pieces</h3>
+<dl class="kvgrid">
+  <dt>storage</dt>
+  <dd><code>donna_state_agendas(id, user_id, kind, step, payload jsonb, status, created_at, updated_at)</code> — index on <code>(user_id, status, kind)</code> so the composer's "what's open?" query is one b-tree lookup.</dd>
+
+  <dt>composer block</dt>
+  <dd><code>src/donna/composer/agendas.ts</code> exports <code>loadActiveAgendas(userId)</code> and <code>renderAgendasBlock(rows)</code>. brain's reactive prompt assembly calls these and prepends an <code>&lt;active_agendas&gt;</code> XML block before <code>&lt;chat_history&gt;</code>.</dd>
+
+  <dt>tool</dt>
+  <dd><code>agendas_advance({id, next_step, payload?, status?})</code> — direct, reactive only. tiny by design: the prompt teaches donna which step follows which (per kind), the tool just persists.</dd>
+</dl>
+
+<h3>18.3 prompt contract</h3>
+<p>the <code>&lt;agenda_handling&gt;</code> block in <code>REACTIVE_SYSTEM_PROMPT</code> lists each kind, the legal step transitions, and the tools to call at each. when donna sees an active agenda in <code>&lt;active_agendas&gt;</code>, she follows that contract instead of inventing flow. when she calls <code>agendas_advance(status="completed")</code>, the row drops out of the block and she's free.</p>
+
+<aside class="aside">
+  <strong>why so small.</strong> we resisted building a full state machine library. one row, one tool, one block — the prompt does the orchestration. if a future agenda needs branching, it's a new kind with new steps; the primitive doesn't grow.
+</aside>
+
+</section>
+
+<section id="composio-webhook">
+<h2>19. composio webhooks (push, not poll)</h2>
+<p>provider events arrive at donna via composio's webhook lane, not a polling loop. composio holds the watch (gmail <code>users.watch</code> + pub/sub), renews it, paginates history; we own a single endpoint that verifies, dedupes, and fires a proactive turn.</p>
+
+<h3>19.1 the lane</h3>
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant G as gmail mailbox
+  participant PS as google pub/sub
+  participant C as composio
+  participant S as donna-web /composio/webhook
+  participant B as proactive brain
+  participant U as you (whatsapp)
+
+  G->>PS: mailbox change
+  PS->>C: push (composio holds the watch)
+  C->>C: history.list since lastHistoryId<br/>+ normalize event
+  C->>S: POST /composio/webhook<br/>headers: webhook-id, webhook-signature,<br/>webhook-timestamp
+  S->>S: verifyComposioWebhook (hmac via sdk)
+  alt signature ok
+    S-->>C: 200 ok (fast)
+    S->>S: dedupe by webhook-id (5min in-memory)
+    S->>S: resolve composio_account_id → users.id<br/>via integrations table
+    S->>B: runProactiveTurn(cause=gmail_event,<br/>payload={message_id,thread_id,from,subject})
+    B->>B: read prompt &lt;cause_kinds&gt;<br/>decide: send_burst | do_nothing | defer
+    alt worth interrupting
+      B-->>U: send_burst via deliverBurstToUser
+    else not worth it
+      B->>B: do_nothing(reason)
+    end
+  else bad signature
+    S-->>C: 401 invalid_signature
+  end
+</pre>
+</div>
+
+<h3>19.2 what we own vs what composio owns</h3>
+<table>
+  <thead><tr><th>concern</th><th>owner</th><th>why</th></tr></thead>
+  <tbody>
+    <tr><td>google oauth scopes (incl. push)</td><td>composio</td><td>part of the toolkit oauth flow</td></tr>
+    <tr><td><code>users.watch</code> call + 7-day renewal</td><td>composio</td><td>they manage the lifecycle behind <code>triggers.create</code></td></tr>
+    <tr><td>pub/sub subscription + receiver</td><td>composio</td><td>they post to us, not google</td></tr>
+    <tr><td><code>history.list</code> pagination</td><td>composio</td><td>each push tells composio mailbox changed; they fetch the diff</td></tr>
+    <tr><td>hmac signature verify</td><td>donna (sdk-delegated)</td><td><code>composio.triggers.verifyWebhook(...)</code></td></tr>
+    <tr><td>per-event dedupe</td><td>donna</td><td>5-min in-memory cache keyed on <code>webhook-id</code></td></tr>
+    <tr><td>account → user resolution</td><td>donna</td><td>look up <code>integrations.composio_account_id</code></td></tr>
+    <tr><td>cause synthesis + brain dispatch</td><td>donna</td><td><code>buildCause</code> → <code>runProactiveTurn</code> → <code>deliverBurstToUser</code></td></tr>
+    <tr><td>trigger lifecycle (enable/disable)</td><td>donna calls composio</td><td><code>enableProviderTrigger</code> on connect, <code>triggers.delete</code> on disconnect</td></tr>
+  </tbody>
+</table>
+
+<h3>19.3 wiring it on</h3>
+<dl class="kvgrid">
+  <dt>connect-time enable</dt>
+  <dd>after <code>upsertState({status:'connected'})</code> for gmail, both <code>scripts/connect-integration.ts</code> and the in-conversation <code>integrationConnectHandler</code> call <code>enableProviderTrigger({composioUserId, triggerSlug, connectedAccountId})</code>. the returned <code>triggerId</code> is patched into <code>integrations.config</code> via a jsonb merge so disconnect can clean it up later.</dd>
+
+  <dt>endpoint</dt>
+  <dd><code>POST /composio/webhook</code> on donna-web. fast-acks 200 after signature verify, dispatches asynchronously. invalid signature → 401, no body parse.</dd>
+
+  <dt>cause mapping</dt>
+  <dd><code>buildCause</code> in <code>composio_webhook.ts</code> dispatches by <code>triggerSlug</code>. <code>GMAIL_*</code> → <code>kind: "gmail_event"</code> with extracted <code>{message_id, thread_id, from, subject}</code>. unknown slugs fall back to <code>kind: "scheduled"</code> so the brain still sees them and can decide.</dd>
+
+  <dt>prompt contract</dt>
+  <dd><code>&lt;cause_kinds&gt;</code> block in <code>PROACTIVE_SYSTEM_PROMPT</code> teaches that gmail_event defaults to <code>do_nothing</code> ≥95% of the time. only personal/time-sensitive mail earns a burst — promotions, digests, automated notifications never do.</dd>
+
+  <dt>env</dt>
+  <dd><code>COMPOSIO_WEBHOOK_SECRET</code> (signing secret from composio dashboard) and optional <code>COMPOSIO_GMAIL_TRIGGER_SLUG</code> (defaults to <code>GMAIL_NEW_GMAIL_MESSAGE</code>).</dd>
+</dl>
+
+<aside class="aside">
+  <strong>scan_gmail isn't dead, it's narrowed.</strong> the recurring inbox-triage cause survives — but its job is now "review the state of the inbox" (stale threads, missed follow-ups), not "discover new mail." new mail is a push lane via <code>gmail_event</code>. one is a sweep, the other is a notification. they don't overlap.
+</aside>
+
+</section>
+
+<section id="gmail-intelligence" class="dark">
+<h2>20. gmail intelligence — threads, people, ball-in-court</h2>
+<p>email isn't a stream of text, it's a graph of obligations. donna's gmail intelligence layer turns inbox messages into two typed stores — <code>gmail_threads</code> (the spine) and <code>gmail_people</code> (the saliency prior) — that downstream tools query directly. you stop opening gmail; you talk to donna.</p>
+
+<h3>20.1 the spine</h3>
+<div class="diagram">
+<pre class="mermaid">
+flowchart TB
+  subgraph IN["sources"]
+    BF["backfill cli<br/>(once)"]
+    PUSH["composio push<br/>(per-event)"]
+  end
+
+  subgraph SRC["source_gmail.ts"]
+    SG["fetch + group by thread_id<br/>build ThreadCandidate{<br/>last_message, recent_messages,<br/>participants, user_email}"]
+  end
+
+  subgraph CLF["classify.ts"]
+    H["heuristic (no llm)<br/>• all-bots → fyi<br/>• last from user → awaiting_other<br/>• question → awaiting_user<br/>• closeout → closed<br/>• scheduled → scheduled"]
+    HJ["haiku judge<br/>(only when ambiguous)<br/>batched 12/call"]
+    OUT["ClassifiedThread{<br/>state, ball_in_court,<br/>one_line_summary,<br/>importance, judge_confidence}"]
+  end
+
+  subgraph AGG["aggregate.ts"]
+    PEO["upsert gmail_people<br/>per counterparty<br/>(counts, reply_rate, salience)"]
+    THR["upsert gmail_threads<br/>(state machine,<br/>blend importance × salience)"]
+    AUD["integration_audit<br/>(threads.inserted /<br/> updated / push_silenced)"]
+  end
+
+  BF --> SG
+  PUSH --> SG
+  SG --> H
+  H -- "ambiguous" --> HJ
+  H -- "decided" --> OUT
+  HJ --> OUT
+  OUT --> PEO --> THR --> AUD
+</pre>
+</div>
+<p class="caption">heuristic handles ~90% of events without an llm call. haiku is reserved for real-human-real-question ambiguity.</p>
+
+<h3>20.2 ball-in-court state machine</h3>
+<div class="diagram">
+<pre class="mermaid">
+stateDiagram-v2
+  [*] --> awaiting_user: counterparty asked / sent inbound
+  [*] --> awaiting_other: user sent
+  [*] --> fyi: all bots
+  [*] --> scheduled: invite / "see you at..."
+  [*] --> closed: short closeout
+
+  awaiting_user --> awaiting_other: user replied
+  awaiting_other --> awaiting_user: counterparty replied
+  awaiting_user --> closed: user closes
+  awaiting_other --> closed: thread resolved
+
+  awaiting_user --> fyi: user dismisses
+  closed --> [*]
+  fyi --> [*]
+  scheduled --> [*]
+
+  note right of awaiting_user
+    awaiting_since resets ONLY when
+    the ball flips. so "days_waiting"
+    is real time the user has been
+    sitting on this thread.
+  end note
+</pre>
+</div>
+
+<h3>20.3 the data</h3>
+<div class="domaincard">
+  <h4>gmail_threads <span class="tag">domain</span></h4>
+  <p class="purpose">one row per gmail thread donna learns about. computed columns drive every downstream query.</p>
+  <table>
+    <thead><tr><th>field</th><th>meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>state</code></td><td>awaiting_user · awaiting_other · scheduled · closed · fyi</td></tr>
+      <tr><td><code>ball_in_court</code></td><td>'user' · 'other' · null</td></tr>
+      <tr><td><code>awaiting_since</code></td><td>when the ball started sitting in current court — preserved across same-ball updates</td></tr>
+      <tr><td><code>one_line_summary</code></td><td>≤120 char human-readable summary written by classifier</td></tr>
+      <tr><td><code>importance_score</code></td><td>0..1 = base × counterparty salience (clamped). pinned threads floor at 0.85</td></tr>
+      <tr><td><code>user_dismissed</code> / <code>user_pinned</code></td><td>explicit user overrides — survive future updates</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="domaincard">
+  <h4>gmail_people <span class="tag">domain</span></h4>
+  <p class="purpose">people-graph derived from threads. one row per counterparty email. saliency_score is the prior the brain uses to filter push events and to interpret "who matters."</p>
+  <table>
+    <thead><tr><th>field</th><th>meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>inbound_count_30d</code> / <code>outbound_count_30d</code></td><td>engagement counters</td></tr>
+      <tr><td><code>reply_rate</code></td><td>outbound_total / inbound_total — low + high inbound = noise</td></tr>
+      <tr><td><code>salience_score</code></td><td>engagement × reply_rate × recency. recomputed on every event</td></tr>
+      <tr><td><code>is_bot_likely</code></td><td>noreply@ / notifications@ / mailgun-style domains — excluded from people_top by default</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>20.4 the tool surface</h3>
+<table>
+  <thead><tr><th>tool</th><th>modes</th><th>ptc</th><th>what it answers</th></tr></thead>
+  <tbody>
+    <tr><td><code>threads_open_for_me</code></td><td><span class="pill both">both</span></td><td>yes</td><td>"what's open on me" — sorted by importance × age. spine of every morning triage.</td></tr>
+    <tr><td><code>threads_search</code></td><td><span class="pill both">both</span></td><td>yes</td><td>"anything from raj" / "the lease thread" / "open with stripe" — typed lookups, faster than gmail_search.</td></tr>
+    <tr><td><code>threads_get</code></td><td><span class="pill both">both</span></td><td>yes</td><td>full row for one tracked thread (donna's id).</td></tr>
+    <tr><td><code>people_top</code></td><td><span class="pill both">both</span></td><td>yes</td><td>"who emails me most" / "who am i ghosting" — humans only by default.</td></tr>
+    <tr><td><code>threads_mark_done</code></td><td><span class="pill reactive">reactive</span></td><td>—</td><td>"i replied to that" → state=closed; mode="dismiss" for "ignore forever".</td></tr>
+    <tr><td><code>threads_pin</code></td><td><span class="pill reactive">reactive</span></td><td>—</td><td>"always remind me about X" — floors importance at 0.85.</td></tr>
+  </tbody>
+</table>
+
+<h3>20.5 push event hot-path</h3>
+<p>this is where the layer pays for itself. without intelligence, every gmail push wakes the brain, runs an llm, decides "do_nothing" 95% of the time. with the threads layer, the heuristic classifier triages the event in &lt;10ms — bots, low-importance, ball-on-other → silent audit row, no brain wake. only events with ball=user AND importance ≥ 0.55 spend an llm call.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant C as composio (push)
+  participant S as /composio/webhook
+  participant CLF as classifyPushedThread
+  participant DB as supabase
+  participant B as proactive brain
+  participant U as user
+
+  C->>S: POST + headers
+  S->>S: verify hmac · dedupe
+  S->>S: extract gmail_thread_id
+  S->>CLF: classify single thread
+  CLF->>DB: upsert gmail_threads + gmail_people
+  alt is_worth_interrupting? (ball=user, importance≥0.55)
+    CLF-->>S: yes
+    S->>B: runProactiveTurn(cause=gmail_event,<br/>payload includes one_line_summary)
+    B->>B: read &lt;cause_kinds&gt;: pre-classified, default silence unless time-sensitive
+    alt earned a burst
+      B-->>U: send_burst via deliverBurstToUser
+    else
+      B->>B: do_nothing
+    end
+  else
+    CLF-->>S: no
+    S->>DB: integration_audit threads.push_silenced
+    Note over S: brain never woken — zero llm cost
+  end
+</pre>
+</div>
+
+<h3>20.6 conversational surface</h3>
+<table>
+  <thead><tr><th>you say</th><th>donna does</th></tr></thead>
+  <tbody>
+    <tr><td>"what's open on me"</td><td><code>threads_open_for_me({limit:5, min_importance:0.5})</code> → 1-2 bubble summary</td></tr>
+    <tr><td>"anything from raj"</td><td><code>threads_search({participant:"raj"})</code></td></tr>
+    <tr><td>"who am i ghosting"</td><td><code>people_top()</code> + filter rows where reply_rate &lt; 0.3 + inbound &gt; 5</td></tr>
+    <tr><td>"i replied to amit, mark done"</td><td><code>threads_search({participant:"amit"})</code> → <code>threads_mark_done({id})</code></td></tr>
+    <tr><td>(silently, monday 9am)</td><td>scan_gmail wake → threads_open_for_me → only burst if anything &gt; 7 days ball-on-user</td></tr>
+    <tr><td>(push from stranger)</td><td>heuristic: bot/low-salience → silenced via audit, brain never woken</td></tr>
+    <tr><td>(push from boss with question)</td><td>heuristic: awaiting_user + high importance → cause + summary in payload → brain confirms with <code>threads_get</code> → burst</td></tr>
+  </tbody>
+</table>
+
+<aside class="aside">
+  <strong>this is the same shape as subscriptions.</strong> source adapter → heuristic+haiku classifier → typed aggregator → tool surface. every future domain (calendar, contacts, commitments) follows the same pattern. the substrate doesn't change.
+</aside>
+
 </section>
 
 <hr />

@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./donna/env.js";
 import * as readline from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";

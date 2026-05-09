@@ -16,7 +16,7 @@
 //   inbox  → in:inbox only (with hard noise filter)
 //   both   → in:inbox + in:sent (with filter on inbox side)
 
-import "dotenv/config";
+import "../src/donna/env.js";
 import { randomUUID } from "node:crypto";
 import { closeDb, getSql } from "../src/donna/db.js";
 import { withTurnContext } from "../src/donna/context.js";

@@ -7,7 +7,7 @@
 //   npx tsx scripts/inspect-context.ts <user_id>          # specify user
 //   USER_INPUT="hi donna" npx tsx scripts/inspect-context.ts   # simulate a new user message
 
-import "dotenv/config";
+import "../src/donna/env.js";
 import { tool_definitions } from "../src/donna/tools/index.ts";
 import { REACTIVE_SYSTEM_PROMPT as SYSTEM_PROMPT } from "../src/donna/prompt.ts";
 import { loadRecentMessages } from "../src/donna/memory/chat.ts";

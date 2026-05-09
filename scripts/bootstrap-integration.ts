@@ -4,7 +4,7 @@
 //
 // usage: npx tsx scripts/bootstrap-integration.ts [--provider gmail]
 
-import "dotenv/config";
+import "../src/donna/env.js";
 import { upsertState, readState } from "../src/donna/integrations/service.js";
 import { closeDb } from "../src/donna/db.js";
 
