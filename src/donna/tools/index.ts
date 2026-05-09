@@ -31,6 +31,45 @@ import { doNothingTool, doNothingHandler } from "./do_nothing.js";
 import { deferTool, deferHandler } from "./defer.js";
 import { createScheduleTool, createScheduleHandler } from "./create_schedule.js";
 import { recallTool, recallHandler } from "./recall.js";
+import {
+  subscriptionsListTool,
+  subscriptionsListHandler,
+  subscriptionsSummaryTool,
+  subscriptionsSummaryHandler,
+  subscriptionsRecordTool,
+  subscriptionsRecordHandler,
+  subscriptionsUpdateTool,
+  subscriptionsUpdateHandler,
+  subscriptionsMergeTool,
+  subscriptionsMergeHandler,
+} from "./subscriptions.js";
+import { agendasAdvanceTool, agendasAdvanceHandler } from "./agendas.js";
+import {
+  logMealTool,
+  logMealHandler,
+  updateMealTool,
+  updateMealHandler,
+  deleteMealTool,
+  deleteMealHandler,
+  setFoodGoalTool,
+  setFoodGoalHandler,
+  saveMealAliasTool,
+  saveMealAliasHandler,
+  logMealFromAliasTool,
+  logMealFromAliasHandler,
+  parseFoodTextTool,
+  parseFoodTextHandler,
+  lookupFoodTool,
+  lookupFoodHandler,
+  getFoodGoalTool,
+  getFoodGoalHandler,
+  getDailySummaryTool,
+  getDailySummaryHandler,
+  getMealHistoryTool,
+  getMealHistoryHandler,
+  listMealAliasesTool,
+  listMealAliasesHandler,
+} from "./calories/index.js";
 
 // Tool already carries cache_control?: CacheControlEphemeral | null | undefined.
 // We alias it here to make the intent explicit without narrowing out null (which
@@ -72,10 +111,30 @@ export const tool_definitions: Array<ToolWithModes | CodeExecutionTool20250825> 
   integrationSetModeTool,
   integrationDisconnectTool,
   recallTool,
+  subscriptionsListTool,
+  subscriptionsSummaryTool,
+  subscriptionsRecordTool,
+  subscriptionsUpdateTool,
+  subscriptionsMergeTool,
+  agendasAdvanceTool,
   sendBurstTool,
   doNothingTool,
   deferTool,
   createScheduleTool,
+  // calorie tracker — direct writes
+  logMealTool,
+  updateMealTool,
+  deleteMealTool,
+  setFoodGoalTool,
+  saveMealAliasTool,
+  logMealFromAliasTool,
+  // calorie tracker — ptc reads
+  parseFoodTextTool,
+  lookupFoodTool,
+  getFoodGoalTool,
+  getDailySummaryTool,
+  getMealHistoryTool,
+  listMealAliasesTool,
 ];
 
 // satisfy MessageCreateParams["tools"] (which is a union including the server
@@ -98,9 +157,27 @@ export const tool_handlers: Record<
   integration_set_mode: integrationSetModeHandler,
   integration_disconnect: integrationDisconnectHandler,
   recall: recallHandler,
+  subscriptions_list: subscriptionsListHandler,
+  subscriptions_summary: subscriptionsSummaryHandler,
+  subscriptions_record: subscriptionsRecordHandler,
+  subscriptions_update: subscriptionsUpdateHandler,
+  subscriptions_merge: subscriptionsMergeHandler,
+  agendas_advance: agendasAdvanceHandler,
   do_nothing: doNothingHandler,
   defer: deferHandler,
   create_schedule: createScheduleHandler,
+  log_meal: logMealHandler,
+  update_meal: updateMealHandler,
+  delete_meal: deleteMealHandler,
+  set_food_goal: setFoodGoalHandler,
+  save_meal_alias: saveMealAliasHandler,
+  log_meal_from_alias: logMealFromAliasHandler,
+  parse_food_text: parseFoodTextHandler,
+  lookup_food: lookupFoodHandler,
+  get_food_goal: getFoodGoalHandler,
+  get_daily_summary: getDailySummaryHandler,
+  get_meal_history: getMealHistoryHandler,
+  list_meal_aliases: listMealAliasesHandler,
 };
 
 export const TERMINATORS = new Set<string>(["send_burst", "do_nothing", "defer"]);
@@ -112,6 +189,13 @@ export const PTC_ELIGIBLE = new Set<string>([
   "gmail_search",
   "gmail_list_sent",
   "gmail_read_thread",
+  "subscriptions_list",
+  "parse_food_text",
+  "lookup_food",
+  "get_food_goal",
+  "get_daily_summary",
+  "get_meal_history",
+  "list_meal_aliases",
 ]);
 
 function isCodeExecutionTool(
