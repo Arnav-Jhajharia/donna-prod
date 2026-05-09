@@ -14,12 +14,11 @@ const TEST_USER_ID = "00000000-0000-0000-0000-000000000001";
 
 before(async () => {
   const sql = getSql();
-  // ensure test user exists. deployed users schema diverges slightly from
-  // 20260506020727_users.sql (no profile_name, requires timezone). insert
-  // only id + phone + timezone to satisfy live constraints.
+  // ensure test user exists. matches 20260506020727_users.sql shape
+  // (id uuid, phone text, profile_name text nullable).
   await sql`
-    insert into users (id, phone, timezone)
-    values (${TEST_USER_ID}, '+10000000001', 'UTC')
+    insert into users (id, phone, profile_name)
+    values (${TEST_USER_ID}, '+10000000001', 'test-user')
     on conflict (id) do nothing
   `;
 });

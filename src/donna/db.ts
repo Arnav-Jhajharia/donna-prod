@@ -7,8 +7,10 @@ function init(): ReturnType<typeof postgres> {
   if (!url) {
     throw new Error("DATABASE_URL not set");
   }
-  // session pooler url; transform: { undefined: null } maps JS undefined to SQL NULL
-  return postgres(url, { transform: { undefined: null } });
+  // supabase pooler (port 6543 = transaction mode). transaction pooling does
+  // not support prepared statements — `prepare: false` keeps the postgres lib
+  // from trying. transform: { undefined: null } maps JS undefined → SQL NULL.
+  return postgres(url, { transform: { undefined: null }, prepare: false });
 }
 
 export function getSql(): ReturnType<typeof postgres> {
