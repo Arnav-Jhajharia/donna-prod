@@ -15,6 +15,7 @@
     "worker": "tsx watch --clear-screen=false src/proactive-worker.ts",
     "worker:once": "tsx src/proactive-worker.ts",
     "start:worker": "node dist/proactive-worker.js",
+    "seed:proactive": "tsx scripts/seed-proactive-schedule.ts",
     "world:tick": "tsx scripts/world-tick.ts",
     "world:worker": "tsx scripts/world-worker.ts",
     "start": "node dist/server.js",
