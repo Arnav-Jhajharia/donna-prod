@@ -31,6 +31,34 @@ const MAX_TOKENS = 2048;
 const MAX_LOOP_ITERATIONS = 10;
 const CAP_HIT_FALLBACK = "sorry, got stuck in a loop. try again.";
 
+// observability: cap how much input/output we serialize per tool/code event.
+// generous enough to fit typical calorie/gmail payloads in full; small enough
+// to avoid runaway logs if a handler returns a huge blob.
+const TOOL_INPUT_PREVIEW_CHARS = 8000;
+const TOOL_OUTPUT_PREVIEW_CHARS = 8000;
+const CODE_STDOUT_PREVIEW_CHARS = 8000;
+const CODE_STDERR_PREVIEW_CHARS = 4000;
+const CODE_SOURCE_PREVIEW_CHARS = 8000;
+
+interface ToolInvocationSummary {
+  tool_use_id: string;
+  name: string;
+  caller: CallerKind;
+  terminator: boolean;
+  iteration: number;
+  duration_ms: number;
+  ok: boolean;
+  error?: string;
+  input_preview: string;
+  output_preview: string;
+}
+
+function previewString(value: unknown, cap: number): string {
+  const text = typeof value === "string" ? value : JSON.stringify(value);
+  if (!text) return "";
+  return text.length > cap ? `${text.slice(0, cap)}…[+${text.length - cap}]` : text;
+}
+
 // the advanced-tool-use beta enables `code_execution_20250825` server tool +
 // `allowed_callers` opt-in on user-defined tools. claude writes python in a
 // sandbox; tool calls from inside the sandbox arrive as regular `tool_use`
@@ -297,6 +325,10 @@ async function _runTurnInner(args: RunTurnArgs): Promise<RunTurnResult> {
   let terminatorHit = false;
   let ptcInvocations = 0;
   let lastAssistantContent: ContentBlock[] = [];
+  // ordered ledger of every tool dispatched this turn; emitted as a single
+  // tool_invocations summary event at terminator time so the timeline has a
+  // one-row "what tools fired and how" view without scanning N start/end pairs.
+  const toolInvocations: ToolInvocationSummary[] = [];
 
   while (iterations < MAX_LOOP_ITERATIONS) {
     iterations++;
@@ -355,7 +387,8 @@ async function _runTurnInner(args: RunTurnArgs): Promise<RunTurnResult> {
         const code = (block.input as { code?: string } | undefined)?.code ?? "";
         await recordExecutionEvent(runId, "code_start", "code_execution", {
           tool_use_id: block.id,
-          code,
+          iteration: iterations,
+          code_preview: previewString(code, CODE_SOURCE_PREVIEW_CHARS),
           code_length: code.length,
         });
         continue;
@@ -367,9 +400,11 @@ async function _runTurnInner(args: RunTurnArgs): Promise<RunTurnResult> {
         const errored = isCodeExecutionError(block);
         await recordExecutionEvent(runId, "code_end", "code_execution", {
           tool_use_id: block.tool_use_id,
-          stdout_preview: stdout.slice(0, 1000),
+          iteration: iterations,
+          stdout_preview: previewString(stdout, CODE_STDOUT_PREVIEW_CHARS),
           stdout_length: stdout.length,
-          stderr_preview: stderr.slice(0, 500),
+          stderr_preview: previewString(stderr, CODE_STDERR_PREVIEW_CHARS),
+          stderr_length: stderr.length,
           errored,
         });
         continue;
@@ -391,12 +426,28 @@ async function _runTurnInner(args: RunTurnArgs): Promise<RunTurnResult> {
       if (TERMINATORS.has(block.name)) sawTerminator = true;
 
       const caller = callerKind(block);
+      const isTerminator = TERMINATORS.has(block.name);
+      const inputPreview = previewString(block.input, TOOL_INPUT_PREVIEW_CHARS);
       const handler = tool_handlers[block.name];
       if (!handler) {
         await recordExecutionEvent(runId, "tool_error", block.name, {
           tool_use_id: block.id,
+          iteration: iterations,
           error: "unknown_tool",
           caller,
+          input_preview: inputPreview,
+        });
+        toolInvocations.push({
+          tool_use_id: block.id,
+          name: block.name,
+          caller,
+          terminator: isTerminator,
+          iteration: iterations,
+          duration_ms: 0,
+          ok: false,
+          error: "unknown_tool",
+          input_preview: inputPreview,
+          output_preview: "",
         });
         toolResults.push({
           type: "tool_result",
@@ -413,23 +464,26 @@ async function _runTurnInner(args: RunTurnArgs): Promise<RunTurnResult> {
       if (caller === "code_execution" && !PTC_ELIGIBLE.has(block.name)) {
         await recordExecutionEvent(runId, "tool_warning", block.name, {
           tool_use_id: block.id,
+          iteration: iterations,
           warning: "ptc_call_on_direct_only_tool",
         });
       }
 
+      const toolStartedAt = Date.now();
       try {
         await recordExecutionEvent(runId, "tool_start", block.name, {
           tool_use_id: block.id,
+          iteration: iterations,
           input: block.input,
-          terminator: TERMINATORS.has(block.name),
+          input_preview: inputPreview,
+          terminator: isTerminator,
           caller,
+          ptc_eligible: PTC_ELIGIBLE.has(block.name),
         });
-        const toolStartedAt = Date.now();
 
-        // wrap each tool dispatch as a langsmith span. when LANGSMITH_TRACING
-        // is unset, traceable is a passthrough (zero overhead). nests inside
-        // the runTurn parent span automatically (langsmith uses
-        // AsyncLocalStorage internally).
+        // wrap each tool dispatch as a langsmith span. metadata includes the
+        // raw input so langsmith trace UI surfaces it directly in the span
+        // detail. when LANGSMITH_TRACING is unset traceable is a passthrough.
         const tracedHandler = traceable(
           async (input: unknown) => handler(input),
           {
@@ -438,20 +492,35 @@ async function _runTurnInner(args: RunTurnArgs): Promise<RunTurnResult> {
             metadata: {
               tool_use_id: block.id,
               caller,
-              terminator: TERMINATORS.has(block.name),
+              terminator: isTerminator,
+              ptc_eligible: PTC_ELIGIBLE.has(block.name),
+              iteration: iterations,
+              input: block.input,
             },
           },
         );
         const output = await tracedHandler(block.input);
 
+        const durationMs = Date.now() - toolStartedAt;
+        const outputPreview = previewString(output, TOOL_OUTPUT_PREVIEW_CHARS);
         await recordExecutionEvent(runId, "tool_end", block.name, {
           tool_use_id: block.id,
-          duration_ms: Date.now() - toolStartedAt,
+          iteration: iterations,
+          duration_ms: durationMs,
           caller,
-          output_preview:
-            typeof output === "string"
-              ? output.slice(0, 500)
-              : JSON.stringify(output).slice(0, 500),
+          terminator: isTerminator,
+          output_preview: outputPreview,
+        });
+        toolInvocations.push({
+          tool_use_id: block.id,
+          name: block.name,
+          caller,
+          terminator: isTerminator,
+          iteration: iterations,
+          duration_ms: durationMs,
+          ok: true,
+          input_preview: inputPreview,
+          output_preview: outputPreview,
         });
         toolResults.push({
           type: "tool_result",
@@ -461,10 +530,26 @@ async function _runTurnInner(args: RunTurnArgs): Promise<RunTurnResult> {
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
+        const durationMs = Date.now() - toolStartedAt;
         await recordExecutionEvent(runId, "tool_error", block.name, {
           tool_use_id: block.id,
+          iteration: iterations,
+          duration_ms: durationMs,
           error: msg,
           caller,
+          input_preview: inputPreview,
+        });
+        toolInvocations.push({
+          tool_use_id: block.id,
+          name: block.name,
+          caller,
+          terminator: isTerminator,
+          iteration: iterations,
+          duration_ms: durationMs,
+          ok: false,
+          error: msg,
+          input_preview: inputPreview,
+          output_preview: "",
         });
         toolResults.push({
           type: "tool_result",
@@ -536,6 +621,22 @@ async function _runTurnInner(args: RunTurnArgs): Promise<RunTurnResult> {
   const nextSchedule = terminator === "defer"
     ? extractDeferSpec(lastAssistantContent) ?? undefined
     : undefined;
+
+  // single rolled-up "what tools fired this turn" event. keyed by tool_use_id
+  // so each row links back to the matching tool_start/tool_end pair.
+  const directCount = toolInvocations.filter((t) => t.caller === "direct").length;
+  const ptcCount = toolInvocations.filter((t) => t.caller === "code_execution").length;
+  const failedCount = toolInvocations.filter((t) => !t.ok).length;
+  await recordExecutionEvent(runId, "tool_invocations", "summary", {
+    iterations,
+    terminator,
+    ptc_invocations: ptcInvocations,
+    tool_count: toolInvocations.length,
+    direct_count: directCount,
+    ptc_tool_count: ptcCount,
+    failed_count: failedCount,
+    invocations: toolInvocations,
+  });
 
   return {
     messages: working,
