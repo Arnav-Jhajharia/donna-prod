@@ -1,6 +1,7 @@
 import type { Tool } from "@anthropic-ai/sdk/resources/messages";
 import type { CacheControlEphemeral } from "@anthropic-ai/sdk/resources/index.js";
 import { getCurrentTimeTool, getCurrentTimeHandler } from "./time.js";
+import { recallTool, recallHandler } from "./recall.js";
 import { sendBurstTool, sendBurstHandler } from "./send_burst.js";
 
 // Tool already carries cache_control?: CacheControlEphemeral | null | undefined.
@@ -16,6 +17,7 @@ type ToolWithCache = Tool & {
 // new last entry.
 export const tool_definitions: ToolWithCache[] = [
   getCurrentTimeTool,
+  recallTool,
   { ...sendBurstTool, cache_control: { type: "ephemeral" } },
 ];
 
@@ -24,6 +26,7 @@ export const tool_handlers: Record<
   (input: unknown) => Promise<unknown>
 > = {
   get_current_time: getCurrentTimeHandler,
+  recall: recallHandler,
   send_burst: sendBurstHandler,
 };
 

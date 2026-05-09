@@ -60,8 +60,8 @@ export async function saveMessages(
   userId: string,
   messages: MessageParam[],
   mode: Mode,
-): Promise<void> {
-  if (messages.length === 0) return;
+): Promise<{ firstSeq: number; lastSeq: number } | null> {
+  if (messages.length === 0) return null;
   const sql = getSql();
   const values = messages.map((m) => ({
     user_id: userId,
@@ -69,7 +69,10 @@ export async function saveMessages(
     content: sql.json(normalizeContent(m.content) as unknown as Parameters<typeof sql.json>[0]),
     mode,
   }));
-  await sql`
+  const rows = await sql<{ seq: string }[]>`
     insert into chat_messages ${sql(values, "user_id", "role", "content", "mode")}
+    returning seq
   `;
+  const seqs = rows.map((row) => Number(row.seq));
+  return { firstSeq: Math.min(...seqs), lastSeq: Math.max(...seqs) };
 }

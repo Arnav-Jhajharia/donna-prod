@@ -4,6 +4,8 @@ import { stdin, stdout } from "node:process";
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
 import { runTurn } from "./donna/brain.js";
 import { loadRecentMessages, saveMessages } from "./donna/memory/chat.js";
+import { runPostTurnMemory } from "./donna/memory/post_turn.js";
+import { loadMemoryContext } from "./donna/memory/store.js";
 import { getSql, closeDb } from "./donna/db.js";
 
 async function main(): Promise<void> {
@@ -72,10 +74,12 @@ async function main(): Promise<void> {
 
     let result;
     try {
+      const memoryContext = await loadMemoryContext(userId);
       result = await runTurn({
         mode: "reactive",
         messages,
         userInput: line,
+        memoryContext,
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -89,8 +93,9 @@ async function main(): Promise<void> {
     messages = result.messages;
 
     // best-effort persist
+    let savedRange: { firstSeq: number; lastSeq: number } | null = null;
     try {
-      await saveMessages(userId, result.newMessages, "reactive");
+      savedRange = await saveMessages(userId, result.newMessages, "reactive");
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(`couldn't write to memory: ${msg}`);
@@ -104,6 +109,15 @@ async function main(): Promise<void> {
 
     if (result.terminator === "cap_hit") {
       console.error("[cap_hit]");
+    }
+
+    if (savedRange) {
+      try {
+        await runPostTurnMemory(userId);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`[memory_worker_failed] ${msg}`);
+      }
     }
   }
 

@@ -19,6 +19,7 @@ export interface RunTurnArgs {
   mode: BrainMode;
   messages: MessageParam[];
   userInput: string;
+  memoryContext?: string;
 }
 
 export interface RunTurnResult {
@@ -46,6 +47,7 @@ export async function runTurn({
   mode,
   messages,
   userInput,
+  memoryContext,
 }: RunTurnArgs): Promise<RunTurnResult> {
   if (mode !== "reactive") {
     throw new Error(`brain mode '${mode}' not implemented yet`);
@@ -64,16 +66,25 @@ export async function runTurn({
   while (iterations < MAX_LOOP_ITERATIONS) {
     iterations++;
 
+    const system = [
+      {
+        type: "text" as const,
+        text: SYSTEM_PROMPT,
+        cache_control: { type: "ephemeral" as const },
+      },
+    ];
+    if (memoryContext?.trim()) {
+      system.push({
+        type: "text" as const,
+        text: `memory_context:\n${memoryContext.trim()}`,
+        cache_control: { type: "ephemeral" as const },
+      });
+    }
+
     const resp = await client.messages.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
-      system: [
-        {
-          type: "text",
-          text: SYSTEM_PROMPT,
-          cache_control: { type: "ephemeral" },
-        },
-      ],
+      system,
       tools: tool_definitions,
       messages: working,
     });
