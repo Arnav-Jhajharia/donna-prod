@@ -13,6 +13,7 @@
     "test:once": "tsx --test",
     "setup:imessage": "tsx scripts/setup-linq-webhook.ts",
     "world:tick": "tsx scripts/world-tick.ts",
+    "world:worker": "tsx scripts/world-worker.ts",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "build": "tsc",

@@ -1,0 +1,1118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>donna — architecture</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '13px',
+      primaryColor: '#F0EAE4',
+      primaryTextColor: '#1E1A18',
+      primaryBorderColor: '#4A2F23',
+      lineColor: '#4A2F23',
+      secondaryColor: '#FBF7F5',
+      tertiaryColor: '#F0EAE4',
+      noteBkgColor: '#F0EAE4',
+      noteTextColor: '#1E1A18',
+      activationBkgColor: '#7B5544',
+      activationBorderColor: '#4A2F23',
+      sequenceNumberColor: '#FBF7F5',
+      labelBackground: '#FBF7F5',
+      altBackground: '#F0EAE4',
+      mainBkg: '#F0EAE4',
+      errorBkgColor: '#7B5544',
+      errorTextColor: '#FBF7F5',
+    },
+    flowchart: { curve: 'basis', padding: 14, htmlLabels: true },
+    sequence: { mirrorActors: false, bottomMarginAdj: 8 },
+    er: { layoutDirection: 'TB', minEntityWidth: 130, minEntityHeight: 80 },
+  });
+</script>
+<style>
+:root {
+  --ivory:    #FBF7F5;
+  --tan:      #F0EAE4;
+  --ink:      #1E1A18;
+  --soft:     #6B6360;
+  --rust:     #7B5544;
+  --umber:    #4A2F23;
+  --rule:     #DCD2C9;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--ivory); color: var(--ink); margin: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+  line-height: 1.62;
+  letter-spacing: 0.005em;
+  padding: 80px 32px 160px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+header { padding-bottom: 56px; border-bottom: 1px solid var(--rule); margin-bottom: 64px; }
+h1, h2, h3, h4 {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+h1 { font-size: 56px; line-height: 1.05; margin: 0 0 18px; }
+h1 em { color: var(--rust); font-style: italic; }
+h2 { font-size: 36px; line-height: 1.15; margin: 88px 0 18px; padding-top: 24px; border-top: 1px solid var(--rule); }
+h3 { font-size: 24px; line-height: 1.2; margin: 56px 0 12px; }
+h4 { font-size: 17px; line-height: 1.3; margin: 32px 0 8px; font-weight: 500; }
+p, li { font-size: 15.5px; color: var(--ink); }
+.lede { font-size: 19px; color: var(--soft); max-width: 720px; margin-top: 4px; }
+small.kicker {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--rust);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 14px;
+}
+code, kbd, pre {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  font-size: 13px;
+  background: var(--tan);
+  border-radius: 3px;
+  padding: 2px 5px;
+  color: var(--umber);
+}
+pre {
+  display: block;
+  padding: 18px 22px;
+  margin: 18px 0 24px;
+  overflow-x: auto;
+  background: var(--tan);
+  border-left: 3px solid var(--rust);
+  line-height: 1.55;
+}
+.diagram {
+  background: var(--tan);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 28px;
+  margin: 24px 0 36px;
+  overflow-x: auto;
+}
+.diagram svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+.caption {
+  color: var(--soft);
+  font-size: 13px;
+  font-style: italic;
+  margin: -18px 0 36px;
+  padding-left: 4px;
+}
+section.dark {
+  background: var(--ink);
+  color: var(--ivory);
+  margin: 88px -32px;
+  padding: 56px 32px;
+  border-radius: 0;
+}
+section.dark h2 { color: var(--ivory); border-top-color: rgba(251,247,245,0.18); }
+section.dark h3, section.dark h4 { color: var(--ivory); }
+section.dark p, section.dark li { color: rgba(251,247,245,0.84); }
+section.dark code, section.dark pre { background: rgba(251,247,245,0.08); color: var(--ivory); border-left-color: var(--rust); }
+section.dark .diagram { background: rgba(251,247,245,0.04); border-color: rgba(251,247,245,0.16); }
+section.dark .caption { color: rgba(251,247,245,0.6); }
+section.dark a { color: #E8C9B7; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0 36px;
+  font-size: 14px;
+}
+th, td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+th {
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rust);
+  border-bottom: 1px solid var(--umber);
+}
+tr:hover td { background: rgba(123,85,68,0.04); }
+.pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.pill.both     { background: rgba(123,85,68,0.12);  color: var(--umber); }
+.pill.reactive { background: rgba(74,47,35,0.10);   color: var(--umber); }
+.pill.proactive{ background: rgba(123,85,68,0.20);  color: var(--umber); }
+.pill.term     { background: var(--ink);            color: var(--ivory); }
+ul.tight li { margin-bottom: 4px; }
+hr { border: none; border-top: 1px solid var(--rule); margin: 56px 0; }
+nav.toc {
+  position: sticky;
+  top: 16px;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  margin: 0 0 32px;
+  padding: 18px 22px;
+  background: var(--tan);
+  border-radius: 4px;
+}
+nav.toc ol { list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 32px; }
+nav.toc li { padding: 3px 0; }
+nav.toc a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; }
+nav.toc a:hover { border-bottom-color: var(--rust); color: var(--rust); }
+.aside {
+  border-left: 3px solid var(--rust);
+  padding: 14px 20px;
+  margin: 24px 0;
+  background: rgba(123,85,68,0.05);
+  font-size: 14.5px;
+  color: var(--soft);
+}
+.kvgrid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 8px 24px;
+  margin: 16px 0 32px;
+  font-size: 14px;
+}
+.kvgrid > dt { color: var(--rust); font-weight: 500; padding-top: 4px; }
+.kvgrid > dd { margin: 0; padding-top: 4px; }
+</style>
+</head>
+
+<body>
+
+<header>
+  <small class="kicker">donna v0.2 · architecture</small>
+  <h1>one brain, two modes, <em>one log.</em></h1>
+  <p class="lede">end-to-end map of the stack: services, ingress, brain loop, terminators, schedule substrate, integrations, delivery, memory, and the user model. the through-line is presence — substrate that compounds, surfaces that render.</p>
+</header>
+
+<nav class="toc">
+  <ol>
+    <li>1. <a href="#topology">service topology</a></li>
+    <li>2. <a href="#brain">the brain loop</a></li>
+    <li>3. <a href="#tools">tool tiers + gating</a></li>
+    <li>4. <a href="#cause">cause-as-message</a></li>
+    <li>5. <a href="#scheduler">scheduler + executor</a></li>
+    <li>6. <a href="#triggers">three trigger surfaces</a></li>
+    <li>7. <a href="#delivery">delivery (wa + imessage)</a></li>
+    <li>8. <a href="#integrations">integrations runtime</a></li>
+    <li>9. <a href="#substrate">database substrate</a></li>
+    <li>10. <a href="#user">user model</a></li>
+    <li>11. <a href="#voice">voice filter + cache</a></li>
+    <li>12. <a href="#turns">turn sequences (reactive vs proactive)</a></li>
+    <li>13. <a href="#world">world engine (sibling)</a></li>
+    <li>14. <a href="#deployment">deployment shape</a></li>
+  </ol>
+</nav>
+
+<section id="topology">
+<h2>1. service topology</h2>
+<p>two railway services, one repo, one supabase. they share <code>chat_messages</code> as the single source of truth for what donna has said and seen.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  subgraph U["user surfaces"]
+    U1[whatsapp]
+    U2[imessage]
+    U3[cli / dev]
+  end
+
+  subgraph WEB["donna-web (railway)"]
+    direction TB
+    WW[server.ts<br/>http :3000]
+    WA[parse + dispatch<br/>whatsapp]
+    IM[parse + dispatch<br/>imessage / linq]
+    DB1[runTurn<br/>mode: reactive]
+  end
+
+  subgraph WORKER["donna-worker (railway)"]
+    direction TB
+    PW[proactive-worker.ts]
+    EX[executor tick<br/>every 30s]
+    DB2[runTurn<br/>mode: proactive]
+  end
+
+  subgraph SUPA["supabase: donna-v3"]
+    direction TB
+    CM[(chat_messages)]
+    DS[(donnaschedule)]
+    UR[(users)]
+    IT[(integrations)]
+    IA[(integration_audit)]
+    DD[(donna_state_drafts)]
+    EO[(execution_observability)]
+  end
+
+  subgraph EXT["external"]
+    META[meta whatsapp cloud api]
+    LINQ[linq partner api]
+    COMP[composio · gmail oauth]
+    ANTH[anthropic · claude sonnet 4.6]
+    LS[langsmith traces]
+  end
+
+  U1 -->|webhook| META --> WW
+  U2 -->|webhook| LINQ --> WW
+  U3 --> WW
+  WW --> WA --> DB1
+  WW --> IM --> DB1
+  DB1 --> CM
+  DB1 --> META
+  DB1 --> LINQ
+  DB1 --> ANTH
+  DB1 --> COMP
+  DB1 --> LS
+
+  PW --> EX
+  EX --> DS
+  EX --> DB2
+  DB2 --> CM
+  DB2 --> META
+  DB2 --> LINQ
+  DB2 --> ANTH
+  DB2 --> COMP
+  DB2 --> LS
+
+  CM -.shared.- UR
+  CM -.shared.- DS
+  CM -.shared.- EO
+</pre>
+</div>
+<p class="caption">webhook traffic and scheduled fires are physically separated. shared state lives in postgres. the <em>identity</em> donna presents is the same on both — both modes write <code>role: "assistant"</code> rows.</p>
+</section>
+
+<section id="brain">
+<h2>2. the brain loop</h2>
+<p>one function (<code>runTurn</code>), one tool-use loop, two prompts, gated tool subsets. proactivity is not a separate cognitive system — it's the same brain with a different trigger and a different toolbox.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart TB
+  IN["RunTurnArgs<br/>(discriminated union)"]
+  R{"mode?"}
+  R1["reactive<br/>userInput: string"]
+  R2["proactive<br/>cause: ProactiveCause"]
+  WTC["withTurnContext({userId, runId, source})<br/>AsyncLocalStorage scope"]
+  PROMPT["selectSystemPromptForMode(mode)<br/>REACTIVE_SYSTEM_PROMPT |<br/>PROACTIVE_SYSTEM_PROMPT"]
+  TOOLS["selectToolsForMode(mode)<br/>filter by .modes"]
+  HEAD["client.messages.create<br/>(advanced-tool-use beta)"]
+  LOOP{"stop_reason?"}
+  TUSE["execute tool_use blocks<br/>via tool_handlers"]
+  EXIT["assemble RunTurnResult<br/>{sends, terminator,<br/>nextSchedule?, ...}"]
+  VF["filterSends() voice filter<br/>(skipped on do_nothing/defer)"]
+
+  IN --> R
+  R -->|reactive| R1
+  R -->|proactive| R2
+  R1 --> WTC
+  R2 --> WTC
+  WTC --> PROMPT
+  PROMPT --> TOOLS
+  TOOLS --> HEAD
+  HEAD --> LOOP
+  LOOP -->|tool_use| TUSE
+  TUSE --> HEAD
+  LOOP -->|terminator hit| EXIT
+  EXIT --> VF
+</pre>
+</div>
+
+<h3>what the two modes share</h3>
+<ul class="tight">
+  <li>same <code>runTurn</code> entry, same Anthropic client (with langsmith wrapping)</li>
+  <li>same prompt cache strategy (system+tools cached, last message cached per turn)</li>
+  <li>same voice filter on egress (only when there are sends)</li>
+  <li>same <code>chat_messages</code> persistence (cause user-msg + assistant turn)</li>
+  <li>same observability events to <code>execution_observability</code></li>
+</ul>
+
+<h3>what differs</h3>
+<table>
+<thead><tr><th></th><th>reactive</th><th>proactive</th></tr></thead>
+<tbody>
+<tr><td>trigger</td><td>user inbound text</td><td>cron tick on <code>donnaschedule</code></td></tr>
+<tr><td>initial user msg</td><td>raw user text</td><td><code>&lt;proactive_cause kind="..."&gt;...&lt;/proactive_cause&gt;</code></td></tr>
+<tr><td>system prompt</td><td><code>REACTIVE_SYSTEM_PROMPT</code></td><td><code>PROACTIVE_SYSTEM_PROMPT</code><br/>(adds <code>&lt;proactive_rules&gt;</code> block)</td></tr>
+<tr><td>visible toolset</td><td>all reactive-mode tools</td><td>reactive set − write-on-consent + <code>do_nothing</code> + <code>defer</code></td></tr>
+<tr><td>terminators allowed</td><td><code>send_burst</code></td><td><code>send_burst</code> · <code>do_nothing</code> · <code>defer</code></td></tr>
+<tr><td>side effect on send</td><td>WA reply to inbound</td><td>unprompted WA send via <code>deliverBurstToUser</code></td></tr>
+<tr><td>self-recursion</td><td>n/a</td><td><code>defer</code> inserts new <code>donnaschedule</code> row</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="tools" class="dark">
+<h2>3. tool tiers + gating</h2>
+<p>three exposure tiers map to anthropic SDK shapes. each tool carries a <code>modes: ReadonlySet&lt;BrainMode&gt;</code> flag — the brain filters at API call time so the model literally never sees a tool it can't call in the current mode.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  subgraph A["A · direct (model picks itself)"]
+    A1[get_current_time]
+    A2[send_burst<br/>terminator]
+    A3[do_nothing<br/>terminator]
+    A4[defer<br/>terminator]
+    A5[create_schedule]
+    A6[integration_status]
+    A7[integration_connect]
+    A8[integration_set_mode]
+    A9[integration_disconnect]
+  end
+  subgraph B["B · code_execution (PTC)"]
+    B0[code_execution<br/>server tool]
+    B1[gmail_list_recent]
+    B2[gmail_search]
+    B3[gmail_list_sent]
+    B4[gmail_read_thread]
+  end
+  subgraph C["C · native (anthropic-side, deferred)"]
+    C1[web_search]
+    C2[memory_20250818]
+  end
+
+  A6 -.both.- A1
+  B0 -.python sandbox calls.- B1
+  B0 -.python sandbox calls.- B2
+  B0 -.python sandbox calls.- B3
+  B0 -.python sandbox calls.- B4
+</pre>
+</div>
+
+<table>
+<thead><tr><th>tool</th><th>tier</th><th>modes</th><th>terminator?</th></tr></thead>
+<tbody>
+<tr><td><code>get_current_time</code></td><td>A direct</td><td><span class="pill both">both</span></td><td>—</td></tr>
+<tr><td><code>send_burst</code></td><td>A direct</td><td><span class="pill both">both</span></td><td><span class="pill term">yes</span></td></tr>
+<tr><td><code>do_nothing</code></td><td>A direct</td><td><span class="pill proactive">proactive</span></td><td><span class="pill term">yes</span></td></tr>
+<tr><td><code>defer</code></td><td>A direct</td><td><span class="pill proactive">proactive</span></td><td><span class="pill term">yes</span></td></tr>
+<tr><td><code>create_schedule</code></td><td>A direct</td><td><span class="pill both">both</span></td><td>—</td></tr>
+<tr><td><code>integration_status</code></td><td>A direct</td><td><span class="pill both">both</span></td><td>—</td></tr>
+<tr><td><code>integration_connect</code></td><td>A direct</td><td><span class="pill reactive">reactive</span></td><td>—</td></tr>
+<tr><td><code>integration_set_mode</code></td><td>A direct</td><td><span class="pill reactive">reactive</span></td><td>—</td></tr>
+<tr><td><code>integration_disconnect</code></td><td>A direct</td><td><span class="pill reactive">reactive</span></td><td>—</td></tr>
+<tr><td><code>gmail_list_recent</code></td><td>B PTC</td><td><span class="pill both">both</span></td><td>—</td></tr>
+<tr><td><code>gmail_search</code></td><td>B PTC</td><td><span class="pill both">both</span></td><td>—</td></tr>
+<tr><td><code>gmail_list_sent</code></td><td>B PTC</td><td><span class="pill both">both</span></td><td>—</td></tr>
+<tr><td><code>gmail_read_thread</code></td><td>B PTC</td><td><span class="pill both">both</span></td><td>—</td></tr>
+<tr><td><code>code_execution</code> (server)</td><td>B</td><td><span class="pill both">both</span></td><td>—</td></tr>
+</tbody>
+</table>
+
+<p class="caption">PTC = "tools-callable from code execution." <code>allowed_callers: ["code_execution_20250825"]</code> opts a tool into being invoked from inside the python sandbox. claude writes python; tool calls come back as ordinary <code>tool_use</code> blocks carrying a <code>caller</code> field. the brain logs caller="direct" vs "code_execution" so we can split telemetry.</p>
+</section>
+
+<section id="cause">
+<h2>4. cause-as-message</h2>
+<p>when the proactive brain wakes, the cause arrives as a synthetic <code>role:"user"</code> message tagged with xml. it lives in <code>chat_messages</code> permanently. reactive donna later sees her own past triggers in history — first-person continuity preserved.</p>
+
+<pre>&lt;proactive_cause
+  kind="scheduled"
+  set_at="2026-05-08T18:00:00Z"
+  schedule_id="11111111-1111-1111-1111-111111111111"
+  payload="{&amp;quot;since_hours&amp;quot;:4}"
+&gt;remind nikhil about workout&lt;/proactive_cause&gt;</pre>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  S[(donnaschedule row<br/>cause_kind, cause_payload,<br/>instruction, schedule_id)]
+  RC["rowToCause()"]
+  PC["ProactiveCause<br/>{kind, payload, set_at,<br/>schedule_id, instruction}"]
+  RX["renderCauseXml()<br/>escapes &lt;&gt;&amp;&quot;"]
+  XML["&lt;proactive_cause ...&gt;...&lt;/proactive_cause&gt;"]
+  SM["synthesizeCauseMessage()"]
+  MP["MessageParam<br/>{role:'user', content:[text]}"]
+  WK["working messages array"]
+  CM[(chat_messages<br/>persisted)]
+
+  S --> RC --> PC --> RX --> XML --> SM --> MP --> WK
+  WK --> CM
+</pre>
+</div>
+
+<div class="aside">
+why a synthetic user message and not metadata: the model integrates dense prose into its reasoning naturally. the cause IS donna's thinking trigger, not a system intrusion. tagging with xml lets future reactive turns recognize and reason over it, while keeping the unified-log invariant.
+</div>
+</section>
+
+<section id="scheduler">
+<h2>5. scheduler + executor</h2>
+<p>everything proactive is a <em>scheduled brain run with a cause</em>. one table (<code>donnaschedule</code>), one cron tick, one entrypoint. trigger types differ only by <code>cause_kind</code>.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant T as ticker (setInterval 30s)
+  participant Ex as executor
+  participant DB as donnaschedule
+  participant Ar as arbiter
+  participant Br as runTurn(proactive)
+  participant Save as saveMessages
+  participant Del as deliverBurstToUser
+  participant CM as chat_messages
+
+  T->>Ex: runScheduleTickOnce()
+  Ex->>DB: sweepStuckClaimed(5min)
+  Ex->>DB: claimNextPending<br/>(FOR UPDATE SKIP LOCKED)
+  alt no row due
+    DB-->>Ex: null
+    Ex-->>T: return
+  else row claimed
+    DB-->>Ex: ScheduleRow
+    Ex->>Ar: arbitrate({cause, last_assistant_at, now, tz})
+    alt arbiter rejects
+      Ar-->>Ex: {allow:false, reason, reschedule_at?}
+      Ex->>DB: markCancelled(reason)
+      opt has reschedule_at
+        Ex->>DB: insertSchedule(reschedule_at, same cause)
+      end
+    else arbiter allows
+      Ar-->>Ex: {allow:true}
+      Ex->>CM: loadRecentMessages(50)
+      Ex->>Br: runTurn({mode, cause, messages})
+      Br->>Save: saveMessages(newMessages, "proactive")
+      alt terminator: send_burst
+        Br-->>Ex: {sends, terminator:"send_burst"}
+        loop each burst
+          Ex->>Del: deliverBurstToUser(userId, body)
+        end
+      else terminator: defer
+        Br-->>Ex: {terminator:"defer", nextSchedule}
+        Ex->>DB: insertSchedule(nextSchedule)
+      else terminator: do_nothing
+        Br-->>Ex: {terminator:"do_nothing"}
+      end
+      Ex->>DB: markFired
+    end
+  end
+</pre>
+</div>
+
+<h3>concurrency &amp; recovery</h3>
+<ul class="tight">
+  <li><code>FOR UPDATE SKIP LOCKED</code> — atomic claim across N worker instances. instance A grabs row 1, instance B grabs row 2 (or null), no double-fire.</li>
+  <li><code>sweepStuckClaimed(thresholdMinutes=5)</code> — rows in <code>status='claimed'</code> for &gt;5min get reset to pending. handles process-crash recovery.</li>
+  <li>in-process <code>_ticking</code> guard prevents overlapping ticks within a single instance.</li>
+</ul>
+</section>
+
+<section id="triggers">
+<h2>6. three trigger surfaces</h2>
+<p>differentiated only by <code>cause_kind</code>. all share the same brain entrypoint and the same persistence shape. what makes a cause "event-like" is which tools the brain reaches for to evaluate it.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart TB
+  subgraph S["scheduled (user-set reminder)"]
+    S1["user says<br/>'remind me at 6pm'"]
+    S2["reactive brain calls<br/>create_schedule"]
+    S3["row inserted<br/>cause_kind='scheduled'"]
+    S4["fire_at hits"]
+    S5["proactive brain wakes<br/>reads instruction<br/>checks chat history"]
+    S6{"already addressed?"}
+    S7["send_burst"]
+    S8["do_nothing"]
+    S1 --> S2 --> S3 --> S4 --> S5 --> S6
+    S6 -->|no| S7
+    S6 -->|yes| S8
+  end
+
+  subgraph G["scan_gmail (recurring inbox triage)"]
+    G1["seed: recurring row<br/>cause_kind='scan_gmail'<br/>payload: {since_hours:4}"]
+    G2["fire_at hits"]
+    G3["proactive brain<br/>uses code_execution +<br/>gmail_list_recent / search"]
+    G4{"anything urgent?"}
+    G5["send_burst"]
+    G6["defer +4h"]
+    G1 --> G2 --> G3 --> G4
+    G4 -->|yes| G5
+    G4 -->|no| G6
+    G6 -.re-arms.-> G2
+  end
+
+  subgraph W["watch_fired (defer-loop)"]
+    W1["earlier turn called defer<br/>cause_kind='watch_fired'<br/>instruction: 'btc &lt; 50k?'"]
+    W2["fire_at hits"]
+    W3["proactive brain<br/>uses web_search<br/>(future: native)"]
+    W4{"condition tripped?"}
+    W5["send_burst"]
+    W6["defer +1h"]
+    W1 --> W2 --> W3 --> W4
+    W4 -->|yes| W5
+    W4 -->|no| W6
+    W6 -.re-arms.-> W2
+  end
+</pre>
+</div>
+</section>
+
+<section id="delivery">
+<h2>7. delivery (whatsapp + imessage)</h2>
+<p>two channels, one shape. <code>WhatsAppChannel</code> and <code>IMessageChannel</code> implement <code>send(phone, TextMessage)</code>. the proactive helper <code>deliverBurstToUser</code> resolves user phone, picks the channel, and persists the burst as a <code>role:"assistant"</code> row.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart TB
+  subgraph IN["ingress"]
+    META[meta whatsapp cloud]
+    LINQ[linq partner api]
+    META --> WP["parseWebhook<br/>ingress/whatsapp.ts"]
+    LINQ --> IP["parseWebhook + verify HMAC<br/>ingress/imessage.ts"]
+    WP --> IPP["IngressPayload<br/>{platformMessageId, phone,<br/>message, source, ...}"]
+    IP --> IPP
+  end
+
+  subgraph DISP["dispatch (server.ts)"]
+    IPP --> DPW["dispatchPayload (whatsapp)"]
+    IPP --> DPI["dispatchImessagePayload"]
+    DPW --> RU["getOrCreateUser"]
+    DPI --> RU
+    RU --> RT["runTurn({mode:'reactive', userInput, userId})"]
+  end
+
+  subgraph EG["egress"]
+    RT --> SBT["send_burst sends array"]
+    SBT --> WC["WhatsAppChannel.send"]
+    SBT --> IC["IMessageChannel.send<br/>(via linq)"]
+    WC --> META2[meta]
+    IC --> LINQ2[linq]
+  end
+
+  subgraph PRO["proactive lane"]
+    EX[executor] --> RT2["runTurn({mode:'proactive', cause})"]
+    RT2 --> DBU["deliverBurstToUser(userId, bursts)"]
+    DBU -->|per user| WC
+    DBU -->|persists| CM[(chat_messages)]
+  end
+</pre>
+</div>
+
+<div class="aside">
+ingress dedup is two-layered: in-memory 5-min ttl cache for burst retries, plus durable <code>inbound_messages</code> with <code>unique(platform_message_id)</code> for cross-restart safety. atomic claim via <code>insert ... on conflict do nothing</code> — concurrent retries cannot both win.
+</div>
+</section>
+
+<section id="integrations" class="dark">
+<h2>8. integrations runtime</h2>
+<p>per-user, per-provider state. consent-gated reads, audited writes. <code>integration_*</code> direct-only tools handle the lifecycle; the actual provider work goes through <code>composio</code> (gmail) or <code>linq</code> (imessage).</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart TB
+  subgraph TOOLS["tools/integrations.ts"]
+    T1[integration_status]
+    T2[integration_connect]
+    T3[integration_set_mode]
+    T4[integration_disconnect]
+  end
+
+  subgraph SVC["integrations/service.ts"]
+    SVC1[listForUser]
+    SVC2[readState]
+    SVC3[upsertState]
+    SVC4[setMode]
+    SVC5[disconnectIntegration]
+  end
+
+  subgraph PROV["providers"]
+    PC[composio.ts<br/>gmail oauth + actions]
+    PL[linq.ts<br/>imessage send]
+    PS[supermemory.ts<br/>memory backend]
+  end
+
+  subgraph DB["postgres"]
+    II[(integrations<br/>user_id, provider, status,<br/>mode, exclusions, config,<br/>composio_account_id, last_sync_at)]
+    IIA[(integration_audit<br/>action, item_ref, caller,<br/>ok, duration_ms, meta)]
+    IID[(donna_state_drafts<br/>provider, thread_ref,<br/>intent, status,<br/>external_draft_id)]
+  end
+
+  T1 --> SVC1 --> II
+  T2 --> SVC3 --> PC
+  T3 --> SVC4 --> II
+  T4 --> SVC5 --> II
+
+  PC --> II
+  PC --> IIA
+
+  TG[gmail tools<br/>list/search/sent/read_thread] --> PC
+  PC --> COMPC[composio cloud<br/>GMAIL_FETCH_EMAILS<br/>GMAIL_FETCH_MESSAGE_BY_THREAD_ID]
+
+  IM[imessage delivery] --> PL --> LINQAPI[linq partner api]
+
+  SM[memory tools<br/>future] --> PS --> SMC[supermemory cloud]
+</pre>
+</div>
+
+<h3>integration modes (consent depth)</h3>
+<table>
+<thead><tr><th>mode</th><th>read scope</th><th>write scope</th><th>example</th></tr></thead>
+<tbody>
+<tr><td><code>search_only</code></td><td>queries only, no caching</td><td>none</td><td>"find emails about X"</td></tr>
+<tr><td><code>smart_index</code></td><td>topical indexing, no full bodies</td><td>drafts only (preview required)</td><td>default</td></tr>
+<tr><td><code>full</code></td><td>full thread access, vector store</td><td>send-on-confirm</td><td>power user</td></tr>
+</tbody>
+</table>
+
+<p>category exclusions (banking, medical, legal) default-on at every mode, override per-user.</p>
+</section>
+
+<section id="substrate">
+<h2>9. database substrate</h2>
+<p>postgres is the single source of truth. nothing important lives in memory. the schema separates: identity (<code>users</code>), conversation (<code>chat_messages</code>, <code>inbound_messages</code>), proactive (<code>donnaschedule</code>), integrations (<code>integrations</code>, <code>integration_audit</code>, <code>donna_state_drafts</code>), telemetry (<code>execution_observability</code>, <code>execution_events</code>).</p>
+
+<div class="diagram">
+<pre class="mermaid">
+erDiagram
+  users ||--o{ chat_messages : has
+  users ||--o{ donnaschedule : has
+  users ||--o{ inbound_messages : received
+  users ||--o{ integrations : has
+  users ||--o{ integration_audit : audited
+  users ||--o{ donna_state_drafts : drafted
+  users ||--o{ execution_observability : ran
+
+  users {
+    uuid id PK
+    text phone "e164 unique"
+    text profile_name
+    text timezone
+    bool onboarding_complete
+    text voice_model
+    bool has_google
+    bool has_github
+    jsonb facts
+    jsonb living_profile
+    timestamptz created_at
+    timestamptz last_active_at
+  }
+
+  chat_messages {
+    uuid id PK
+    bigserial seq
+    uuid user_id FK
+    text role "user|assistant"
+    jsonb content
+    text mode "reactive|proactive"
+    jsonb metadata
+    timestamptz created_at
+  }
+
+  inbound_messages {
+    text platform_message_id PK
+    uuid user_id FK
+    text source "wa|imessage"
+    timestamptz received_at
+  }
+
+  donnaschedule {
+    uuid id PK
+    uuid user_id FK
+    timestamptz fire_at
+    text cause_kind "scheduled|scan_gmail|watch_fired"
+    jsonb cause_payload
+    text instruction
+    text status "pending|claimed|fired|errored|cancelled"
+    timestamptz claimed_at
+    timestamptz fired_at
+    text created_by
+  }
+
+  integrations {
+    uuid user_id FK
+    text provider PK
+    text status "connected|expired|revoked|error"
+    text mode "search_only|smart_index|full"
+    jsonb exclusions
+    jsonb config
+    text composio_account_id
+    timestamptz last_sync_at
+  }
+
+  integration_audit {
+    uuid id PK
+    uuid user_id FK
+    text provider
+    text action "read.list|read.search|write.draft|write.send"
+    text item_ref
+    text caller "direct|code_execution"
+    bool ok
+    int duration_ms
+    jsonb meta
+    timestamptz occurred_at
+  }
+
+  donna_state_drafts {
+    uuid id PK
+    uuid user_id FK
+    text provider
+    text thread_ref
+    text intent
+    text status "pending_preview|previewed|sent|discarded"
+    text external_draft_id
+  }
+
+  execution_observability {
+    uuid run_id PK
+    uuid user_id FK
+    text channel
+    text mode
+    text status
+    text terminator
+    text error
+    timestamptz started_at
+    timestamptz finished_at
+  }
+</pre>
+</div>
+
+<h3>indexes load-bearing for v0.2</h3>
+<ul class="tight">
+  <li><code>donnaschedule_pending_fire_at (fire_at) WHERE status='pending'</code> — partial index, executor's hot path</li>
+  <li><code>donnaschedule_claimed_recovery (claimed_at) WHERE status='claimed'</code> — sweeper's hot path</li>
+  <li><code>idx_chat_messages_user_seq (user_id, seq DESC)</code> — load-recent-history</li>
+</ul>
+</section>
+
+<section id="user">
+<h2>10. user model</h2>
+<p>the canonical row keyed by phone. resolved on every inbound webhook. all per-user state hangs off <code>users.id</code>. v0.2 adds nothing here — the existing shape carries the proactive substrate naturally.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart TB
+  subgraph IN["resolution"]
+    WB["webhook arrives<br/>phone in payload"]
+    GET["getOrCreateUser(phone, profileName?)"]
+    UU{exists?}
+    NEW["insert + return"]
+    UPD["refresh profile_name<br/>if platform has fresher"]
+  end
+
+  subgraph CORE["users row · core identity"]
+    ID["id (uuid PK)"]
+    PH["phone (e164 unique)"]
+    NM["profile_name"]
+    TZ["timezone"]
+  end
+
+  subgraph ONBO["onboarding state"]
+    OC["onboarding_complete<br/>(bool)"]
+    OS["onboarding_step (int)"]
+    OG["onboarding_goals jsonb<br/>{tz_done, watch_done}"]
+    ON["onboarding_node"]
+  end
+
+  subgraph ROUTINE["routine awareness"]
+    WT["wake_time"]
+    ST["sleep_time"]
+    LA["last_active_at"]
+  end
+
+  subgraph KNOW["what donna knows"]
+    F["facts jsonb<br/>(staged user facts)"]
+    LP["living_profile jsonb<br/>(prose world model)"]
+    CS["conversation_summary text<br/>(reflection job, not yet wired)"]
+    VM["voice_model text<br/>(per-user voice tuning)"]
+  end
+
+  subgraph CONN["connections"]
+    HG["has_google bool"]
+    HGH["has_github bool"]
+    SB["is_sandbox bool"]
+  end
+
+  subgraph LINKED["linked tables"]
+    CMU[(chat_messages)]
+    DSU[(donnaschedule)]
+    IGU[(integrations)]
+    EOU[(execution_observability)]
+  end
+
+  WB --> GET --> UU
+  UU -->|no| NEW --> ID
+  UU -->|yes| UPD --> ID
+
+  ID --> CORE
+  ID --> ONBO
+  ID --> ROUTINE
+  ID --> KNOW
+  ID --> CONN
+
+  ID -.fk.-> CMU
+  ID -.fk.-> DSU
+  ID -.fk.-> IGU
+  ID -.fk.-> EOU
+</pre>
+</div>
+
+<h3>how the user model interacts with the brain</h3>
+<dl class="kvgrid">
+  <dt>userId is per-turn</dt>
+  <dd>every <code>runTurn</code> call carries <code>userId</code>. <code>withTurnContext({...})</code> wraps the loop; tool handlers read <code>getTurnContext().userId</code> via <code>AsyncLocalStorage</code> — no thread-through.</dd>
+  <dt>timezone informs arbiter</dt>
+  <dd>quiet hours (23:00–07:00) are user-local. <code>users.timezone</code> drives the arbiter; missing tz defaults to UTC.</dd>
+  <dt>last_active_at adapts cooldown</dt>
+  <dd>(future) cooldown thresholds adjust based on user's typical engagement window. v0.2 uses a fixed 30 min.</dd>
+  <dt>living_profile projection</dt>
+  <dd>(future) <code>users.living_profile</code> as prose injected into every turn — the world model. v0.2 leaves the column dormant; reactive turns rely on chat history.</dd>
+  <dt>onboarding_complete gates surfaces</dt>
+  <dd>not yet wired in v0.2. once on, dashboard surfaces unlock; until then, conversational onboarding owns the user.</dd>
+</dl>
+</section>
+
+<section id="voice">
+<h2>11. voice filter + cache</h2>
+
+<h3>egress voice filter</h3>
+<p>every <code>send_burst</code> output passes through <code>filterSends</code> before delivery. catches model regressions on the banned-phrases list (sycophancy, "as an AI", em-dashes, semicolons, emojis above the cap, "happy to help"). violations are logged. skipped on <code>do_nothing</code>/<code>defer</code> (no user-facing text).</p>
+
+<h3>prompt cache strategy</h3>
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  subgraph CALL["each api call"]
+    direction TB
+    SYS["system block<br/>cache_control: ephemeral<br/>(REACTIVE_ or PROACTIVE_<br/>SYSTEM_PROMPT)"]
+    TLS["tools array<br/>(implicitly cached<br/>with system as prefix)"]
+    MSG["messages...<br/>last block:<br/>cache_control: ephemeral"]
+  end
+  HIT["cache hit reads<br/>tools+system+prefix"]
+  MISS["cache write on<br/>last message tail"]
+
+  SYS --> HIT
+  TLS --> HIT
+  MSG --> HIT
+  MSG --> MISS
+</pre>
+</div>
+
+<p>two breakpoints per request: system+tools (1h ttl, very stable) + last message (5min ttl, the multi-turn prefix-cache pattern). target: reactive turn &lt; 5¢ amortized.</p>
+</section>
+
+<section id="turns">
+<h2>12. turn sequences</h2>
+
+<h3>reactive turn (whatsapp inbound)</h3>
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant U as user
+  participant M as meta (wa cloud)
+  participant W as donna-web
+  participant DB as supabase
+  participant A as anthropic
+  participant L as langsmith
+
+  U->>M: text message
+  M->>W: POST /webhook
+  W-->>M: 200 OK (ack fast)
+  W->>W: parseWebhook
+  W->>DB: dedup check (inbound_messages)
+  W->>DB: getOrCreateUser(phone)
+  W->>DB: createExecutionRun
+  W->>M: typing indicator (fire-and-forget)
+  W->>DB: loadRecentMessages(50)
+  W->>A: messages.create<br/>(reactive prompt + tools)
+  loop tool_use blocks
+    A-->>W: tool_use
+    W->>W: handler runs<br/>(e.g., gmail_search via composio)
+    W->>A: messages.create (tool_result)
+  end
+  A-->>W: send_burst({messages})
+  W->>W: filterSends voice filter
+  W->>DB: saveMessages(newMessages, "reactive")
+  loop each burst
+    W->>M: send (1st quotes inbound)
+  end
+  W->>L: trace finished
+  W->>DB: finishExecutionRun(completed)
+</pre>
+</div>
+
+<h3>proactive turn (scheduled fire)</h3>
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant T as ticker (30s interval)
+  participant Wo as donna-worker
+  participant DB as supabase
+  participant Ar as arbiter
+  participant A as anthropic
+  participant M as meta (wa cloud)
+
+  T->>Wo: tick
+  Wo->>DB: sweepStuckClaimed
+  Wo->>DB: claimNextPending<br/>(SKIP LOCKED)
+  alt no row
+    DB-->>Wo: null
+  else
+    DB-->>Wo: ScheduleRow
+    Wo->>Ar: arbitrate(cause, last_assistant_at, now, tz)
+    alt rejected (quiet hours / cooldown)
+      Ar-->>Wo: {allow:false, reschedule_at}
+      Wo->>DB: markCancelled + insertSchedule(reschedule_at)
+    else allowed
+      Ar-->>Wo: {allow:true}
+      Wo->>DB: loadRecentMessages
+      Wo->>Wo: rowToCause + synthesizeCauseMessage
+      Wo->>A: messages.create<br/>(proactive prompt + gated tools<br/>+ &lt;proactive_cause&gt; user-msg)
+      loop tool_use blocks
+        A-->>Wo: tool_use (gmail_*, web_search, ...)
+        Wo->>A: messages.create (tool_result)
+      end
+      A-->>Wo: terminator
+      alt send_burst
+        Wo->>DB: saveMessages(newMessages, "proactive")
+        loop each burst
+          Wo->>M: deliverBurstToUser
+        end
+      else defer
+        Wo->>DB: insertSchedule(nextSchedule)
+        Wo->>DB: saveMessages(newMessages, "proactive")
+      else do_nothing
+        Wo->>DB: saveMessages(newMessages, "proactive")
+      end
+      Wo->>DB: markFired
+    end
+  end
+</pre>
+</div>
+</section>
+
+<section id="world">
+<h2>13. world engine (sibling effort)</h2>
+<p>not part of v0.2's proactive brain, but lives in the same repo and writes to the same logs. the world engine actively pulls signal from the public web (via <code>exa</code>) according to user's interests and judges it for relevance. it complements the proactive brain — events from the world become causes that fire the same scheduler.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  subgraph WE["world engine (src/donna/world/)"]
+    QC["query_creation.ts<br/>derive queries from<br/>user interests"]
+    EX[exa.ts<br/>web search adapter]
+    JG[judge.ts<br/>relevance + novelty scoring]
+    ST[(store.ts<br/>vetted hits)]
+    RN[runner.ts<br/>orchestrator]
+  end
+
+  TICK["scripts/world-tick.ts<br/>(cron)"] --> RN
+  RN --> QC --> EX
+  EX --> JG --> ST
+  ST -.feeds.-> CAUSE["future:<br/>cause_kind='world_signal'<br/>fires proactive brain"]
+  CAUSE -.via.-> DS[(donnaschedule)]
+</pre>
+</div>
+
+<p class="caption">caps via env vars: <code>WORLD_PER_TURN</code>, <code>WORLD_PER_DAY</code>. honors the same exploration discipline as proactive — earn the interrupt or stay silent.</p>
+</section>
+
+<section id="deployment">
+<h2>14. deployment shape</h2>
+
+<h3>railway services</h3>
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  REPO[github repo<br/>main branch]
+  GHA[github actions<br/>build + deploy]
+  subgraph RW["railway"]
+    direction TB
+    WB["donna-web<br/>start: node dist/server.js<br/>port :3000<br/>handles: webhooks, observability"]
+    WK["donna-worker<br/>start: node dist/proactive-worker.js<br/>handles: scheduler ticking"]
+  end
+  subgraph SUP["supabase: donna-v3<br/>(pzrxohmyeaoyuxcogsra)"]
+    PG[(postgres)]
+  end
+  subgraph EX["external"]
+    META[meta wa cloud]
+    LINQ[linq partner api]
+    COMP[composio]
+    ANTH[anthropic]
+    LS[langsmith]
+    EXA[exa]
+  end
+
+  REPO --> GHA --> WB
+  GHA --> WK
+  WB --> PG
+  WK --> PG
+  WB --> META
+  WB --> LINQ
+  WB --> COMP
+  WB --> ANTH
+  WB --> LS
+  WK --> COMP
+  WK --> ANTH
+  WK --> LS
+  WK -.world tick.-> EXA
+</pre>
+</div>
+
+<h3>env contract</h3>
+<table>
+<thead><tr><th>variable</th><th>web</th><th>worker</th><th>purpose</th></tr></thead>
+<tbody>
+<tr><td><code>ANTHROPIC_API_KEY</code></td><td>✓</td><td>✓</td><td>brain</td></tr>
+<tr><td><code>DATABASE_URL</code></td><td>✓</td><td>✓</td><td>postgres pooler</td></tr>
+<tr><td><code>COMPOSIO_API_KEY</code></td><td>✓</td><td>✓</td><td>gmail tools</td></tr>
+<tr><td><code>COMPOSIO_USER_ID</code></td><td>✓</td><td>✓</td><td>composio entity (oauth grant holder)</td></tr>
+<tr><td><code>WHATSAPP_TOKEN</code> · <code>WHATSAPP_PHONE_NUMBER_ID</code></td><td>✓</td><td>✓</td><td>send via meta</td></tr>
+<tr><td><code>WHATSAPP_VERIFY_TOKEN</code></td><td>✓</td><td>—</td><td>webhook verification</td></tr>
+<tr><td><code>LINQ_API_KEY</code> · <code>LINQ_FROM_NUMBER</code></td><td>✓</td><td>✓</td><td>imessage send</td></tr>
+<tr><td><code>LINQ_WEBHOOK_SECRET</code></td><td>✓</td><td>—</td><td>HMAC verify</td></tr>
+<tr><td><code>LANGSMITH_*</code></td><td>✓</td><td>✓</td><td>tracing (silent if unset)</td></tr>
+<tr><td><code>EXA_API_KEY</code></td><td>—</td><td>✓</td><td>world engine</td></tr>
+<tr><td><code>DONNA_PROACTIVE_TICK_MS</code></td><td>—</td><td>✓</td><td>tick cadence (default 30000)</td></tr>
+<tr><td><code>DONNA_DEFAULT_TZ</code></td><td>—</td><td>✓</td><td>arbiter fallback</td></tr>
+<tr><td><code>DONNA_OBSERVABILITY_TOKEN</code></td><td>✓</td><td>—</td><td>auth for /debug/*</td></tr>
+<tr><td><code>PORT</code></td><td>3000</td><td>—</td><td>http</td></tr>
+</tbody>
+</table>
+
+<h3>migrations applied to donna-v3</h3>
+<ol class="tight">
+  <li><code>20260505185202_chat_messages.sql</code></li>
+  <li><code>20260506010221_inbound_messages.sql</code></li>
+  <li><code>20260506020727_users.sql</code></li>
+  <li><code>20260507000100_execution_observability.sql</code></li>
+  <li><code>20260507202012_integrations.sql</code> (integrations + integration_audit + donna_state_drafts)</li>
+  <li><code>20260508120000_donnaschedule.sql</code> (donnaschedule + chat_messages.metadata)</li>
+  <li><code>20260508140000_world_engine.sql</code> (world signal store, sibling effort)</li>
+</ol>
+</section>
+
+<hr />
+
+<p style="text-align:center; color: var(--soft); font-size: 13px; padding-top: 24px;">
+  spec: <code>docs/superpowers/specs/2026-05-08-donna-v0.2-proactive-brain-design.md</code>
+  <br/>plan: <code>docs/superpowers/plans/2026-05-08-donna-v0.2-proactive-brain.md</code>
+  <br/>audit: <code>docs/superpowers/plans/2026-05-08-donna-v0.2-audit-and-adjustments.md</code>
+</p>
+
+</body>
+</html>

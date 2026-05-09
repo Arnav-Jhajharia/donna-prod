@@ -3,9 +3,11 @@
 
 import { runProactiveTurn } from "../brain.js";
 import { randomUUID } from "node:crypto";
+import { buildWorldContext } from "./context.js";
 import { exaSearch } from "./exa.js";
 import { judgeResult } from "./judge.js";
 import { createMoves } from "./query_creation.js";
+import { scheduleWorldTick } from "./scheduling.js";
 import {
   bumpDailyCount,
   getDailyCount,
@@ -32,7 +34,7 @@ function envCap(name: string, fallback: number): number {
 
 export interface RunWorldTickArgs {
   context: WorldContext;
-  source: "cli" | "whatsapp" | "imessage";
+  source: "cli" | "whatsapp" | "imessage" | "proactive_worker";
   perTurn?: number;
   perDay?: number;
 }
@@ -106,6 +108,36 @@ export async function runWorldTick(args: RunWorldTickArgs): Promise<WorldTickRes
     delivered,
     elapsed_ms: Date.now() - startedAt,
   };
+}
+
+// convenience entry: builds context from supermemory + recent chat, runs the
+// tick, then books the next cadence fire. used by the worker and by the
+// scripts/world-tick.ts dev entry.
+export interface DriveWorldTickArgs {
+  user_id: string;
+  source: "cli" | "whatsapp" | "imessage" | "proactive_worker";
+  trigger: string;
+  // override the default interval. omit to use WORLD_TICK_INTERVAL_MINUTES env.
+  next_interval_minutes?: number;
+  // if false, skip booking the next tick. useful for one-off dev runs.
+  reschedule?: boolean;
+}
+
+export async function driveWorldTick(args: DriveWorldTickArgs): Promise<WorldTickResult> {
+  const context = await buildWorldContext({
+    user_id: args.user_id,
+    trigger: args.trigger,
+  });
+  const result = await runWorldTick({ context, source: args.source });
+  if (args.reschedule !== false) {
+    await scheduleWorldTick({
+      user_id: args.user_id,
+      interval_minutes: args.next_interval_minutes,
+      trigger: "cadence",
+      created_by: "donna_proactive",
+    });
+  }
+  return result;
 }
 
 async function executeMove(move: ProactiveMove): Promise<ProactiveResult> {
