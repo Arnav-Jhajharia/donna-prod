@@ -35,7 +35,10 @@ inbound (whatsapp/imessage webhook)
 - `src/donna/memory/chat.ts` — load/save persisted messages. coalesces consecutive same-role rows so storage can be non-alternating but the api always sees alternation.
 - `src/donna/observability/execution.ts` — execution_runs + execution_events tables. visible at `/debug/runs` (requires `DONNA_OBSERVABILITY_TOKEN`).
 - `src/donna/context.ts` — `AsyncLocalStorage`-backed turn context. handlers read userId / runId / source via `getTurnContext()`; do not thread these by hand.
-- `src/server.ts` — http server. `/webhook` (whatsapp), `/imessage/webhook` (linq, hmac-verified), `/debug/runs` (bearer-auth).
+- `src/server.ts` — http server. `/webhook` (whatsapp), `/imessage/webhook` (linq, hmac-verified), `/composio/webhook` (oauth-completion, bearer-auth), `/app/inbox` (app channel polling, device-token-auth), `/debug/runs` (bearer-auth).
+- `src/donna/delivery/router.ts` — channel router. resolves the right surface per user (sourceHint → last_active_channel → preferred_channel → app outbox) and walks a fallback chain on send failure. every proactive burst goes through here.
+- `src/donna/delivery/app.ts` — app channel. writes bursts to `outbound_messages` for any client polling `/app/inbox` (native app, dynamic island, browser).
+- `src/donna/delivery/omnipresence.ts` — silence guard. fires a fallback burst via the router when a brain call throws, so a webhook turn never ends with the user seeing nothing.
 
 ### tool taxonomy
 
@@ -61,8 +64,10 @@ npm run migrate     # supabase db push
 
 postgres (supabase). `postgres@^3` (porsager). migrations in `supabase/migrations/`.
 
-- `users(id, phone, profile_name, ...)` — canonical user, resolved by phone on inbound.
+- `users(id, phone, profile_name, preferred_channel, last_active_channel, last_active_at, ...)` — canonical user, resolved by phone on inbound. `preferred_channel` is the sticky pick; `last_active_channel` is stamped on every webhook so the router knows where to push proactive bursts.
+- `user_identities(user_id, provider, external_id, metadata, ...)` — many surfaces → one canonical user. `provider in (whatsapp_phone, imessage_phone, app_device, email)`. resolves via `memory/users.ts:getUserByIdentity`. existing phones backfilled as whatsapp_phone identities on migration.
 - `chat_messages(id, seq, user_id, role, content jsonb, mode, created_at)` — full conversation history. `mode = reactive | proactive | proactive_tier3`. storage allows non-alternating rows; the loader coalesces.
+- `outbound_messages(id, user_id, channel, body, status, ...)` — outbox for the `app` channel. clients drain it from `/app/inbox` and ack via `/app/inbox/<id>/(delivered|read)`. whatsapp/imessage never write here — they deliver inline.
 - `inbound_messages` — raw dedupe/audit trail of webhook payloads.
 - `integrations(user_id, provider, status, mode, exclusions, config, composio_account_id, ...)` — per-(user, provider) state row. `(user_id, provider)` unique.
 - `integration_audit` — every external call logged.
@@ -94,7 +99,9 @@ optional: `LANGSMITH_*` (leave `LANGSMITH_TRACING` unset to disable). `LINQ_*` f
 - prompt cache stays inactive until the prefix grows past ~2048 tokens. fresh users see no cache hits for the first several turns. don't conclude caching is broken without checking `cache_read_input_tokens` over multiple turns.
 - the brain currently persists the model's full assistant content (including any leaked private-reasoning text blocks alongside `tool_use(send_burst)`). that text never reaches the user but it does poison future turns. there's an open todo to filter non-`send_burst`-input text before persisting.
 - the trailing-block cache marker skips `thinking` / `redacted_thinking` blocks (the SDK forbids `cache_control` on those). don't remove that guard.
-- `integration_connect` fires `waitForConnection` in a detached promise. server restarts during the oauth window lose the pending await — for production the right move is a composio webhook handler at `/composio/webhook` that does the same `upsertState` + `runProactiveTurn` work.
+- `integration_connect` still fires `waitForConnection` in a detached promise as a best-effort fast-path. the durable path is `POST /composio/webhook` (gated on `DONNA_COMPOSIO_WEBHOOK_TOKEN`), which enqueues a `donnaschedule` row with `cause_kind='integration_oauth_complete'`; the proactive worker drains it and delivers via the channel router. when both fire, the webhook handler no-ops because the integration is already `connected` — but the proactive ack can land twice in the rare case the in-process path completes between the webhook's `readState` and `upsertState`. acceptable until we add a `connected_ack_at` flag.
+- `/app/inbox` requires an `X-App-Device` header carrying an opaque token stored as a `user_identities` row of `provider='app_device'`. there is no device-pairing flow yet — tokens are provisioned out-of-band. native app / dynamic island / browser onboarding is a separate piece of work.
+- omnipresence guarantee: a thrown brain call now triggers a fallback burst via `delivery/omnipresence.ts`. it doesn't catch silence from the model emitting `do_nothing` or `defer` — those are intentional. but if you add new server-side error paths that abort the dispatcher, call `deliverSilenceFallback` first.
 
 ## adding things
 

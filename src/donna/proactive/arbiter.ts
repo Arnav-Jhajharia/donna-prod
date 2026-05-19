@@ -50,7 +50,17 @@ function nextSevenAm(now: Date, tz: string): Date {
   return new Date(now.getTime() + 8 * 3600_000);
 }
 
+// causes that bypass quiet hours / cooldown — user-initiated events where
+// silence is worse than the interrupt. integration_oauth_complete fires
+// because the user just finished an oauth flow and is staring at their
+// phone waiting for confirmation. holding it for quiet hours would be a
+// betrayal of the omnipresence contract.
+const ALWAYS_ALLOW = new Set<string>(["integration_oauth_complete"]);
+
 export function arbitrate(args: ArbitrateArgs): ArbiterDecision {
+  if (ALWAYS_ALLOW.has(args.cause.kind)) {
+    return { allow: true };
+  }
   if (isQuietHours(args.now, args.user_tz)) {
     return {
       allow: false,

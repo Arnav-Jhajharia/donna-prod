@@ -1,7 +1,7 @@
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
 import { runTurn as defaultRunTurn, type RunTurnResult } from "../brain.js";
 import { loadRecentMessages, saveMessages } from "../memory/chat.js";
-import { WhatsAppChannel } from "../delivery/whatsapp.js";
+import { deliverBurst } from "../delivery/router.js";
 import { arbitrate } from "./arbiter.js";
 import {
   claimNextPending,
@@ -15,14 +15,19 @@ import {
 import type { ProactiveCause } from "./cause.js";
 import { getSql } from "../db.js";
 
+import type { TurnSource } from "../context.js";
+
 export type RunTurnFn = (args: {
   mode: "proactive";
   messages: MessageParam[];
   cause: ProactiveCause;
   userId: string;
-  source: "cli" | "whatsapp" | "imessage" | "proactive_worker";
+  source: TurnSource;
 }) => Promise<RunTurnResult>;
 
+// deliver one burst body to a user. the default implementation routes
+// through the omnipresence router (whatsapp → imessage → app fallback);
+// tests inject their own via opts.deliverFn.
 export type DeliverFn = (userId: string, body: string) => Promise<void>;
 
 export interface RunScheduleTickOnceOptions {
@@ -35,14 +40,16 @@ export interface RunScheduleTickOnceOptions {
 let _ticking = false;
 
 async function defaultDeliver(userId: string, body: string): Promise<void> {
-  const sql = getSql();
-  const rows = await sql<Array<{ phone: string }>>`
-    select phone from users where id = ${userId} limit 1
-  `;
-  const phone = rows[0]?.phone;
-  if (!phone) throw new Error(`no phone for user_id=${userId}`);
-  const wa = new WhatsAppChannel();
-  await wa.send(phone, { kind: "text", body, replyToMessageId: null });
+  // proactive worker has no source hint — the router will pick based on the
+  // user's last_active_channel / preferred_channel and fall through to the
+  // app outbox if nothing else lands.
+  const result = await deliverBurst(userId, [body], {
+    sourceHint: "proactive_worker",
+    persistHistory: false,
+  });
+  if (result.delivered === 0) {
+    throw new Error(`proactive delivery failed for user_id=${userId}`);
+  }
 }
 
 function rowToCause(row: ScheduleRow): ProactiveCause {

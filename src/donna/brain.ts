@@ -22,7 +22,7 @@ import { REACTIVE_SYSTEM_PROMPT, PROACTIVE_SYSTEM_PROMPT } from "./prompt.js";
 import { filterSends } from "./voice_filter.js";
 import type { DeferInput } from "./tools/defer.js";
 import { recordExecutionEvent } from "./observability/execution.js";
-import { withTurnContext } from "./context.js";
+import { withTurnContext, type TurnSource } from "./context.js";
 import type { ProactiveCause } from "./proactive/cause.js";
 import { synthesizeCauseMessage } from "./proactive/cause.js";
 
@@ -86,7 +86,7 @@ export interface RunTurnArgsBase {
   userId: string;
   // where the turn originated. cli runs and channel webhook runs differ
   // in their downstream side effects (egress, dedup, etc).
-  source?: "cli" | "whatsapp" | "imessage" | "proactive_worker";
+  source?: TurnSource;
   runId?: string | null;
   // optional langsmith RunTreeConfig (tags, metadata, etc.). when LANGSMITH_TRACING
   // is set, these flow into the parent trace. the traceable wrapper extracts and
@@ -278,7 +278,7 @@ async function _runTurn(args: RunTurnArgs): Promise<RunTurnResult> {
 // need conversation history unless the caller explicitly passes recent context.
 export async function runProactiveTurn(args: {
   userId: string;
-  source: "cli" | "whatsapp" | "imessage" | "proactive_worker";
+  source: TurnSource;
   cause: ProactiveCause;
   messages?: MessageParam[];
   runId?: string | null;

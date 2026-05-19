@@ -4,7 +4,7 @@
 
 import type { Tool } from "@anthropic-ai/sdk/resources/messages";
 import type { BrainMode } from "../brain.js";
-import { getTurnContext } from "../context.js";
+import { getTurnContext, type TurnSource } from "../context.js";
 import { getComposio } from "../integrations/composio.js";
 import {
   listForUser,
@@ -258,7 +258,7 @@ interface ComposioAuthHandle {
 
 async function completeConnectionInBackground(args: {
   userId: string;
-  source: "cli" | "whatsapp" | "imessage" | "proactive_worker";
+  source: TurnSource;
   provider: string;
   mode: IntegrationMode;
   cr: ComposioAuthHandle;
@@ -297,7 +297,9 @@ async function completeConnectionInBackground(args: {
       source,
       cause,
     });
-    await deliverBurstToUser(userId, result.sends);
+    // route to the channel the user just connected from — fixes the bug
+    // where an imessage-initiated oauth ack was hardcoded to whatsapp.
+    await deliverBurstToUser(userId, result.sends, { source });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn(

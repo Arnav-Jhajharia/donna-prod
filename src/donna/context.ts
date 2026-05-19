@@ -4,10 +4,16 @@ import { AsyncLocalStorage } from "node:async_hooks";
 // in `withTurnContext({...}, () => ...)`; tool handlers (and anything they
 // call) read the current context via `getTurnContext()`. lets handlers reach
 // userId / runId without threading them through every signature.
+// 'app' covers any client that pulls bursts from outbound_messages: native
+// app, dynamic island live activity, browser. they share one source kind
+// because, from donna's perspective, they're the same "user has the donna
+// app open right now" surface — only the renderer differs.
+export type TurnSource = "cli" | "whatsapp" | "imessage" | "app" | "proactive_worker";
+
 export interface TurnContext {
   userId: string;
   runId: string | null;
-  source: "cli" | "whatsapp" | "imessage" | "proactive_worker";
+  source: TurnSource;
 }
 
 const als = new AsyncLocalStorage<TurnContext>();

@@ -14,7 +14,11 @@ import type { IngressPayload } from "./donna/ingress/payload.js";
 import { WhatsAppChannel } from "./donna/delivery/whatsapp.js";
 import { IMessageChannel } from "./donna/delivery/imessage.js";
 import type { TextMessage } from "./donna/delivery/messages.js";
-import { getOrCreateUser } from "./donna/memory/users.js";
+import { getOrCreateUser, getUserByIdentity, recordIdentity, updateActivity } from "./donna/memory/users.js";
+import { deliverSilenceFallback } from "./donna/delivery/omnipresence.js";
+import { listPendingForUser, markDelivered, markRead } from "./donna/delivery/app.js";
+import { insertSchedule } from "./donna/proactive/schedule.js";
+import { upsertState, readState } from "./donna/integrations/service.js";
 import {
   createExecutionRun,
   finishExecutionRun,
@@ -79,6 +83,11 @@ async function dispatchPayload(payload: IngressPayload): Promise<void> {
     console.error(`[wa] user resolution failed for ${payload.phone}: ${msg}`);
     return;
   }
+
+  // stamp last_active_channel so the router knows where to push proactive
+  // bursts. fire-and-forget — a stale stamp is a soft regression, never a
+  // reason to drop the turn.
+  void updateActivity(user.id, "whatsapp").catch(() => undefined);
 
   const runId = await createExecutionRun({
     userId: user.id,
@@ -191,6 +200,14 @@ async function dispatchPayload(payload: IngressPayload): Promise<void> {
     await recordExecutionEvent(runId, "brain_error", "runTurn", {
       error: msg,
     });
+    // omnipresence: never let a brain failure become silence on the user's
+    // surface. fallback burst still lands via the channel router.
+    await deliverSilenceFallback({
+      userId: user.id,
+      runId,
+      source: "whatsapp",
+      error: err,
+    });
     await finishExecutionRun(runId, {
       status: "failed",
       error: msg,
@@ -272,6 +289,16 @@ async function dispatchImessagePayload(payload: IngressPayload): Promise<void> {
     console.error(`[imessage] user resolution failed for ${payload.phone}: ${msg}`);
     return;
   }
+
+  // stamp last_active_channel + ensure an imessage_phone identity exists so
+  // future surfaces can resolve this user from the imessage side.
+  void updateActivity(user.id, "imessage").catch(() => undefined);
+  void recordIdentity({
+    userId: user.id,
+    provider: "imessage_phone",
+    externalId: user.phone,
+    metadata: payload.chatId ? { chat_id: payload.chatId } : {},
+  }).catch(() => undefined);
 
   const runId = await createExecutionRun({
     userId: user.id,
@@ -376,6 +403,13 @@ async function dispatchImessagePayload(payload: IngressPayload): Promise<void> {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`[imessage] brain failed: ${msg}`);
     await recordExecutionEvent(runId, "brain_error", "runTurn", { error: msg });
+    // omnipresence: never let a brain failure become silence.
+    await deliverSilenceFallback({
+      userId: user.id,
+      runId,
+      source: "imessage",
+      error: err,
+    });
     await finishExecutionRun(runId, { status: "failed", error: msg });
     return;
   }
@@ -518,6 +552,191 @@ async function handleImessageWebhook(
   await dispatchImessagePayload(parsed.payload);
 }
 
+// ── composio webhook ────────────────────────────────────────────────────────
+//
+// kills the detached-promise sharp edge in tools/integrations.ts: if the
+// server restarts during the oauth window, the in-process waitForConnection
+// is lost. this endpoint persists the oauth completion as a donnaschedule row
+// (cause_kind='integration_oauth_complete') so the proactive worker picks it
+// up and delivers the ack via the channel router.
+//
+// auth: shared-secret bearer token, set via DONNA_COMPOSIO_WEBHOOK_TOKEN.
+// configure composio to send `Authorization: Bearer <token>` on webhook hits.
+// (full HMAC verification can replace this once we surface composio's
+// signature header — for v0 a strong shared secret is sufficient.)
+//
+// payload shape (composio's auth-events): { type, data: { entity_id,
+//   app_name | toolkit_slug, connected_account_id, status, ... } }.
+// we accept either toolkit_slug or app_name as the provider key for
+// compatibility across composio SDK versions.
+
+interface ComposioWebhookPayload {
+  type?: string;
+  data?: {
+    entity_id?: string;
+    user_id?: string;
+    app_name?: string;
+    toolkit_slug?: string;
+    connected_account_id?: string;
+    status?: string;
+  };
+}
+
+function extractProvider(data: ComposioWebhookPayload["data"]): string | null {
+  if (!data) return null;
+  const raw = data.toolkit_slug ?? data.app_name;
+  return raw ? raw.toLowerCase() : null;
+}
+
+async function handleComposioWebhook(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  const token = process.env.DONNA_COMPOSIO_WEBHOOK_TOKEN;
+  if (!token) {
+    console.error("[composio] DONNA_COMPOSIO_WEBHOOK_TOKEN not set");
+    sendJson(res, 500, { status: "not_configured" });
+    return;
+  }
+  const auth = req.headers.authorization ?? "";
+  if (auth !== `Bearer ${token}`) {
+    sendJson(res, 401, { status: "unauthorized" });
+    return;
+  }
+
+  let body: ComposioWebhookPayload;
+  try {
+    body = (await readJson(req)) as ComposioWebhookPayload;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[composio] bad json body: ${msg}`);
+    sendJson(res, 400, { status: "bad_request" });
+    return;
+  }
+
+  // ack fast — composio retries on >5s.
+  sendJson(res, 200, { status: "ok" });
+
+  const data = body.data;
+  const userId = data?.entity_id ?? data?.user_id;
+  const provider = extractProvider(data);
+  const accountId = data?.connected_account_id ?? null;
+  const eventType = body.type ?? "";
+
+  // only flip state on actual success events. composio emits other auth
+  // event types (initiated, expired, revoked) we don't need to act on here.
+  const isSuccess =
+    eventType.toLowerCase().includes("success") ||
+    (data?.status ?? "").toLowerCase() === "connected" ||
+    (data?.status ?? "").toLowerCase() === "active";
+
+  if (!userId || !provider || !isSuccess) {
+    console.info(
+      `[composio] skipping webhook event_type=${eventType} provider=${provider ?? "?"} user=${userId?.slice(0, 8) ?? "?"} success=${isSuccess}`,
+    );
+    return;
+  }
+
+  try {
+    const existing = await readState(userId, provider);
+    // idempotent: if integration is already connected with this account, the
+    // detached in-process completion handler already won the race. record
+    // nothing and let it deliver the ack.
+    if (
+      existing &&
+      existing.status === "connected" &&
+      existing.composio_account_id === accountId
+    ) {
+      console.info(
+        `[composio] webhook is a no-op — ${provider} already connected for ${userId.slice(0, 8)}`,
+      );
+      return;
+    }
+
+    await upsertState({
+      userId,
+      provider,
+      status: "connected",
+      mode: existing?.mode ?? "smart_index",
+      composio_account_id: accountId,
+    });
+
+    // enqueue an immediate proactive ack. the worker runs it through the
+    // brain in proactive mode (arbiter bypasses quiet hours for this cause
+    // kind) and routes the burst via the omnipresence router.
+    await insertSchedule({
+      user_id: userId,
+      fire_at: new Date().toISOString(),
+      cause_kind: "integration_oauth_complete",
+      cause_payload: { provider, account_id: accountId, mode: existing?.mode ?? "smart_index" },
+      instruction: `${provider} just finished oauth and is now connected. tell the user briefly, in your voice. do not greet, do not preamble.`,
+      created_by: "system",
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[composio] processing failed for ${provider}/${userId}: ${msg}`);
+  }
+}
+
+// ── app inbox ───────────────────────────────────────────────────────────────
+//
+// app surfaces (native app, dynamic island live activity, browser) pull
+// pending bursts from outbound_messages here. auth is via the X-App-Device
+// header carrying the opaque token stored as a user_identities row of
+// provider='app_device'. device pairing is out of scope for this branch —
+// tokens are provisioned out-of-band for now. clients should:
+//
+//   GET  /app/inbox                       → { messages: [...] }
+//   POST /app/inbox/<id>/delivered        → mark delivered (received on device)
+//   POST /app/inbox/<id>/read             → mark read (user actually saw it)
+
+async function authenticateAppDevice(
+  req: IncomingMessage,
+): Promise<{ userId: string } | null> {
+  const header = req.headers["x-app-device"];
+  const token = Array.isArray(header) ? header[0] : header;
+  if (!token) return null;
+  const user = await getUserByIdentity("app_device", token);
+  return user ? { userId: user.id } : null;
+}
+
+async function handleAppInbox(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  const auth = await authenticateAppDevice(req);
+  if (!auth) {
+    sendJson(res, 401, { status: "unauthorized" });
+    return;
+  }
+
+  const url = new URL(req.url ?? "/", "http://localhost");
+
+  if (req.method === "GET" && url.pathname === "/app/inbox") {
+    const rawLimit = Number(url.searchParams.get("limit") ?? 50);
+    const limit = Number.isFinite(rawLimit)
+      ? Math.max(1, Math.min(200, rawLimit))
+      : 50;
+    const messages = await listPendingForUser(auth.userId, limit);
+    sendJson(res, 200, { messages });
+    return;
+  }
+
+  const ackMatch = url.pathname.match(
+    /^\/app\/inbox\/([0-9a-f-]+)\/(delivered|read)$/i,
+  );
+  if (req.method === "POST" && ackMatch) {
+    const id = ackMatch[1]!;
+    const kind = ackMatch[2]!.toLowerCase() as "delivered" | "read";
+    if (kind === "delivered") await markDelivered(id);
+    else await markRead(id);
+    sendJson(res, 200, { status: "ok" });
+    return;
+  }
+
+  sendJson(res, 404, { status: "not_found" });
+}
+
 async function handleVerify(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const cfg = getConfig().whatsapp;
   const url = new URL(req.url ?? "/", "http://localhost");
@@ -623,6 +842,14 @@ async function main(): Promise<void> {
     }
     if (req.method === "POST" && url.startsWith("/imessage/webhook")) {
       void handleImessageWebhook(req, res);
+      return;
+    }
+    if (req.method === "POST" && url === "/composio/webhook") {
+      void handleComposioWebhook(req, res);
+      return;
+    }
+    if (url.startsWith("/app/inbox")) {
+      void handleAppInbox(req, res);
       return;
     }
     send(res, 404, "not found");
