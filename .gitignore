@@ -6,9 +6,16 @@ node_modules/
 dist/
 *.log
 
+# Runtime binary cache (yt-dlp downloaded on first use)
+.cache/
+
 # Env
 .env
 .env.local
+.env.old
+
+# Local archives / binary blobs
+donna-archive.tar.gz
 
 # Editor
 .vscode/
@@ -22,3 +29,7 @@ supabase/.branches/
 # scratch / local notes
 insights.md
 borrow-from-old.md
+scripts/.composio-mining.json
+
+# turn ledger (JSONL per-day, written by src/donna/ledger.ts)
+.donna/
