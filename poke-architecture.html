@@ -1,0 +1,1100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>poke architecture</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:      #faf7f1;
+    --paper-2:    #f3eee2;
+    --ink:        #1a1a1a;
+    --ink-soft:   #3d3d3d;
+    --ink-faded:  #888;
+    --rule:       #2a2a2a;
+    --rule-soft:  #cfc8b8;
+
+    --yellow:     #ffe066;
+    --yellow-2:   #fff3a8;
+    --blue:       #a8d8ff;
+    --blue-2:     #d4ebff;
+    --purple:     #d4b5ff;
+    --purple-2:   #ebdcff;
+    --green:      #b5e7c5;
+    --green-2:    #d8f0e0;
+    --pink:       #ffc1cc;
+    --pink-2:     #ffe0e5;
+    --orange:     #ffc99d;
+    --orange-2:   #ffe2c7;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 48px 28px 120px;
+  }
+
+  /* ---- typography ---- */
+  h1, h2, h3 {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  h1 {
+    font-size: 64px;
+    margin: 0 0 4px;
+    line-height: 1;
+  }
+  h2 {
+    font-size: 38px;
+    margin: 80px 0 8px;
+    color: var(--ink);
+  }
+  h3 {
+    font-size: 26px;
+    margin: 28px 0 8px;
+    color: var(--ink-soft);
+  }
+  .subtitle {
+    font-family: 'Caveat', cursive;
+    font-size: 24px;
+    color: var(--ink-faded);
+    margin-bottom: 24px;
+  }
+  p {
+    margin: 0 0 14px;
+    max-width: 760px;
+  }
+  code, .mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 13px;
+    background: var(--paper-2);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  .scribble { font-family: 'Caveat', cursive; font-weight: 500; }
+
+  /* ---- header ---- */
+  header {
+    padding-bottom: 28px;
+    border-bottom: 2px dashed var(--rule);
+    margin-bottom: 48px;
+    position: relative;
+  }
+  header .meta {
+    font-family: 'Caveat', cursive;
+    font-size: 20px;
+    color: var(--ink-faded);
+    margin-top: 12px;
+  }
+  header .tag {
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: rotate(4deg);
+    background: var(--yellow);
+    padding: 8px 14px;
+    border: 2px solid var(--rule);
+    border-radius: 4px;
+    font-family: 'Caveat', cursive;
+    font-size: 18px;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.1);
+  }
+
+  /* ---- main diagram canvas ---- */
+  .canvas {
+    margin: 24px 0 8px;
+    width: 100%;
+    overflow-x: auto;
+  }
+  svg.diagram {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* shared SVG node text */
+  .label { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; fill: var(--ink); }
+  .label-sm { font-family: 'Inter', sans-serif; font-size: 11px; fill: var(--ink-soft); }
+  .label-tiny { font-family: 'Inter', sans-serif; font-size: 10px; fill: var(--ink-soft); }
+  .scribble-text { font-family: 'Caveat', cursive; font-size: 22px; fill: var(--ink); font-weight: 600; }
+  .scribble-sm { font-family: 'Caveat', cursive; font-size: 18px; fill: var(--ink-soft); }
+  .code-text { font-family: 'JetBrains Mono', monospace; font-size: 11px; fill: var(--ink); }
+
+  /* sticky note callouts */
+  .note {
+    background: var(--yellow-2);
+    border: 1px solid var(--rule);
+    padding: 14px 18px;
+    border-radius: 4px;
+    font-family: 'Caveat', cursive;
+    font-size: 20px;
+    line-height: 1.3;
+    max-width: 380px;
+    box-shadow: 3px 3px 0 rgba(0,0,0,0.08);
+    margin: 16px 0;
+    transform: rotate(-0.4deg);
+  }
+  .note.blue { background: var(--blue-2); }
+  .note.pink { background: var(--pink-2); transform: rotate(0.6deg); }
+  .note.green { background: var(--green-2); transform: rotate(-0.3deg); }
+  .note.purple { background: var(--purple-2); }
+
+  blockquote {
+    margin: 16px 0;
+    padding: 14px 18px;
+    background: var(--paper-2);
+    border-left: 4px solid var(--rule);
+    border-radius: 0 4px 4px 0;
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: 14px;
+    max-width: 800px;
+  }
+  blockquote .cite {
+    display: block;
+    margin-top: 8px;
+    font-style: normal;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faded);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    font-size: 14px;
+    max-width: 1000px;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px dashed var(--rule-soft);
+  }
+  th {
+    font-family: 'Caveat', cursive;
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--ink);
+    border-bottom: 2px solid var(--rule);
+  }
+  td code { background: var(--paper-2); }
+
+  /* card grid */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
+    margin: 18px 0;
+  }
+  .card {
+    background: var(--paper-2);
+    border: 2px solid var(--rule);
+    border-radius: 6px;
+    padding: 16px 18px;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.06);
+  }
+  .card h4 {
+    font-family: 'Caveat', cursive;
+    font-size: 22px;
+    margin: 0 0 8px;
+    color: var(--ink);
+  }
+  .card.yellow { background: var(--yellow-2); }
+  .card.blue { background: var(--blue-2); }
+  .card.green { background: var(--green-2); }
+  .card.purple { background: var(--purple-2); }
+  .card.pink { background: var(--pink-2); }
+  .card p { font-size: 13px; margin: 0; }
+
+  /* legend */
+  .legend {
+    margin: 32px 0;
+    padding: 16px 20px;
+    background: var(--paper-2);
+    border: 1.5px solid var(--rule);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .legend .item { display: flex; align-items: center; gap: 8px; }
+  .swatch {
+    width: 24px;
+    height: 14px;
+    border: 1.5px solid var(--rule);
+    border-radius: 3px;
+  }
+  .swatch.solid { background: var(--yellow-2); }
+  .swatch.exec { background: var(--blue-2); }
+  .swatch.specialist { background: var(--purple-2); }
+  .swatch.trigger { background: var(--green-2); }
+  .swatch.user { background: var(--pink-2); }
+  .swatch.dashed { background: transparent; border-style: dashed; }
+
+  footer {
+    margin-top: 80px;
+    padding-top: 24px;
+    border-top: 2px dashed var(--rule);
+    color: var(--ink-faded);
+    font-family: 'Caveat', cursive;
+    font-size: 18px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="tag">leak-grounded · no openpoke</div>
+    <h1>poke / interaction co</h1>
+    <div class="subtitle">architecture, drawn from the september 2025 leak</div>
+    <div class="meta">sources: agent.md · agent-protocol.md · guidelines.md · integration-policies.md · memory-guidelines.md · email-protocols.md · linq customer story · techcrunch</div>
+  </header>
+
+  <!-- ====================== HERO DIAGRAM ====================== -->
+  <h2>the whole picture</h2>
+  <p>two prompts. two tiers. one user-facing thread. real work is hidden behind a routing tool.</p>
+
+  <div class="canvas">
+    <svg class="diagram" viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+          <path d="M2,2 L10,6 L2,10 z" fill="#2a2a2a"/>
+        </marker>
+        <marker id="arrowSmall" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M2,2 L8,5 L2,8 z" fill="#2a2a2a"/>
+        </marker>
+        <pattern id="diag-paper" width="22" height="22" patternUnits="userSpaceOnUse">
+          <circle cx="1" cy="1" r="0.7" fill="rgba(0,0,0,0.06)"/>
+        </pattern>
+      </defs>
+
+      <!-- USER -->
+      <g>
+        <rect x="500" y="20" width="200" height="50" rx="25" ry="25"
+              fill="#ffe0e5" stroke="#2a2a2a" stroke-width="2"/>
+        <text x="600" y="42" text-anchor="middle" class="label">the user</text>
+        <text x="600" y="58" text-anchor="middle" class="label-sm">whatsapp / imessage / sms</text>
+      </g>
+      <!-- arrow down to linq -->
+      <line x1="600" y1="72" x2="600" y2="98" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- LINQ -->
+      <g>
+        <rect x="430" y="100" width="340" height="38" rx="6" ry="6"
+              fill="#f3eee2" stroke="#2a2a2a" stroke-width="2" stroke-dasharray="6,3"/>
+        <text x="600" y="124" text-anchor="middle" class="label">linq — messaging infra (soc 2, zero retention)</text>
+      </g>
+      <line x1="600" y1="140" x2="600" y2="160" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- VERCEL AI GATEWAY -->
+      <g>
+        <rect x="430" y="162" width="340" height="38" rx="6" ry="6"
+              fill="#f3eee2" stroke="#2a2a2a" stroke-width="2" stroke-dasharray="6,3"/>
+        <text x="600" y="186" text-anchor="middle" class="label">vercel ai gateway — multi-model routing</text>
+      </g>
+      <line x1="600" y1="202" x2="600" y2="232" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- TIER 1: PERSONALITY -->
+      <g>
+        <rect x="160" y="234" width="880" height="170" rx="10" ry="10"
+              fill="#fff3a8" stroke="#2a2a2a" stroke-width="3"
+              filter="url(#shadow)"/>
+        <text x="195" y="266" class="scribble-text">tier 1 — the personality agent ("poke")</text>
+        <text x="195" y="290" class="label-sm">owns the user-facing voice · holds personality · cannot do real work</text>
+
+        <!-- four tools as little boxes -->
+        <g>
+          <rect x="195" y="310" width="190" height="70" rx="6" fill="#fffdf0" stroke="#2a2a2a" stroke-width="1.5"/>
+          <text x="290" y="332" text-anchor="middle" class="code-text">send_message_to_agent</text>
+          <text x="290" y="350" text-anchor="middle" class="label-tiny">route work to a sub-agent</text>
+          <text x="290" y="366" text-anchor="middle" class="label-tiny">(only path to action)</text>
+        </g>
+        <g>
+          <rect x="400" y="310" width="190" height="70" rx="6" fill="#fffdf0" stroke="#2a2a2a" stroke-width="1.5"/>
+          <text x="495" y="332" text-anchor="middle" class="code-text">display_draft</text>
+          <text x="495" y="350" text-anchor="middle" class="label-tiny">show email / cal draft</text>
+          <text x="495" y="366" text-anchor="middle" class="label-tiny">for user confirmation</text>
+        </g>
+        <g>
+          <rect x="605" y="310" width="190" height="70" rx="6" fill="#fffdf0" stroke="#2a2a2a" stroke-width="1.5"/>
+          <text x="700" y="332" text-anchor="middle" class="code-text">react_to_message</text>
+          <text x="700" y="350" text-anchor="middle" class="label-tiny">emoji tapback</text>
+        </g>
+        <g>
+          <rect x="810" y="310" width="190" height="70" rx="6" fill="#fffdf0" stroke="#2a2a2a" stroke-width="1.5"/>
+          <text x="905" y="332" text-anchor="middle" class="code-text">wait</text>
+          <text x="905" y="350" text-anchor="middle" class="label-tiny">silent cancellation</text>
+          <text x="905" y="366" text-anchor="middle" class="label-tiny">(false-positive trigger)</text>
+        </g>
+      </g>
+
+      <!-- Annotation sticky for tier 1 -->
+      <g transform="translate(1060,260) rotate(4)">
+        <rect x="0" y="0" width="120" height="92" fill="#a8d8ff" stroke="#2a2a2a" stroke-width="1.5"/>
+        <text x="60" y="22" text-anchor="middle" class="scribble-sm">no gmail!</text>
+        <text x="60" y="44" text-anchor="middle" class="scribble-sm">no calendar!</text>
+        <text x="60" y="66" text-anchor="middle" class="scribble-sm">no work tools</text>
+        <text x="60" y="84" text-anchor="middle" class="scribble-sm">at all.</text>
+      </g>
+
+      <!-- arrow from tier 1 to tier 2 -->
+      <path d="M 600 410 L 600 462" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="610" y="438" class="scribble-text">send_message_to_agent({name, msg})</text>
+
+      <!-- TIER 2: EXECUTION AGENTS -->
+      <g>
+        <rect x="100" y="464" width="1000" height="200" rx="10" ry="10"
+              fill="#d4ebff" stroke="#2a2a2a" stroke-width="3"/>
+        <text x="135" y="496" class="scribble-text">tier 2 — execution agents (long-lived, named, persistent)</text>
+        <text x="135" y="518" class="label-sm">one per task/goal · own conversation history · ALL real tools live here · zero personality</text>
+
+        <!-- example named agents (instances) -->
+        <g>
+          <rect x="135" y="540" width="170" height="100" rx="6" fill="#fff" stroke="#2a2a2a" stroke-width="1.5"/>
+          <text x="220" y="562" text-anchor="middle" class="scribble-sm">"jane menu"</text>
+          <text x="220" y="582" text-anchor="middle" class="label-tiny">emailId: abc</text>
+          <text x="220" y="596" text-anchor="middle" class="label-tiny">attachment: xyz</text>
+          <text x="220" y="610" text-anchor="middle" class="label-tiny">user requested forward</text>
+          <text x="220" y="624" text-anchor="middle" class="label-tiny">(loaded next firing)</text>
+        </g>
+        <g>
+          <rect x="320" y="540" width="170" height="100" rx="6" fill="#fff" stroke="#2a2a2a" stroke-width="1.5"/>
+          <text x="405" y="562" text-anchor="middle" class="scribble-sm">"PR #123 watch"</text>
+          <text x="405" y="582" text-anchor="middle" class="label-tiny">cron: every 15m</text>
+          <text x="405" y="596" text-anchor="middle" class="label-tiny">last commit seen: abc</text>
+          <text x="405" y="610" text-anchor="middle" class="label-tiny">status: review-requested</text>
+          <text x="405" y="624" text-anchor="middle" class="label-tiny">reviewers: 3</text>
+        </g>
+        <g>
+          <rect x="505" y="540" width="170" height="100" rx="6" fill="#fff" stroke="#2a2a2a" stroke-width="1.5"/>
+          <text x="590" y="562" text-anchor="middle" class="scribble-sm">"berlin flights"</text>
+          <text x="590" y="582" text-anchor="middle" class="label-tiny">cron: daily 10am</text>
+          <text x="590" y="596" text-anchor="middle" class="label-tiny">baseline: $420</text>
+          <text x="590" y="610" text-anchor="middle" class="label-tiny">last seen: $385</text>
+        </g>
+        <g>
+          <rect x="690" y="540" width="170" height="100" rx="6" fill="#fff" stroke="#2a2a2a" stroke-width="1.5"/>
+          <text x="775" y="562" text-anchor="middle" class="scribble-sm">"morning brief"</text>
+          <text x="775" y="582" text-anchor="middle" class="label-tiny">cron: weekdays 8am</text>
+          <text x="775" y="596" text-anchor="middle" class="label-tiny">last 14 briefs logged</text>
+          <text x="775" y="610" text-anchor="middle" class="label-tiny">user response rate: 60%</text>
+        </g>
+        <g>
+          <rect x="875" y="540" width="210" height="100" rx="6" fill="#fff" stroke="#2a2a2a" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <text x="980" y="572" text-anchor="middle" class="scribble-sm">...many more</text>
+          <text x="980" y="600" text-anchor="middle" class="label-tiny">addressable by name.</text>
+          <text x="980" y="616" text-anchor="middle" class="label-tiny">poke picks which to reuse.</text>
+        </g>
+      </g>
+
+      <!-- arrow tier 2 → tier 3 -->
+      <path d="M 600 666 L 600 710" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="610" y="688" class="scribble-text">task({prompt, subagent_type})</text>
+
+      <!-- TIER 3: SPECIALISTS -->
+      <g>
+        <rect x="100" y="712" width="1000" height="140" rx="10" ry="10"
+              fill="#ebdcff" stroke="#2a2a2a" stroke-width="3"/>
+        <text x="135" y="744" class="scribble-text">tier 3 — specialist sub-agents (parallel fan-out)</text>
+        <text x="135" y="766" class="label-sm">typed by subagent_type · spawned in parallel · stateless · own the actual tool calls</text>
+
+        <g>
+          <rect x="135" y="784" width="150" height="50" rx="6" fill="#fff" stroke="#2a2a2a" stroke-width="1.5"/>
+          <text x="210" y="804" text-anchor="middle" class="code-text">search-agent</text>
+          <text x="210" y="822" text-anchor="middle" class="label-tiny">gmail / search</text>
+        </g>
+        <g>
+          <rect x="295" y="784" width="150" height="50" rx="6" fill="#fff" stroke="#2a2a2a" stroke-width="1.5"/>
+          <text x="370" y="804" text-anchor="middle" class="code-text">notion-agent</text>
+          <text x="370" y="822" text-anchor="middle" class="label-tiny">notion read / write</text>
+        </g>
+        <g>
+          <rect x="455" y="784" width="150" height="50" rx="6" fill="#fff" stroke="#2a2a2a" stroke-width="1.5"/>
+          <text x="530" y="804" text-anchor="middle" class="code-text">linear-agent</text>
+          <text x="530" y="822" text-anchor="middle" class="label-tiny">linear issues</text>
+        </g>
+        <g>
+          <rect x="615" y="784" width="150" height="50" rx="6" fill="#fff" stroke="#2a2a2a" stroke-width="1.5"/>
+          <text x="690" y="804" text-anchor="middle" class="code-text">browser-agent</text>
+          <text x="690" y="822" text-anchor="middle" class="label-tiny">open-web</text>
+        </g>
+        <g>
+          <rect x="775" y="784" width="310" height="50" rx="6" fill="#fff" stroke="#2a2a2a" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <text x="930" y="804" text-anchor="middle" class="label-sm">gmail · calendar · vercel · intercom · sentry · custom mcp</text>
+          <text x="930" y="822" text-anchor="middle" class="label-tiny">(inferred from tool catalog)</text>
+        </g>
+      </g>
+
+      <!-- side annotation: api calls -->
+      <g transform="translate(40,340) rotate(-2)">
+        <rect x="0" y="0" width="100" height="80" fill="#b5e7c5" stroke="#2a2a2a" stroke-width="1.5"/>
+        <text x="50" y="22" text-anchor="middle" class="scribble-sm">EACH</text>
+        <text x="50" y="42" text-anchor="middle" class="scribble-sm">tier =</text>
+        <text x="50" y="62" text-anchor="middle" class="scribble-sm">separate</text>
+        <text x="50" y="78" text-anchor="middle" class="scribble-sm">api call</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="legend">
+    <strong>legend:</strong>
+    <span class="item"><span class="swatch user"></span> user / inbound</span>
+    <span class="item"><span class="swatch solid"></span> personality agent</span>
+    <span class="item"><span class="swatch exec"></span> execution agents</span>
+    <span class="item"><span class="swatch specialist"></span> specialists</span>
+    <span class="item"><span class="swatch dashed"></span> dashed = inferred / infra</span>
+  </div>
+
+  <!-- ====================== A TURN ====================== -->
+  <h2>one user turn, end to end</h2>
+  <p>"<em>find the menu jane sent me last week and forward it to bob</em>"</p>
+
+  <div class="canvas">
+    <svg class="diagram" viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr2" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+          <path d="M2,2 L10,6 L2,10 z" fill="#2a2a2a"/>
+        </marker>
+      </defs>
+
+      <!-- user message -->
+      <rect x="40" y="40" width="240" height="60" rx="30" fill="#ffe0e5" stroke="#2a2a2a" stroke-width="2"/>
+      <text x="160" y="68" text-anchor="middle" class="label">user message</text>
+      <text x="160" y="86" text-anchor="middle" class="label-tiny">"find that menu jane sent..."</text>
+
+      <!-- poke api call #1 -->
+      <rect x="340" y="20" width="280" height="100" rx="8" fill="#fff3a8" stroke="#2a2a2a" stroke-width="2"/>
+      <text x="480" y="46" text-anchor="middle" class="scribble-sm">api call #1 — poke</text>
+      <text x="480" y="68" text-anchor="middle" class="label-sm">system = personality prompt</text>
+      <text x="480" y="86" text-anchor="middle" class="label-sm">tools = [send_message_to_agent, ...]</text>
+      <text x="480" y="106" text-anchor="middle" class="label-tiny">decides: need an agent named "jane menu"</text>
+
+      <!-- agent lookup -->
+      <rect x="680" y="20" width="220" height="100" rx="8" fill="#d4ebff" stroke="#2a2a2a" stroke-width="2"/>
+      <text x="790" y="46" text-anchor="middle" class="scribble-sm">backend lookup</text>
+      <text x="790" y="68" text-anchor="middle" class="label-tiny">name = "jane menu"</text>
+      <text x="790" y="84" text-anchor="middle" class="label-tiny">no existing row →</text>
+      <text x="790" y="100" text-anchor="middle" class="label-tiny">CREATE new agent</text>
+
+      <!-- api call #2 -->
+      <rect x="940" y="20" width="240" height="100" rx="8" fill="#d4ebff" stroke="#2a2a2a" stroke-width="2"/>
+      <text x="1060" y="46" text-anchor="middle" class="scribble-sm">api call #2 — exec agent</text>
+      <text x="1060" y="68" text-anchor="middle" class="label-sm">system = execution prompt</text>
+      <text x="1060" y="84" text-anchor="middle" class="label-sm">tools = [gmail, task, draft, ...]</text>
+      <text x="1060" y="104" text-anchor="middle" class="label-tiny">calls gmail_search via search-agent</text>
+
+      <!-- arrows row 1 -->
+      <line x1="280" y1="70" x2="338" y2="70" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arr2)"/>
+      <line x1="620" y1="70" x2="678" y2="70" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arr2)"/>
+      <line x1="900" y1="70" x2="938" y2="70" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arr2)"/>
+
+      <!-- agent's history grows -->
+      <g transform="translate(940, 150)">
+        <rect x="0" y="0" width="240" height="80" rx="6" fill="#fff" stroke="#2a2a2a" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="120" y="22" text-anchor="middle" class="scribble-sm">"jane menu" thread row</text>
+        <text x="120" y="42" text-anchor="middle" class="label-tiny">+ user msg: "find the menu"</text>
+        <text x="120" y="56" text-anchor="middle" class="label-tiny">+ tool_use: gmail_search</text>
+        <text x="120" y="70" text-anchor="middle" class="label-tiny">+ assistant: "found: emailId=abc"</text>
+      </g>
+      <line x1="1060" y1="125" x2="1060" y2="148" stroke="#2a2a2a" stroke-width="2" stroke-dasharray="3,2"/>
+
+      <!-- result back to poke -->
+      <rect x="340" y="260" width="280" height="80" rx="8" fill="#fff3a8" stroke="#2a2a2a" stroke-width="2"/>
+      <text x="480" y="286" text-anchor="middle" class="scribble-sm">api call #3 — poke (resumed)</text>
+      <text x="480" y="306" text-anchor="middle" class="label-tiny">reads exec result: "found from tuesday"</text>
+      <text x="480" y="322" text-anchor="middle" class="label-tiny">→ replies: "found it. forward?"</text>
+
+      <line x1="940" y1="240" x2="620" y2="290" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arr2)"/>
+
+      <!-- user reply -->
+      <rect x="40" y="270" width="240" height="60" rx="30" fill="#ffe0e5" stroke="#2a2a2a" stroke-width="2"/>
+      <text x="160" y="298" text-anchor="middle" class="label">user: "yes, to bob"</text>
+      <line x1="280" y1="300" x2="338" y2="300" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arr2)"/>
+
+      <!-- second poke call routing to SAME agent -->
+      <rect x="340" y="400" width="280" height="80" rx="8" fill="#fff3a8" stroke="#2a2a2a" stroke-width="2"/>
+      <text x="480" y="424" text-anchor="middle" class="scribble-sm">api call #4 — poke</text>
+      <text x="480" y="446" text-anchor="middle" class="label-tiny">routes to SAME "jane menu" agent</text>
+      <text x="480" y="462" text-anchor="middle" class="label-tiny">"forward to bob@..."</text>
+
+      <line x1="480" y1="340" x2="480" y2="398" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arr2)"/>
+
+      <!-- magic moment annotation -->
+      <g transform="translate(700, 380) rotate(-1)">
+        <rect x="0" y="0" width="280" height="100" fill="#a8d8ff" stroke="#2a2a2a" stroke-width="1.5"/>
+        <text x="140" y="28" text-anchor="middle" class="scribble-text">the magic moment ↓</text>
+        <text x="140" y="56" text-anchor="middle" class="scribble-sm">exec agent already KNOWS</text>
+        <text x="140" y="76" text-anchor="middle" class="scribble-sm">the emailId — it's in its</text>
+        <text x="140" y="94" text-anchor="middle" class="scribble-sm">own thread. no re-search.</text>
+      </g>
+
+      <!-- exec agent resumed -->
+      <rect x="340" y="520" width="280" height="60" rx="8" fill="#d4ebff" stroke="#2a2a2a" stroke-width="2"/>
+      <text x="480" y="546" text-anchor="middle" class="scribble-sm">api call #5 — exec agent (RESUMED)</text>
+      <text x="480" y="568" text-anchor="middle" class="label-tiny">history loads: emailId=abc, attachment=xyz</text>
+      <line x1="480" y1="480" x2="480" y2="518" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arr2)"/>
+    </svg>
+  </div>
+
+  <div class="note">
+    <strong>that's the killer move.</strong> "long-lived" doesn't mean a daemon — it means the row sticks around. when poke addresses the SAME NAME, the full prior history loads automatically. no re-search. no re-derive. state is free.
+  </div>
+
+  <!-- ====================== TRIGGERS ====================== -->
+  <h2>the trigger system</h2>
+  <p>two trigger kinds — cron and email-match. critically: a <strong>tiny classifier model</strong> decides whether something is worth waking the big model up for.</p>
+
+  <div class="canvas">
+    <svg class="diagram" viewBox="0 0 1200 500" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr3" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+          <path d="M2,2 L10,6 L2,10 z" fill="#2a2a2a"/>
+        </marker>
+      </defs>
+
+      <!-- sources -->
+      <rect x="60" y="40" width="220" height="60" rx="6" fill="#d8f0e0" stroke="#2a2a2a" stroke-width="2"/>
+      <text x="170" y="64" text-anchor="middle" class="label">cron scheduler</text>
+      <text x="170" y="84" text-anchor="middle" class="label-tiny">user-set reminders</text>
+
+      <rect x="60" y="120" width="220" height="60" rx="6" fill="#d8f0e0" stroke="#2a2a2a" stroke-width="2"/>
+      <text x="170" y="144" text-anchor="middle" class="label">email watcher</text>
+      <text x="170" y="164" text-anchor="middle" class="label-tiny">checks gmail every ~1 min</text>
+
+      <!-- tiny model -->
+      <g>
+        <rect x="380" y="60" width="280" height="120" rx="60" ry="60" fill="#ffe066" stroke="#2a2a2a" stroke-width="3"/>
+        <text x="520" y="98" text-anchor="middle" class="scribble-text">tiny classifier</text>
+        <text x="520" y="124" text-anchor="middle" class="label-sm">"should this actually fire?"</text>
+        <text x="520" y="144" text-anchor="middle" class="label-tiny">urgency · OTP · sender · match</text>
+        <text x="520" y="162" text-anchor="middle" class="label-tiny">may be wrong — that's ok</text>
+      </g>
+
+      <line x1="280" y1="70" x2="378" y2="92" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arr3)"/>
+      <line x1="280" y1="150" x2="378" y2="138" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arr3)"/>
+
+      <!-- quote callout -->
+      <g transform="translate(720, 30) rotate(2)">
+        <rect x="0" y="0" width="340" height="120" fill="#ffe0e5" stroke="#2a2a2a" stroke-width="2"/>
+        <text x="170" y="28" text-anchor="middle" class="scribble-sm">from agent-protocol.md:19</text>
+        <foreignObject x="14" y="38" width="312" height="80">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:'Caveat',cursive; font-size:18px; color:#1a1a1a; line-height:1.2; font-style: italic;">
+            "the decision to activate a trigger is done by a very small model that sometimes makes mistakes."
+          </div>
+        </foreignObject>
+      </g>
+
+      <!-- exec agent path -->
+      <rect x="380" y="240" width="280" height="80" rx="8" fill="#d4ebff" stroke="#2a2a2a" stroke-width="2"/>
+      <text x="520" y="268" text-anchor="middle" class="scribble-sm">execution agent</text>
+      <text x="520" y="290" text-anchor="middle" class="label-tiny">receives &lt;trigger&gt; or &lt;email&gt; tag</text>
+      <text x="520" y="306" text-anchor="middle" class="label-tiny">does the work, reports to poke</text>
+
+      <line x1="520" y1="180" x2="520" y2="238" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arr3)"/>
+      <text x="540" y="216" class="scribble-sm">fires</text>
+
+      <!-- poke decides -->
+      <rect x="380" y="370" width="280" height="80" rx="8" fill="#fff3a8" stroke="#2a2a2a" stroke-width="2"/>
+      <text x="520" y="398" text-anchor="middle" class="scribble-sm">poke (personality)</text>
+      <text x="520" y="420" text-anchor="middle" class="label-tiny">reads exec report · decides...</text>
+
+      <line x1="520" y1="320" x2="520" y2="368" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arr3)"/>
+
+      <!-- two outcomes -->
+      <rect x="100" y="400" width="220" height="60" rx="6" fill="#b5e7c5" stroke="#2a2a2a" stroke-width="2"/>
+      <text x="210" y="424" text-anchor="middle" class="label">notify user</text>
+      <text x="210" y="444" text-anchor="middle" class="label-tiny">send_burst (user-visible)</text>
+
+      <rect x="720" y="400" width="280" height="60" rx="6" fill="#ffc1cc" stroke="#2a2a2a" stroke-width="2"/>
+      <text x="860" y="424" text-anchor="middle" class="label">wait() — silent cancel</text>
+      <text x="860" y="444" text-anchor="middle" class="label-tiny">false positive · user never sees it</text>
+
+      <line x1="380" y1="430" x2="322" y2="430" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arr3)"/>
+      <line x1="660" y1="430" x2="718" y2="430" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arr3)"/>
+    </svg>
+  </div>
+
+  <div class="note blue">
+    <strong>the genius of two-stage filtering:</strong><br>
+    tiny model = high recall, sometimes wrong.<br>
+    frontier model = high precision, swallows false positives via <code>wait</code>.<br>
+    user sees zero noise.
+  </div>
+
+  <!-- ====================== DRAFTS PATTERN ====================== -->
+  <h2>drafts before any outbound mutation</h2>
+  <p>email send, calendar create/update/delete — all four routes through the same four-step pattern. enforced by prompt, no exceptions.</p>
+
+  <div class="canvas">
+    <svg class="diagram" viewBox="0 0 1200 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr4" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+          <path d="M2,2 L10,6 L2,10 z" fill="#2a2a2a"/>
+        </marker>
+      </defs>
+
+      <g>
+        <rect x="40" y="60" width="220" height="100" rx="8" fill="#d4ebff" stroke="#2a2a2a" stroke-width="2"/>
+        <text x="150" y="96" text-anchor="middle" class="scribble-sm">step 1</text>
+        <text x="150" y="120" text-anchor="middle" class="code-text">compose_draft</text>
+        <text x="150" y="142" text-anchor="middle" class="label-tiny">exec agent builds the draft</text>
+      </g>
+
+      <line x1="260" y1="110" x2="318" y2="110" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arr4)"/>
+
+      <g>
+        <rect x="320" y="60" width="220" height="100" rx="8" fill="#fff3a8" stroke="#2a2a2a" stroke-width="2"/>
+        <text x="430" y="96" text-anchor="middle" class="scribble-sm">step 2</text>
+        <text x="430" y="120" text-anchor="middle" class="code-text">display_draft</text>
+        <text x="430" y="142" text-anchor="middle" class="label-tiny">poke shows it to user</text>
+      </g>
+
+      <line x1="540" y1="110" x2="598" y2="110" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arr4)"/>
+
+      <g>
+        <rect x="600" y="60" width="220" height="100" rx="8" fill="#ffe0e5" stroke="#2a2a2a" stroke-width="2"/>
+        <text x="710" y="96" text-anchor="middle" class="scribble-sm">step 3</text>
+        <text x="710" y="120" text-anchor="middle" class="label">user confirms</text>
+        <text x="710" y="142" text-anchor="middle" class="label-tiny">yes / no / edit</text>
+      </g>
+
+      <line x1="820" y1="110" x2="878" y2="110" stroke="#2a2a2a" stroke-width="2" marker-end="url(#arr4)"/>
+
+      <g>
+        <rect x="880" y="60" width="220" height="100" rx="8" fill="#b5e7c5" stroke="#2a2a2a" stroke-width="2"/>
+        <text x="990" y="96" text-anchor="middle" class="scribble-sm">step 4</text>
+        <text x="990" y="120" text-anchor="middle" class="code-text">execute_draft</text>
+        <text x="990" y="142" text-anchor="middle" class="label-tiny">actually sends</text>
+      </g>
+
+      <text x="600" y="220" text-anchor="middle" class="scribble-text">no exceptions. ever.</text>
+      <text x="600" y="244" text-anchor="middle" class="label-sm">agent-protocol.md:34–38</text>
+    </svg>
+  </div>
+
+  <!-- ====================== MEMORY ====================== -->
+  <h2>memory model</h2>
+  <p>what's actually in the leak — two explicit blocks plus the implicit per-agent thread state. nothing more. (the "3-tier memory" framing some clones use is their invention.)</p>
+
+  <div class="cards">
+    <div class="card yellow">
+      <h4>&lt;summary&gt; block</h4>
+      <p>auto-injected when conversations grow long. compresses old history without throwing it away. user cannot see it. <span class="mono">memory-guidelines.md:3</span></p>
+    </div>
+    <div class="card blue">
+      <h4>&lt;user_context&gt; block</h4>
+      <p>injected per turn. carries name, connected accounts, "preferences, writing style, previous requests." may be wrong — model told not to rely solely on it. <span class="mono">guidelines.md:19</span></p>
+    </div>
+    <div class="card purple">
+      <h4>per-agent thread state</h4>
+      <p>each execution agent's own conversation history IS its private memory. accumulates across firings. addressable by name. no separate store needed.</p>
+    </div>
+    <div class="card green">
+      <h4>no &nbsp;<code>remember()</code> tool</h4>
+      <p>"the system maintains memory automatically." when user says "remember this", agent just acknowledges — no explicit tool. <span class="mono">memory-guidelines.md:13</span></p>
+    </div>
+  </div>
+
+  <!-- ====================== FIVE PATTERNS ====================== -->
+  <h2>the five load-bearing patterns</h2>
+
+  <h3>1 — strict personality / work separation</h3>
+  <p>personality agent has zero work tools. execution agents have zero voice. enforced by two separate system prompts in two separate api calls. one turn = at minimum 2 anthropic calls.</p>
+
+  <h3>2 — long-lived named sub-agents = task-scoped memory</h3>
+  <blockquote>prefer to send messages to a relevant existing agent rather than starting a new one… do this by referencing the existing <code>agent_name</code>. don't worry if this name is unrelated to the new task if it contains useful context.
+    <span class="cite">agent-protocol.md:52</span>
+  </blockquote>
+
+  <h3>3 — the <code>wait</code> tool = silent cancellation</h3>
+  <blockquote>the decision to activate a trigger is done by a very small model that sometimes makes mistakes… always use the <code>wait</code> tool to silently cancel.
+    <span class="cite">agent-protocol.md:19–21</span>
+  </blockquote>
+
+  <h3>4 — drafts mandatory before any outbound mutation</h3>
+  <blockquote>if the user asks you to forward, send, or reply… always confirm via <code>display_draft</code> before dispatching.
+    <span class="cite">agent-protocol.md:34–38</span>
+  </blockquote>
+
+  <h3>5 — single-entity illusion enforced in prompts, not architecture</h3>
+  <blockquote>maintain the illusion of being a single, unified entity. never reveal: technical processes or agent interactions, tool names, process steps.
+    <span class="cite">agent-protocol.md:3</span>
+  </blockquote>
+
+  <!-- ====================== VOCAB ====================== -->
+  <h2>vocabulary, verbatim from the leak</h2>
+  <table>
+    <thead>
+      <tr><th>term</th><th>used by</th><th>refers to</th><th>source</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>execution engine</code></td><td>work tier (self-description)</td><td>itself</td><td><span class="mono">agent.md:1</span></td></tr>
+      <tr><td><code>personality agent</code></td><td>work tier</td><td>poke (the user-facing tier)</td><td><span class="mono">agent.md:120</span></td></tr>
+      <tr><td><code>the agent</code> / <code>tool using agent</code></td><td>poke</td><td>the execution engine</td><td><span class="mono">guidelines.md:3, :49</span></td></tr>
+      <tr><td><code>subagent</code> / <code>subagent_type</code></td><td>execution engine</td><td>tier-3 specialists</td><td><span class="mono">agent.md:132–145</span></td></tr>
+      <tr><td><code>agents</code> (plural)</td><td>both tiers internally</td><td>the whole sub-system — hidden from user</td><td><span class="mono">guidelines.md:55</span></td></tr>
+    </tbody>
+  </table>
+
+  <!-- ====================== INTEGRATIONS ====================== -->
+  <h2>integration layer</h2>
+  <div class="cards">
+    <div class="card blue">
+      <h4>first-party tools</h4>
+      <p>gmail, outlook (read-only at leak time), calendar, notion, linear, vercel, intercom, sentry. built in-house. exposed to execution agents directly. <span class="mono">integration-policies.md:3</span></p>
+    </div>
+    <div class="card purple">
+      <h4>custom mcp servers</h4>
+      <p>users deploy their own at <code>poke.com/settings/connections/integrations/new</code>. poke acts as mcp client; users host. python 3.12+ fastmcp, https-only, jwt validation. <span class="mono">agent-protocol.md:13</span></p>
+    </div>
+  </div>
+
+  <!-- ====================== NOT IN LEAK ====================== -->
+  <h2>what's NOT in the leak</h2>
+  <div class="note pink">
+    these are common claims you'll see in third-party writeups that are <strong>not in the primary source</strong> — they're projection from the openpoke clone or similar reconstructions:
+  </div>
+  <ul>
+    <li>specific models used (claude / gpt / etc — only "small model" for triggers is signaled)</li>
+    <li>exact summarization thresholds (the "100 messages" figure is a clone's guess)</li>
+    <li>implementation language / framework</li>
+    <li>"3-tier memory" framing (a clone's metaphor — leak has 2 explicit tiers + implicit per-agent state)</li>
+    <li>"hundreds of agents per user" (clone extrapolation — leak doesn't quantify)</li>
+    <li>specific asyncio.gather syntax (parallelism mandated; mechanism is implementation detail)</li>
+  </ul>
+
+  <!-- ====================== DONNA ARCHITECTURE ====================== -->
+  <h2>donna's actual architecture</h2>
+  <p>same scale, same notation, so the comparison is honest. one monolithic brain. one parallel watch substrate. shared transcript at the bottom.</p>
+
+  <div class="canvas">
+    <svg class="diagram" viewBox="0 0 1200 940" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="darr" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+          <path d="M2,2 L10,6 L2,10 z" fill="#2a2a2a"/>
+        </marker>
+      </defs>
+
+      <!-- INBOUND -->
+      <g>
+        <rect x="380" y="20" width="160" height="50" rx="6" fill="#ffe0e5" stroke="#2a2a2a" stroke-width="2"/>
+        <text x="460" y="50" text-anchor="middle" class="label">whatsapp</text>
+        <rect x="560" y="20" width="160" height="50" rx="6" fill="#ffe0e5" stroke="#2a2a2a" stroke-width="2"/>
+        <text x="640" y="50" text-anchor="middle" class="label">imessage (linq)</text>
+        <rect x="740" y="20" width="120" height="50" rx="6" fill="#ffe0e5" stroke="#2a2a2a" stroke-width="2"/>
+        <text x="800" y="50" text-anchor="middle" class="label">cli (dev)</text>
+      </g>
+      <line x1="460" y1="70" x2="600" y2="98" stroke="#2a2a2a" stroke-width="2"/>
+      <line x1="640" y1="70" x2="620" y2="98" stroke="#2a2a2a" stroke-width="2"/>
+      <line x1="800" y1="70" x2="640" y2="98" stroke="#2a2a2a" stroke-width="2"/>
+
+      <!-- server.ts -->
+      <rect x="430" y="100" width="340" height="50" rx="6" fill="#f3eee2" stroke="#2a2a2a" stroke-width="2" stroke-dasharray="6,3"/>
+      <text x="600" y="124" text-anchor="middle" class="label">server.ts — resolve user · create runId · load history</text>
+      <text x="600" y="140" text-anchor="middle" class="label-tiny">withTurnContext({userId, runId, source})</text>
+
+      <line x1="600" y1="152" x2="600" y2="178" stroke="#2a2a2a" stroke-width="2" marker-end="url(#darr)"/>
+
+      <!-- THE BRAIN (single tier) -->
+      <g>
+        <rect x="40" y="180" width="760" height="280" rx="10" fill="#fff3a8" stroke="#2a2a2a" stroke-width="3"/>
+        <text x="75" y="212" class="scribble-text">brain.ts — single-tier manual loop · max 10 iter</text>
+        <text x="75" y="234" class="label-sm">voice + work in one prompt · one anthropic call per iteration · terminator-driven exit</text>
+
+        <!-- direct tools cluster -->
+        <rect x="75" y="254" width="320" height="186" rx="6" fill="#fffdf0" stroke="#2a2a2a" stroke-width="1.5"/>
+        <text x="235" y="278" text-anchor="middle" class="scribble-sm">direct tools (30+)</text>
+        <text x="90" y="302" class="code-text">send_burst</text>
+        <text x="90" y="320" class="code-text">do_nothing  ·  defer</text>
+        <text x="90" y="338" class="code-text">get_current_time</text>
+        <text x="90" y="356" class="code-text">recall  ·  extract_url</text>
+        <text x="90" y="374" class="code-text">browser_use ← NEW</text>
+        <text x="90" y="392" class="code-text">integration_* (4)</text>
+        <text x="90" y="410" class="code-text">create_watch  ·  list_watches</text>
+        <text x="90" y="428" class="code-text">log_meal / log_expense / ...</text>
+
+        <!-- ptc sandbox -->
+        <rect x="415" y="254" width="365" height="186" rx="6" fill="#d8f0e0" stroke="#2a2a2a" stroke-width="1.5"/>
+        <text x="597" y="278" text-anchor="middle" class="scribble-sm">code_execution_20250825 (ptc)</text>
+        <text x="597" y="298" text-anchor="middle" class="label-tiny">model writes python · asyncio.gather fan-out</text>
+        <text x="430" y="324" class="code-text">await gmail_search(...)</text>
+        <text x="430" y="342" class="code-text">await gmail_list_recent(...)</text>
+        <text x="430" y="360" class="code-text">await subscriptions_list(...)</text>
+        <text x="430" y="378" class="code-text">await parse_food_text(...)</text>
+        <text x="430" y="396" class="code-text">await extract_url(...)</text>
+        <text x="597" y="424" text-anchor="middle" class="label-tiny">(donna's "specialist sub-agent" equivalent)</text>
+      </g>
+
+      <!-- annotation: no second tier -->
+      <g transform="translate(820, 200) rotate(2)">
+        <rect x="0" y="0" width="200" height="100" fill="#ffc1cc" stroke="#2a2a2a" stroke-width="1.5"/>
+        <text x="100" y="26" text-anchor="middle" class="scribble-text">no tier-2</text>
+        <text x="100" y="52" text-anchor="middle" class="scribble-sm">voice + work share</text>
+        <text x="100" y="72" text-anchor="middle" class="scribble-sm">the same prompt.</text>
+        <text x="100" y="92" text-anchor="middle" class="scribble-sm">one user → fine.</text>
+      </g>
+
+      <!-- WATCH SUBSTRATE (parallel) -->
+      <g>
+        <rect x="40" y="480" width="760" height="220" rx="10" fill="#d4ebff" stroke="#2a2a2a" stroke-width="3"/>
+        <text x="75" y="512" class="scribble-text">watch substrate ← NEW (parallel to brain)</text>
+        <text x="75" y="534" class="label-sm">long-lived named sub-agents · their own histories · per-task state</text>
+
+        <!-- worker -->
+        <rect x="75" y="552" width="220" height="60" rx="6" fill="#fff" stroke="#2a2a2a" stroke-width="1.5"/>
+        <text x="185" y="576" text-anchor="middle" class="scribble-sm">proactive-worker</text>
+        <text x="185" y="596" text-anchor="middle" class="label-tiny">30s tick · claim · arbiter</text>
+
+        <!-- runWatchTurn -->
+        <rect x="320" y="552" width="240" height="60" rx="6" fill="#fff" stroke="#2a2a2a" stroke-width="1.5"/>
+        <text x="440" y="576" text-anchor="middle" class="scribble-sm">runWatchTurn</text>
+        <text x="440" y="596" text-anchor="middle" class="label-tiny">own loop · own prompt · own tools</text>
+
+        <!-- agent_threads -->
+        <rect x="585" y="552" width="195" height="60" rx="6" fill="#fff" stroke="#2a2a2a" stroke-width="1.5"/>
+        <text x="682" y="576" text-anchor="middle" class="scribble-sm">agent_threads</text>
+        <text x="682" y="596" text-anchor="middle" class="label-tiny">named · persistent · addressable</text>
+
+        <line x1="295" y1="582" x2="318" y2="582" stroke="#2a2a2a" stroke-width="2" marker-end="url(#darr)"/>
+        <line x1="560" y1="582" x2="583" y2="582" stroke="#2a2a2a" stroke-width="2" marker-end="url(#darr)"/>
+
+        <!-- watch terminators -->
+        <text x="75" y="640" class="label-sm">terminators:</text>
+        <rect x="160" y="624" width="120" height="34" rx="4" fill="#b5e7c5" stroke="#2a2a2a" stroke-width="1.5"/>
+        <text x="220" y="646" text-anchor="middle" class="code-text">send_burst</text>
+        <rect x="290" y="624" width="120" height="34" rx="4" fill="#fff3a8" stroke="#2a2a2a" stroke-width="1.5"/>
+        <text x="350" y="646" text-anchor="middle" class="code-text">do_nothing</text>
+        <rect x="420" y="624" width="130" height="34" rx="4" fill="#ffc1cc" stroke="#2a2a2a" stroke-width="1.5"/>
+        <text x="485" y="646" text-anchor="middle" class="code-text">watch_close</text>
+        <text x="565" y="646" class="label-tiny">(no defer — cron handles re-fire)</text>
+
+        <text x="75" y="684" class="label-sm">trigger kinds: cron · one_shot &nbsp;&nbsp; (email_match · event_match_llm coming)</text>
+      </g>
+
+      <!-- arrow brain → chat_messages -->
+      <line x1="200" y1="460" x2="200" y2="730" stroke="#2a2a2a" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="600" y1="700" x2="600" y2="730" stroke="#2a2a2a" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+      <!-- SHARED CHAT_MESSAGES -->
+      <g>
+        <rect x="40" y="735" width="760" height="80" rx="10" fill="#ebdcff" stroke="#2a2a2a" stroke-width="3"/>
+        <text x="75" y="762" class="scribble-text">chat_messages — the shared transcript</text>
+        <text x="75" y="784" class="label-sm">everything user-visible · reactive bursts + watch bursts + user replies live here</text>
+        <text x="75" y="804" class="label-tiny">watches READ this on each firing AND WRITE their bursts here. one unified user history.</text>
+      </g>
+
+      <!-- agent_messages (private) -->
+      <g>
+        <rect x="820" y="480" width="340" height="220" rx="10" fill="#fff" stroke="#2a2a2a" stroke-width="2" stroke-dasharray="5,3"/>
+        <text x="990" y="512" text-anchor="middle" class="scribble-text">agent_messages</text>
+        <text x="990" y="534" text-anchor="middle" class="label-sm">per-watch PRIVATE deliberation</text>
+        <text x="990" y="556" text-anchor="middle" class="label-tiny">tool calls, intermediate state,</text>
+        <text x="990" y="572" text-anchor="middle" class="label-tiny">prior firings — kept isolated</text>
+        <text x="990" y="600" text-anchor="middle" class="label-tiny">a watch sees BOTH its agent_messages</text>
+        <text x="990" y="616" text-anchor="middle" class="label-tiny">AND chat_messages on each firing</text>
+        <text x="990" y="660" text-anchor="middle" class="scribble-sm">private + shared</text>
+        <text x="990" y="682" text-anchor="middle" class="label-tiny">(the donna trade-off)</text>
+      </g>
+
+      <!-- side annotations -->
+      <g transform="translate(830, 750) rotate(-2)">
+        <rect x="0" y="0" width="320" height="76" fill="#b5e7c5" stroke="#2a2a2a" stroke-width="1.5"/>
+        <text x="160" y="26" text-anchor="middle" class="scribble-text">execution_runs + events</text>
+        <text x="160" y="50" text-anchor="middle" class="scribble-sm">every tool, every model call,</text>
+        <text x="160" y="68" text-anchor="middle" class="scribble-sm">visible at /debug/runs</text>
+      </g>
+
+      <line x1="900" y1="700" x2="900" y2="735" stroke="#2a2a2a" stroke-width="1.5" stroke-dasharray="4,3"/>
+    </svg>
+  </div>
+
+  <!-- ====================== STRATEGIC SPLIT ====================== -->
+  <h2>three deliberate trade-offs</h2>
+  <p>these aren't accidents. each is a call we made knowing the cost.</p>
+
+  <div class="canvas">
+    <svg class="diagram" viewBox="0 0 1200 520" xmlns="http://www.w3.org/2000/svg">
+      <!-- TRADE-OFF 1: tiering -->
+      <g>
+        <text x="60" y="40" class="scribble-text">trade-off 1 — agent tiering</text>
+
+        <!-- poke side -->
+        <rect x="60" y="60" width="500" height="160" rx="8" fill="#fff3a8" stroke="#2a2a2a" stroke-width="2"/>
+        <text x="80" y="86" class="scribble-sm">poke: two tiers, hard-walled</text>
+        <text x="80" y="110" class="label-sm">+ voice contamination structurally impossible</text>
+        <text x="80" y="130" class="label-sm">+ scales to huge tool catalogs without prompt bloat</text>
+        <text x="80" y="150" class="label-sm">− 2x api calls per turn (more latency, more $)</text>
+        <text x="80" y="170" class="label-sm">− single-entity illusion is brittle (their leak proves it)</text>
+        <text x="80" y="200" class="label-tiny">why they need it: serving 400k DAU across infinite tasks</text>
+
+        <!-- donna side -->
+        <rect x="640" y="60" width="500" height="160" rx="8" fill="#d4ebff" stroke="#2a2a2a" stroke-width="2"/>
+        <text x="660" y="86" class="scribble-sm">donna: monolithic brain</text>
+        <text x="660" y="110" class="label-sm">+ one api call · half the latency · simpler caching</text>
+        <text x="660" y="130" class="label-sm">+ no illusion to maintain · transparent to the user</text>
+        <text x="660" y="150" class="label-sm">− voice + work share one prompt (mind the size)</text>
+        <text x="660" y="170" class="label-sm">− revisit when tool catalog crosses ~40 tools</text>
+        <text x="660" y="200" class="label-tiny">why we picked it: one user, finite catalog, no need yet</text>
+      </g>
+
+      <!-- TRADE-OFF 2: isolation vs coherence -->
+      <g transform="translate(0,240)">
+        <text x="60" y="20" class="scribble-text">trade-off 2 — isolation vs shared transcript</text>
+
+        <rect x="60" y="40" width="500" height="140" rx="8" fill="#fff3a8" stroke="#2a2a2a" stroke-width="2"/>
+        <text x="80" y="66" class="scribble-sm">poke: execution agents are walled off</text>
+        <text x="80" y="90" class="label-sm">they cannot see the user's main chat</text>
+        <text x="80" y="110" class="label-sm">+ clean abstraction · agents stay on-task</text>
+        <text x="80" y="130" class="label-sm">− personality agent must rephrase every user-bound output</text>
+        <text x="80" y="150" class="label-sm">− coordination is hard (whose context wins?)</text>
+
+        <rect x="640" y="40" width="500" height="140" rx="8" fill="#d4ebff" stroke="#2a2a2a" stroke-width="2"/>
+        <text x="660" y="66" class="scribble-sm">donna: watches read AND write chat_messages</text>
+        <text x="660" y="90" class="label-sm">private deliberation in agent_messages</text>
+        <text x="660" y="110" class="label-sm">shared user-visible truth in chat_messages</text>
+        <text x="660" y="130" class="label-sm">+ no rephrase layer · watches see donna's voice elsewhere</text>
+        <text x="660" y="150" class="label-sm">+ coherence wins for a one-user product</text>
+      </g>
+
+      <!-- TRADE-OFF 3: parallelism mechanism -->
+      <g transform="translate(0,420)">
+        <text x="60" y="20" class="scribble-text">trade-off 3 — how parallel fan-out happens</text>
+
+        <rect x="60" y="40" width="500" height="60" rx="8" fill="#fff3a8" stroke="#2a2a2a" stroke-width="2"/>
+        <text x="80" y="64" class="scribble-sm">poke: parallel task() spawns</text>
+        <text x="80" y="84" class="label-sm">native — model emits N tool_use blocks in one turn</text>
+
+        <rect x="640" y="40" width="500" height="60" rx="8" fill="#d4ebff" stroke="#2a2a2a" stroke-width="2"/>
+        <text x="660" y="64" class="scribble-sm">donna: python sandbox (PTC)</text>
+        <text x="660" y="84" class="label-sm">model writes asyncio.gather code · slower but flexible</text>
+      </g>
+    </svg>
+  </div>
+
+  <!-- ====================== LESSONS ====================== -->
+  <h2>lessons earned (opinionated)</h2>
+  <p>not a feature checklist. things we now believe after staring at the leak for too long.</p>
+
+  <div class="cards">
+
+    <div class="card pink">
+      <h4>the "single unified entity" illusion is a tax, not a feature</h4>
+      <p>poke's prompt enforces it explicitly. their prompt leaked anyway in 7 days. the architecture is provably multi-agent; pretending otherwise costs prompt tokens, distorts error messages, and breaks the moment someone gets curious. <strong>donna doesn't pretend.</strong> the user can see, at <code>/debug/runs</code>, exactly what fired and why. that's a product feature.</p>
+    </div>
+
+    <div class="card yellow">
+      <h4>two tiers is luxury, not necessity</h4>
+      <p>poke needs the personality/work split because their tool catalog is enormous and they need voice consistency across 400k users. donna is one user, ~50 tools. the monolithic brain is the right call <em>today</em>. the day the tool list crosses 40 or the prompt blows past 6000 tokens, revisit. not before.</p>
+    </div>
+
+    <div class="card blue">
+      <h4>long-lived named threads is the real unlock</h4>
+      <p>this is the one architectural pattern donna copied wholesale (today). every "ongoing thing" becomes a thread — a PR watch, a hydration tracker, a gratitude practice. state is free: the thread's own history IS its memory. no separate state schema, no scratchpad table. this is what makes "invent any feature on the fly" possible at all.</p>
+    </div>
+
+    <div class="card green">
+      <h4>the <code>wait</code> pattern is a steal — borrow it next</h4>
+      <p>donna's <code>do_nothing</code> persists the turn. poke's <code>wait</code> silently swallows false-positive triggers without polluting history. small surface — maybe 40 lines of code. enables the two-stage filtering pattern (tiny model decides fire, big model decides act) that drops proactive cost by ~10x. <strong>biggest single quick win remaining.</strong></p>
+    </div>
+
+    <div class="card purple">
+      <h4>drafts before send is non-negotiable</h4>
+      <p>poke mandates <code>compose_draft → display_draft → user confirms → execute_draft</code> for every outbound mutation. donna has no outbound email/calendar tools today, so this is a latent gap — not biting yet. the moment a <code>send_email</code> tool ships, drafts must come with it. no exceptions. this is how you avoid the "ai sent an email i didn't approve" incident every personal-ai eventually faces.</p>
+    </div>
+
+    <div class="card pink">
+      <h4>browser-use is the universal escape hatch</h4>
+      <p>built today. with it, donna's feature surface goes from "what composio supports" to "anything a human can do in a browser." it's slow ($0.20, ~30s), error-prone, and last-resort — but the long tail of "find me a hotel under $250" / "watch this jacket's price" / "check if the LCBO is open" suddenly becomes possible. <strong>browser_use + watches is the cross-integration on-the-fly engine.</strong></p>
+    </div>
+
+    <div class="card yellow">
+      <h4>the shared transcript bet is the right one for us</h4>
+      <p>poke walls watches off from user chat. donna's watches read it. for a multi-tenant agent factory, isolation is correct. for one user's whole life, coherence wins — donna in reactive shouldn't be ignorant of what donna told the user via a watch last night. we deliberately traded poke's strict abstraction for a more honest model of "one donna, many surfaces."</p>
+    </div>
+
+    <div class="card blue">
+      <h4>tiny classifier before big model — pay the haiku tax</h4>
+      <p>poke filters trigger fires with a small model first, frontier model second. donna's current arbiter is rule-based (quiet hours + cooldown). adding a haiku-class classifier in front of <code>scan_gmail</code> causes (and email-match watches when they land) saves an order of magnitude in inference cost. cheap to add. high-leverage.</p>
+    </div>
+
+  </div>
+
+  <!-- ====================== WHAT'S NEXT ====================== -->
+  <h2>what we shipped today · what's next</h2>
+
+  <div class="cards">
+    <div class="card green">
+      <h4>shipped this session</h4>
+      <p>
+        ✓ browser_use (browserbase + stagehand)<br>
+        ✓ agent_threads + agent_messages tables<br>
+        ✓ watches table + create_watch / list_watches / close_watch tools<br>
+        ✓ runWatchTurn (mirror of brain.ts loop, watch-tuned)<br>
+        ✓ WATCH_EXECUTION_PROMPT (per-watch system prompt)<br>
+        ✓ executor branch on cause_kind="watch_fired"<br>
+        ✓ shared <code>chat_messages</code> visibility into watches<br>
+        ✓ watch_close terminator for self-retiring watches
+      </p>
+    </div>
+
+    <div class="card yellow">
+      <h4>next, ranked by ROI</h4>
+      <p>
+        1. <strong>silent <code>wait</code> terminator</strong> — quick win, ~40 lines<br>
+        2. <strong>filter leaked-reasoning text before persisting</strong> — open todo, fast<br>
+        3. <strong>tiny classifier on scan_gmail causes</strong> — 10x cost saving<br>
+        4. <strong>email-match-llm trigger kind</strong> — unlocks commitment tracker, urgent-email watches<br>
+        5. <strong>drafts pattern</strong> — preemptive, before outbound mutations ship<br>
+        6. <strong>summary layer on chat_messages</strong> — when users cross ~500 turns<br>
+        7. <strong>custom MCP servers</strong> — user-extensibility moat, defer until asked
+      </p>
+    </div>
+
+    <div class="card purple">
+      <h4>features that fall out for free</h4>
+      <p>
+        with watches + browser_use both live, these are now <code>create_watch</code> calls — no new code:<br><br>
+        · gratitude reminder (evening cron)<br>
+        · hydration tracker (cross-integration)<br>
+        · friend check-in (per-relationship thread)<br>
+        · PR / deal watching (cron + browser)<br>
+        · price drops on any URL (cron + browser)<br>
+        · travel prep agent (multi-watch composition)<br>
+        · weekly review automation (cron + chat read)
+      </p>
+    </div>
+  </div>
+
+  <footer>
+    drawn for the donna project · primary sources only · no openpoke · no clone speculation
+  </footer>
+
+</div>
+</body>
+</html>

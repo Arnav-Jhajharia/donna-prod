@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>donna — kg option 1 · ledger</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true, theme: 'base',
+    themeVariables: {
+      fontFamily: 'Inter, sans-serif', fontSize: '13px',
+      primaryColor: '#F0EAE4', primaryTextColor: '#1E1A18',
+      primaryBorderColor: '#7B5544', lineColor: '#7B5544',
+      secondaryColor: '#FBF7F5', tertiaryColor: '#F0EAE4',
+      mainBkg: '#F0EAE4'
+    },
+    flowchart: { curve: 'basis', padding: 14, htmlLabels: true }
+  });
+</script>
+<style>
+:root {
+  --ivory:#FBF7F5; --tan:#F0EAE4; --ink:#1E1A18; --soft:#6B6360;
+  --accent:#7B5544; --accent-deep:#4A2F23; --rule:#DCD2C9;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--ivory); color: var(--ink); margin: 0; }
+body { font-family: 'Inter', system-ui, sans-serif; line-height: 1.6; padding: 72px 32px 140px; max-width: 1080px; margin: 0 auto; }
+.optnav { display: flex; gap: 4px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 32px; }
+.optnav a { padding: 6px 14px; border: 1px solid var(--rule); color: var(--soft); text-decoration: none; }
+.optnav a.cur { background: var(--accent); color: var(--ivory); border-color: var(--accent); }
+header { padding-bottom: 48px; border-bottom: 1px solid var(--rule); margin-bottom: 56px; }
+h1, h2, h3, h4 { font-family: 'EB Garamond', Georgia, serif; font-weight: 400; letter-spacing: -0.01em; color: var(--ink); }
+h1 { font-size: 52px; line-height: 1.05; margin: 0 0 16px; }
+h1 em { color: var(--accent); font-style: italic; }
+h2 { font-size: 30px; margin: 72px 0 14px; padding-top: 24px; border-top: 1px solid var(--rule); }
+h3 { font-size: 21px; margin: 40px 0 10px; }
+h4 { font-size: 16px; margin: 24px 0 6px; font-weight: 500; }
+p, li { font-size: 15px; }
+.lede { font-size: 19px; color: var(--soft); max-width: 720px; }
+.lede em { color: var(--accent); font-style: italic; font-family: 'EB Garamond', Georgia, serif; }
+small.kicker { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 600; display: block; margin-bottom: 12px; }
+code, pre { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; background: var(--tan); color: var(--accent-deep); }
+code { padding: 2px 5px; border-radius: 3px; }
+pre { padding: 16px 20px; margin: 14px 0 22px; border-left: 3px solid var(--accent); line-height: 1.5; overflow-x: auto; }
+.diagram { background: var(--tan); border: 1px solid var(--rule); padding: 24px; margin: 18px 0 28px; }
+.diagram svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+table { width: 100%; border-collapse: collapse; margin: 14px 0 28px; font-size: 13.5px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); border-bottom: 1px solid var(--accent-deep); }
+.aside { border-left: 3px solid var(--accent); padding: 12px 18px; margin: 18px 0; background: rgba(123,85,68,0.05); font-size: 14px; color: var(--soft); }
+.aside strong { color: var(--ink); font-weight: 500; }
+.pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 18px 0 28px; }
+.pros-cons > div { padding: 18px 22px; border: 1px solid var(--rule); }
+.pros-cons h4 { margin-top: 0; }
+.pros-cons.pros > div:first-child { border-left: 3px solid var(--accent); }
+.pros-cons.pros > div:last-child { border-left: 3px solid var(--soft); }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; background: rgba(123,85,68,0.15); color: var(--accent-deep); margin-right: 4px; }
+ul.tight li { margin-bottom: 3px; }
+hr { border: none; border-top: 1px solid var(--rule); margin: 48px 0; }
+.note { font-size: 13px; color: var(--soft); font-style: italic; }
+</style>
+</head>
+<body>
+
+<div class="optnav">
+  <a href="kg-v1-ledger.html" class="cur">opt 1 · ledger-first</a>
+  <a href="kg-v2-replay.html">opt 2 · event-first</a>
+  <a href="kg-v3-stream.html">opt 3 · moments stream</a>
+</div>
+
+<header>
+  <small class="kicker">option 1 of 3</small>
+  <h1>ledger-first. <em>typed entries are the unit.</em></h1>
+  <p class="lede">events are an audit log. the model and tools read from a <em>typed day-entries</em> table — every meeting, commitment, mood note, and donna-action is a row with a kind. fast queries, natural tools, schema you can index.</p>
+</header>
+
+<section>
+<h2>1. thesis</h2>
+<p>the day is a stream of <strong>typed things</strong>. each thing is a row with a <code>kind</code>. donna reads, queries, and reasons over these rows. raw events still exist as a truth log, but they're not the primary read path — they're for replay and audit.</p>
+
+<div class="aside">
+<strong>tradeoff up front:</strong> you trade replay purity (option 2) and unified-stream simplicity (option 3) for <em>tool ergonomics</em>. when the model asks "what commitments does the user have open this week," you're one indexed query away, not a derivation pipeline away.
+</div>
+</section>
+
+<section>
+<h2>2. schema</h2>
+
+<h3>tables</h3>
+<table>
+<thead><tr><th>table</th><th>cardinality</th><th>what it is</th></tr></thead>
+<tbody>
+<tr><td><code>events</code></td><td>~100-300/day/user</td><td>append-only audit log. everything donna sees or does.</td></tr>
+<tr><td><code>day_entries</code></td><td>~50-150/day/user</td><td>typed rows. the model's primary read surface.</td></tr>
+<tr><td><code>day_narrative</code></td><td>1/day/user</td><td>sealed at end-of-day. vibe summary + open threads.</td></tr>
+<tr><td><code>entities</code></td><td>~hundreds/user</td><td>people, places, projects, recurring things.</td></tr>
+<tr><td><code>edges</code></td><td>~thousands/user</td><td>typed relations between entities.</td></tr>
+<tr><td><code>rhythms</code></td><td>~tens/user</td><td>derived patterns. "gym tue/thu 7am, p=0.85".</td></tr>
+</tbody>
+</table>
+
+<h3>day_entries — the central table</h3>
+<pre>{
+  id           uuid pk,
+  user_id      uuid not null,
+  date         date not null,          -- user's local date
+  ts           timestamptz not null,   -- exact moment
+  kind         entry_kind not null,    -- enum, see below
+  payload      jsonb not null,         -- shape varies by kind
+  entity_refs  uuid[] not null default '{}',
+  source_event_ids uuid[] not null,    -- provenance
+  created_at   timestamptz default now()
+}
+
+-- indexes
+(user_id, date)
+(user_id, kind, date)
+(user_id, entity_refs gin)</pre>
+
+<h4>entry kinds</h4>
+<ul class="tight">
+  <li><span class="pill">meeting</span> from cal, or mentioned in chat. payload: title, with[], duration, notes.</li>
+  <li><span class="pill">commitment</span> "i'll call mom tonight". payload: what, due, status.</li>
+  <li><span class="pill">mood_note</span> inferred or stated. payload: signal, evidence.</li>
+  <li><span class="pill">donna_notification</span> donna sent something proactively. payload: text, channel, trigger.</li>
+  <li><span class="pill">donna_reminder</span> a reminder donna fired. payload: text, original_commitment_id.</li>
+  <li><span class="pill">mention</span> a person/place/project came up. payload: entity_id, context.</li>
+  <li><span class="pill">observation</span> something donna noticed. payload: what, evidence.</li>
+  <li><span class="pill">integration_signal</span> non-message integration delta worth keeping. payload: source, what.</li>
+  <li><span class="pill">thread_opened</span> / <span class="pill">thread_closed</span> conversational thread state changes.</li>
+</ul>
+
+<h3>day_narrative</h3>
+<pre>{
+  user_id      uuid not null,
+  date         date not null,
+  sealed       bool default false,
+  summary      text,           -- 3-6 sentences
+  open_threads text,           -- what's hanging
+  energy       text,           -- 'flat' | 'sharp' | 'low' | ...
+  generated_at timestamptz,
+  primary key (user_id, date)
+}</pre>
+</section>
+
+<section>
+<h2>3. write path</h2>
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  IN[message / integration / donna action] --> EV[(events)]
+  EV --> EX[extractor]
+  EX -->|typed rows| DE[(day_entries)]
+  EX -->|nodes/edges| GR[(entities + edges)]
+  EX -->|live update| NA[(day_narrative<br/>unsealed)]
+  CRON[nightly worker] -->|seal| NA
+  CRON -->|recompute| RH[(rhythms)]
+</pre>
+</div>
+
+<ol>
+  <li>every inbound (message, integration delta) and every outbound (donna action) writes <strong>one event</strong>.</li>
+  <li>extractor runs per event. emits zero or more <code>day_entries</code>, updates <code>entities</code>/<code>edges</code>, may update unsealed narrative live.</li>
+  <li>at user's local midnight: seal the narrative, refresh rhythms across recent days.</li>
+</ol>
+</section>
+
+<section>
+<h2>4. read path</h2>
+<p>the model gets a context bundle per turn. tools provide on-demand access.</p>
+
+<h3>standard per-turn bundle</h3>
+<pre>// pseudocode
+context = {
+  today:      query day_entries WHERE user=X AND date=today ORDER BY ts,
+  narrative:  query day_narrative WHERE user=X AND date IN last_7,
+  graph_1hop: for entity in mentioned_entities: get node + edges,
+  rhythms:    query rhythms WHERE user=X AND dow=today_dow,
+  pending:    query day_entries WHERE user=X AND kind='commitment' AND status='open',
+}</pre>
+
+<h3>tools the model can call</h3>
+<table>
+<thead><tr><th>tool</th><th>returns</th></tr></thead>
+<tbody>
+<tr><td><code>get_day(date)</code></td><td>all entries + narrative for one day</td></tr>
+<tr><td><code>query_entries({ kind?, range?, entity? })</code></td><td>filtered list</td></tr>
+<tr><td><code>get_entity(name_or_id)</code></td><td>node + 1-hop neighborhood</td></tr>
+<tr><td><code>get_rhythms()</code></td><td>typical patterns by day-of-week</td></tr>
+<tr><td><code>get_open_threads()</code></td><td>commitments + threads not yet closed</td></tr>
+<tr><td><code>search_narratives(text)</code></td><td>semantic search over sealed summaries (pgvector)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section>
+<h2>5. worked example — the 5pm dentist nudge</h2>
+<p>walking one moment through the system end-to-end.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  participant U as user
+  participant D as donna
+  participant E as events
+  participant DE as day_entries
+  participant G as graph
+
+  Note over D,G: yesterday — user mentions dentist
+  U->>D: "remind me to book the dentist tomorrow"
+  D->>E: event(kind=message_in)
+  D->>DE: entry(kind=commitment, due=tomorrow 5pm)
+  D->>G: edge(user, has_appointment_with, dentist)
+
+  Note over D,G: today 5pm — scheduler fires
+  D->>E: event(kind=donna_outbound, trigger=commitment#42)
+  D->>U: "did you book the dentist?"
+  D->>DE: entry(kind=donna_reminder, ref=commitment#42)
+
+  Note over D,G: user replies
+  U->>D: "yeah, booked for next tuesday"
+  D->>E: event(kind=message_in)
+  D->>DE: entry(kind=meeting, title=dentist, when=next_tue)
+  D->>DE: update commitment#42 status='done'
+</pre>
+</div>
+
+<p>three weeks later when the user says "didn't you remind me about something on the 21st?" donna can answer because <code>day_entries WHERE date='2026-05-21' AND kind='donna_reminder'</code> returns the row instantly.</p>
+</section>
+
+<section>
+<h2>6. rhythms — "what's usual this day"</h2>
+<p>nightly job aggregates last 60 days of entries per user. groups by day-of-week and entry-kind. detects recurrences with enough density to call them patterns.</p>
+
+<pre>rhythms row:
+{
+  user_id, dow: 'tue', kind: 'meeting',
+  signature: 'gym',         -- normalized
+  typical_time: '07:00',
+  confidence: 0.85,
+  last_observed: '2026-05-13'
+}</pre>
+
+<p>per-turn, donna can pull rhythms for today's dow and notice the absence: "user didn't mention gym today, that's unusual for tuesday."</p>
+</section>
+
+<section>
+<h2>7. tradeoffs</h2>
+<div class="pros-cons pros">
+<div>
+  <h4>good at</h4>
+  <ul class="tight">
+    <li>tool ergonomics — query maps to intent</li>
+    <li>indexable, fast for "what's open / what happened today"</li>
+    <li>typed rows = the model gets clean, predictable shapes</li>
+    <li>donna's own actions are first-class entries, not buried in events</li>
+  </ul>
+</div>
+<div>
+  <h4>costs</h4>
+  <ul class="tight">
+    <li>two write paths (events + entries) — possible drift</li>
+    <li>extractor logic gets sprawling as kinds proliferate</li>
+    <li>schema migrations when a new kind needs new payload shape</li>
+    <li>cross-table joins for some questions</li>
+  </ul>
+</div>
+</div>
+</section>
+
+<section>
+<h2>8. when to pick this</h2>
+<p>pick this if shipping fast matters and the model needs clean, queryable shapes. it is the most pragmatic of the three — the one that gets donna useful in v0.4 even if it costs some replay purity.</p>
+
+<p class="note">opt 2 trades this for stricter purity. opt 3 trades it for a simpler mental model.</p>
+</section>
+
+</body>
+</html>

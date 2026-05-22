@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>donna — kg option 2 · event-first</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true, theme: 'base',
+    themeVariables: {
+      fontFamily: 'Inter, sans-serif', fontSize: '13px',
+      primaryColor: '#E8EBF2', primaryTextColor: '#1E1A18',
+      primaryBorderColor: '#3B4A6B', lineColor: '#3B4A6B',
+      secondaryColor: '#FBF7F5', tertiaryColor: '#E8EBF2',
+      mainBkg: '#E8EBF2'
+    },
+    flowchart: { curve: 'basis', padding: 14, htmlLabels: true }
+  });
+</script>
+<style>
+:root {
+  --ivory:#FBF7F5; --tan:#E8EBF2; --ink:#1E1A18; --soft:#6B6360;
+  --accent:#3B4A6B; --accent-deep:#23304A; --rule:#D2D6DF;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--ivory); color: var(--ink); margin: 0; }
+body { font-family: 'Inter', system-ui, sans-serif; line-height: 1.6; padding: 72px 32px 140px; max-width: 1080px; margin: 0 auto; }
+.optnav { display: flex; gap: 4px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 32px; }
+.optnav a { padding: 6px 14px; border: 1px solid var(--rule); color: var(--soft); text-decoration: none; }
+.optnav a.cur { background: var(--accent); color: var(--ivory); border-color: var(--accent); }
+header { padding-bottom: 48px; border-bottom: 1px solid var(--rule); margin-bottom: 56px; }
+h1, h2, h3, h4 { font-family: 'EB Garamond', Georgia, serif; font-weight: 400; letter-spacing: -0.01em; color: var(--ink); }
+h1 { font-size: 52px; line-height: 1.05; margin: 0 0 16px; }
+h1 em { color: var(--accent); font-style: italic; }
+h2 { font-size: 30px; margin: 72px 0 14px; padding-top: 24px; border-top: 1px solid var(--rule); }
+h3 { font-size: 21px; margin: 40px 0 10px; }
+h4 { font-size: 16px; margin: 24px 0 6px; font-weight: 500; }
+p, li { font-size: 15px; }
+.lede { font-size: 19px; color: var(--soft); max-width: 720px; }
+.lede em { color: var(--accent); font-style: italic; font-family: 'EB Garamond', Georgia, serif; }
+small.kicker { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 600; display: block; margin-bottom: 12px; }
+code, pre { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; background: var(--tan); color: var(--accent-deep); }
+code { padding: 2px 5px; border-radius: 3px; }
+pre { padding: 16px 20px; margin: 14px 0 22px; border-left: 3px solid var(--accent); line-height: 1.5; overflow-x: auto; }
+.diagram { background: var(--tan); border: 1px solid var(--rule); padding: 24px; margin: 18px 0 28px; }
+.diagram svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+table { width: 100%; border-collapse: collapse; margin: 14px 0 28px; font-size: 13.5px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); border-bottom: 1px solid var(--accent-deep); }
+.aside { border-left: 3px solid var(--accent); padding: 12px 18px; margin: 18px 0; background: rgba(59,74,107,0.06); font-size: 14px; color: var(--soft); }
+.aside strong { color: var(--ink); font-weight: 500; }
+.pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 18px 0 28px; }
+.pros-cons > div { padding: 18px 22px; border: 1px solid var(--rule); }
+.pros-cons h4 { margin-top: 0; }
+.pros-cons.pros > div:first-child { border-left: 3px solid var(--accent); }
+.pros-cons.pros > div:last-child { border-left: 3px solid var(--soft); }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; background: rgba(59,74,107,0.15); color: var(--accent-deep); margin-right: 4px; }
+.pill.truth { background: var(--ink); color: var(--ivory); }
+.pill.derived { background: rgba(59,74,107,0.15); color: var(--accent-deep); }
+ul.tight li { margin-bottom: 3px; }
+hr { border: none; border-top: 1px solid var(--rule); margin: 48px 0; }
+.note { font-size: 13px; color: var(--soft); font-style: italic; }
+</style>
+</head>
+<body>
+
+<div class="optnav">
+  <a href="kg-v1-ledger.html">opt 1 · ledger-first</a>
+  <a href="kg-v2-replay.html" class="cur">opt 2 · event-first</a>
+  <a href="kg-v3-stream.html">opt 3 · moments stream</a>
+</div>
+
+<header>
+  <small class="kicker">option 2 of 3</small>
+  <h1>event-first. <em>everything else is a projection.</em></h1>
+  <p class="lede">only one table holds truth — <em>events</em>. day_entries, narratives, graph, rhythms are all marked <em>derived</em>: drop and rebuild any of them from the event log without losing a thing. extraction is a pure function. replay is a first-class operation, not a recovery story.</p>
+</header>
+
+<section>
+<h2>1. thesis</h2>
+<p>donna's understanding is a function of what she's seen. capture <strong>what she's seen</strong> with absolute fidelity in one append-only log. compute everything else. the discipline isn't storage — it's making sure no derived table ever holds information that can't be reproduced from the log.</p>
+
+<div class="aside">
+<strong>the strong claim:</strong> if you can't drop the graph table and rebuild it from events overnight and get the same answers, you've leaked state outside the log. that's a bug, not an optimization.
+</div>
+</section>
+
+<section>
+<h2>2. schema</h2>
+
+<h3>truth table</h3>
+<table>
+<thead><tr><th>table</th><th>status</th><th>what it holds</th></tr></thead>
+<tbody>
+<tr><td><code>events</code></td><td><span class="pill truth">truth</span></td><td>append-only. every observable thing that ever happened.</td></tr>
+<tr><td><code>d_day_entries</code></td><td><span class="pill derived">derived</span></td><td>typed rows projected from events. droppable.</td></tr>
+<tr><td><code>d_day_narrative</code></td><td><span class="pill derived">derived</span></td><td>per-day vibe. regenerable.</td></tr>
+<tr><td><code>d_entities</code> / <code>d_edges</code></td><td><span class="pill derived">derived</span></td><td>the graph. wipe and replay anytime.</td></tr>
+<tr><td><code>d_rhythms</code></td><td><span class="pill derived">derived</span></td><td>patterns. nightly recompute.</td></tr>
+<tr><td><code>extraction_runs</code></td><td><span class="pill truth">truth</span></td><td>which extractor version ran on which events. lets you partial-replay.</td></tr>
+</tbody>
+</table>
+
+<p class="note">the <code>d_</code> prefix is a visible marker: anyone reading the schema knows "this is rebuildable."</p>
+
+<h3>events — the single truth table</h3>
+<pre>{
+  id           uuid pk,
+  user_id      uuid not null,
+  ts           timestamptz not null,        -- when it happened
+  ingested_at  timestamptz not null,        -- when donna saw it
+  source       source_enum not null,        -- whatsapp, imessage, gmail, cal, donna, system
+  actor        actor_enum not null,         -- user, donna, system, external
+  kind         event_kind not null,
+  payload      jsonb not null,
+  supersedes   uuid references events(id),  -- for corrections
+  created_at   timestamptz default now()
+}
+
+-- partitioned by (user_id, month) for replay-by-user efficiency
+-- indexes: (user_id, ts), (user_id, kind, ts), (supersedes)</pre>
+
+<h4>event kinds</h4>
+<ul class="tight">
+  <li><span class="pill">message_in</span> / <span class="pill">message_out</span> — chat with donna</li>
+  <li><span class="pill">integration_delta</span> — gmail thread, calendar change, etc</li>
+  <li><span class="pill">donna_action</span> — notification fired, reminder sent, tool called</li>
+  <li><span class="pill">fact_asserted</span> — user told donna something declarative</li>
+  <li><span class="pill">fact_corrected</span> — supersedes a prior fact</li>
+  <li><span class="pill">observation</span> — donna noticed something (separate event so extraction is auditable)</li>
+</ul>
+
+<h3>derived tables</h3>
+<p>same shapes as option 1 for <code>d_day_entries</code>, <code>d_day_narrative</code>, <code>d_entities</code>, <code>d_edges</code>, <code>d_rhythms</code>. the difference is enforcement: <strong>writes only via the extractor pipeline</strong>, and the pipeline is a pure function over events.</p>
+</section>
+
+<section>
+<h2>3. write path — and replay path</h2>
+<div class="diagram">
+<pre class="mermaid">
+flowchart TB
+  IN[message / integration / donna action] --> EV[(events)]
+  EV --> Q[event queue]
+  Q --> EX[extractor v_N]
+  EX --> RUN[(extraction_runs)]
+  EX --> DE[(d_day_entries)]
+  EX --> DG[(d_entities + d_edges)]
+  EX --> DN[(d_day_narrative)]
+  CRON[nightly] --> SEAL[seal narrative]
+  CRON --> RH[(d_rhythms)]
+
+  REPLAY[replay job<br/>extractor v_N+1] -.->|wipe + rebuild| DE
+  REPLAY -.->|wipe + rebuild| DG
+  REPLAY -.->|regenerate| DN
+</pre>
+</div>
+
+<h3>live writes</h3>
+<ol>
+  <li>anything observable → event written first. nothing else.</li>
+  <li>extractor consumes events from a queue. produces derived rows. records its version in <code>extraction_runs</code>.</li>
+  <li>downstream tables update as a consequence — never directly.</li>
+</ol>
+
+<h3>replay</h3>
+<p>when extractor logic improves, replay runs against historical events. derived tables wipe and rebuild. yesterday's data gets smarter without re-collecting. this is <strong>routine</strong>, not exceptional.</p>
+
+<div class="aside">
+  <strong>extraction must be pure.</strong> input: (event, current derived state). output: (derived rows to write). no calls to external apis during extraction. no random ids generated. no time.now(). everything reproducible.
+</div>
+</section>
+
+<section>
+<h2>4. read path</h2>
+<p>identical to option 1 from the model's perspective — same tools, same bundle. the model has no idea anything is derived. that's the point.</p>
+
+<h3>tools</h3>
+<table>
+<thead><tr><th>tool</th><th>reads from</th></tr></thead>
+<tbody>
+<tr><td><code>get_day(date)</code></td><td>d_day_entries + d_day_narrative</td></tr>
+<tr><td><code>query_entries(...)</code></td><td>d_day_entries</td></tr>
+<tr><td><code>get_entity(...)</code></td><td>d_entities + d_edges</td></tr>
+<tr><td><code>get_rhythms()</code></td><td>d_rhythms</td></tr>
+<tr><td><code>raw_history(range)</code></td><td>events directly (debug + audit)</td></tr>
+</tbody>
+</table>
+
+<div class="aside">
+  <strong>one tool that's only here:</strong> <code>raw_history</code>. the model can drop to truth when derived feels wrong. lets donna say "let me check what you actually said" when memory disagrees with the user.
+</div>
+</section>
+
+<section>
+<h2>5. worked example — the 5pm dentist nudge, with a twist</h2>
+<p>same scenario as option 1, but two weeks later the extractor learns to detect <em>dental anxiety</em> from earlier messages. replay runs. yesterday's data is now smarter.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  participant U as user
+  participant D as donna
+  participant E as events
+  participant EX as extractor v1
+  participant DT as derived
+
+  U->>D: "remind me to book the dentist tomorrow"
+  D->>E: event(kind=message_in)
+  E->>EX: process
+  EX->>DT: d_day_entries(commitment, dentist, due=tomorrow 5pm)
+  EX->>DT: d_edges(user, has_appointment_with, dentist)
+
+  Note over E,DT: extractor v2 ships — detects dental anxiety
+  D->>EX: replay last 90 days with v2
+  EX->>DT: WIPE + REBUILD d_day_entries, d_edges
+  EX->>DT: now also: observation(user_has_dental_anxiety, evidence=...)
+
+  Note over D: today 5pm — donna nudges with softer language
+  D->>U: "ready to make the dentist call? no rush."
+</pre>
+</div>
+
+<p>donna's nudge gets softer not because someone updated a row — because replay surfaced a pattern the old extractor missed. <strong>no new data was collected. the user's history just got smarter.</strong></p>
+</section>
+
+<section>
+<h2>6. rhythms — same idea, different discipline</h2>
+<p>same shape as option 1. the difference: <code>d_rhythms</code> is computed only from events + d_day_entries. if rhythm logic improves, drop and recompute. patterns aren't sacred — they're a current best-guess from current understanding.</p>
+</section>
+
+<section>
+<h2>7. tradeoffs</h2>
+<div class="pros-cons pros">
+<div>
+  <h4>good at</h4>
+  <ul class="tight">
+    <li><strong>upgradability</strong> — past data gets smarter on every release</li>
+    <li>provenance — every derived row links to events</li>
+    <li>recovery — table corruption is a non-event, replay it</li>
+    <li>schema courage — change derived shapes freely</li>
+    <li>debuggability — "why did donna think X" → trace</li>
+  </ul>
+</div>
+<div>
+  <h4>costs</h4>
+  <ul class="tight">
+    <li>worker / queue infrastructure required from day one</li>
+    <li>eventual consistency — derived tables lag behind events</li>
+    <li>extraction discipline (purity) takes engineering taste</li>
+    <li>more moving parts in v0</li>
+    <li>"why is today's snapshot empty?" → did the extractor run?</li>
+  </ul>
+</div>
+</div>
+</section>
+
+<section>
+<h2>8. when to pick this</h2>
+<p>pick this if you expect donna's understanding to evolve fast and you want every past day to come along for the ride. it is the choice that pays compound interest over years — but front-loads infrastructure work.</p>
+
+<p class="note">opt 1 trades this for ergonomics. opt 3 trades it for mental simplicity.</p>
+</section>
+
+</body>
+</html>

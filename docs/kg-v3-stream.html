@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>donna — kg option 3 · moments stream</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true, theme: 'base',
+    themeVariables: {
+      fontFamily: 'Inter, sans-serif', fontSize: '13px',
+      primaryColor: '#E8EDDF', primaryTextColor: '#1E1A18',
+      primaryBorderColor: '#4F5E45', lineColor: '#4F5E45',
+      secondaryColor: '#FBF7F5', tertiaryColor: '#E8EDDF',
+      mainBkg: '#E8EDDF'
+    },
+    flowchart: { curve: 'basis', padding: 14, htmlLabels: true }
+  });
+</script>
+<style>
+:root {
+  --ivory:#FBF7F5; --tan:#E8EDDF; --ink:#1E1A18; --soft:#6B6360;
+  --accent:#4F5E45; --accent-deep:#2E3B27; --rule:#D6DBC9;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--ivory); color: var(--ink); margin: 0; }
+body { font-family: 'Inter', system-ui, sans-serif; line-height: 1.6; padding: 72px 32px 140px; max-width: 1080px; margin: 0 auto; }
+.optnav { display: flex; gap: 4px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 32px; }
+.optnav a { padding: 6px 14px; border: 1px solid var(--rule); color: var(--soft); text-decoration: none; }
+.optnav a.cur { background: var(--accent); color: var(--ivory); border-color: var(--accent); }
+header { padding-bottom: 48px; border-bottom: 1px solid var(--rule); margin-bottom: 56px; }
+h1, h2, h3, h4 { font-family: 'EB Garamond', Georgia, serif; font-weight: 400; letter-spacing: -0.01em; color: var(--ink); }
+h1 { font-size: 52px; line-height: 1.05; margin: 0 0 16px; }
+h1 em { color: var(--accent); font-style: italic; }
+h2 { font-size: 30px; margin: 72px 0 14px; padding-top: 24px; border-top: 1px solid var(--rule); }
+h3 { font-size: 21px; margin: 40px 0 10px; }
+h4 { font-size: 16px; margin: 24px 0 6px; font-weight: 500; }
+p, li { font-size: 15px; }
+.lede { font-size: 19px; color: var(--soft); max-width: 720px; }
+.lede em { color: var(--accent); font-style: italic; font-family: 'EB Garamond', Georgia, serif; }
+small.kicker { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 600; display: block; margin-bottom: 12px; }
+code, pre { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; background: var(--tan); color: var(--accent-deep); }
+code { padding: 2px 5px; border-radius: 3px; }
+pre { padding: 16px 20px; margin: 14px 0 22px; border-left: 3px solid var(--accent); line-height: 1.5; overflow-x: auto; }
+.diagram { background: var(--tan); border: 1px solid var(--rule); padding: 24px; margin: 18px 0 28px; }
+.diagram svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+table { width: 100%; border-collapse: collapse; margin: 14px 0 28px; font-size: 13.5px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); border-bottom: 1px solid var(--accent-deep); }
+.aside { border-left: 3px solid var(--accent); padding: 12px 18px; margin: 18px 0; background: rgba(79,94,69,0.07); font-size: 14px; color: var(--soft); }
+.aside strong { color: var(--ink); font-weight: 500; }
+.pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 18px 0 28px; }
+.pros-cons > div { padding: 18px 22px; border: 1px solid var(--rule); }
+.pros-cons h4 { margin-top: 0; }
+.pros-cons.pros > div:first-child { border-left: 3px solid var(--accent); }
+.pros-cons.pros > div:last-child { border-left: 3px solid var(--soft); }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; background: rgba(79,94,69,0.18); color: var(--accent-deep); margin-right: 4px; }
+ul.tight li { margin-bottom: 3px; }
+hr { border: none; border-top: 1px solid var(--rule); margin: 48px 0; }
+.note { font-size: 13px; color: var(--soft); font-style: italic; }
+.bigq { font-family: 'EB Garamond', Georgia, serif; font-size: 22px; line-height: 1.4; color: var(--ink); border-left: 3px solid var(--accent); padding: 8px 18px; margin: 24px 0; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div class="optnav">
+  <a href="kg-v1-ledger.html">opt 1 · ledger-first</a>
+  <a href="kg-v2-replay.html">opt 2 · event-first</a>
+  <a href="kg-v3-stream.html" class="cur">opt 3 · moments stream</a>
+</div>
+
+<header>
+  <small class="kicker">option 3 of 3</small>
+  <h1>moments stream. <em>the day is a query.</em></h1>
+  <p class="lede">there is no events table and no entries table — there is one table of <em>moments</em>. a moment is anything that happened at a time. the day is what falls in a date range. simplest mental model. most uniform write path.</p>
+</header>
+
+<section>
+<h2>1. thesis</h2>
+<p class="bigq">"events vs entries" is a false dichotomy. they're the same thing observed at different abstraction levels. collapse them.</p>
+
+<p>a user's life through donna is a time-series of moments. some are raw (a message arrived). some are inferred (donna noticed user sounded flat). some are donna's own actions (a notification sent at 5pm). all share one shape: <strong>when, who, what, payload</strong>.</p>
+
+<p>"the day" is not a row. it is a query — moments where date = today. "this week's commitments" is a query. "every interaction with sarah" is a query. the data model holds moments. composition does the rest.</p>
+</section>
+
+<section>
+<h2>2. schema</h2>
+<h3>tables</h3>
+<table>
+<thead><tr><th>table</th><th>cardinality</th><th>what it is</th></tr></thead>
+<tbody>
+<tr><td><code>moments</code></td><td>~200-450/day/user</td><td>the central time-series. one row per anything-that-happened.</td></tr>
+<tr><td><code>entities</code> / <code>edges</code></td><td>~hundreds/thousands per user</td><td>the graph. derived from moments touching entities.</td></tr>
+<tr><td><code>day_narrative</code></td><td>1/day/user</td><td>only thing that's truly per-day. sealed at end-of-day.</td></tr>
+<tr><td><code>rhythms</code></td><td>~tens/user</td><td>patterns. recomputed nightly.</td></tr>
+</tbody>
+</table>
+
+<h3>moments — the only table that matters</h3>
+<pre>{
+  id           uuid pk,
+  user_id      uuid not null,
+  ts           timestamptz not null,
+  date         date generated always as ((ts at time zone tz)::date) stored,
+  origin       origin_enum not null,    -- observed | inferred | acted
+  source       source_enum not null,    -- whatsapp | imessage | gmail | cal | donna | system
+  actor        actor_enum not null,     -- user | donna | system | external
+  kind         text not null,           -- 'message' | 'commitment' | 'meeting' | 'donna_notification' | ...
+  body         text,                    -- denormalized searchable text (pgvector)
+  payload      jsonb not null,
+  entity_refs  uuid[] not null default '{}',
+  supersedes   uuid references moments(id),  -- corrections
+  caused_by    uuid references moments(id),  -- linkage between related moments
+  created_at   timestamptz default now()
+}
+
+-- partitioned by (user_id, date)
+-- indexes:
+--   (user_id, date, ts)
+--   (user_id, kind, date)
+--   (user_id, entity_refs gin)
+--   (body) using pgvector
+</pre>
+
+<h3>origin — the key abstraction</h3>
+<table>
+<thead><tr><th>origin</th><th>meaning</th><th>example</th></tr></thead>
+<tbody>
+<tr><td><span class="pill">observed</span></td><td>directly witnessed by donna</td><td>a whatsapp message, a gmail thread arrived</td></tr>
+<tr><td><span class="pill">inferred</span></td><td>derived by donna from observed moments</td><td>"user sounded flat" — points back to evidence via <code>caused_by</code></td></tr>
+<tr><td><span class="pill">acted</span></td><td>donna did this herself</td><td>notification sent, reminder fired, tool called</td></tr>
+</tbody>
+</table>
+
+<p>this trichotomy is the only structural distinction. observed moments are <strong>truth</strong> — never deleted, never mutated. inferred moments are <strong>donna's interpretations</strong> — can be superseded if extraction improves. acted moments are <strong>donna's history</strong> — what she did, when, why.</p>
+</section>
+
+<section>
+<h2>3. write path</h2>
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  M[message / integration / donna action] --> W[write moment<br/>origin=observed or acted]
+  W --> M1[(moments)]
+  M1 --> EX[extractor]
+  EX --> M2[write moments<br/>origin=inferred]
+  M2 --> M1
+  M1 --> GR[update entities + edges]
+  CRON[nightly] --> SEAL[write day_narrative]
+  CRON --> RHY[update rhythms]
+</pre>
+</div>
+
+<ol>
+  <li>everything observable or done becomes a moment immediately. one write path.</li>
+  <li>extractor reads moments, may emit more moments (origin=inferred) with <code>caused_by</code> pointing at sources.</li>
+  <li>graph updates as a side effect of moments touching entities.</li>
+  <li>nightly: narrative + rhythm recomputation.</li>
+</ol>
+
+<div class="aside">
+  <strong>no separate "events vs entries" debate.</strong> a commitment is a moment. the message that contained it is a moment. donna's reminder firing is a moment. they all share a table, differ only in <code>kind</code> and <code>origin</code>.
+</div>
+</section>
+
+<section>
+<h2>4. read path</h2>
+
+<h3>standard per-turn bundle</h3>
+<pre>-- today, in order
+SELECT * FROM moments
+WHERE user_id = $1 AND date = today
+ORDER BY ts;
+
+-- recent narrative ambience (last 7 days)
+SELECT date, summary, energy FROM day_narrative
+WHERE user_id = $1 AND date BETWEEN today-7 AND today-1;
+
+-- entities mentioned in current turn → 1-hop graph
+SELECT n, e FROM entities n
+JOIN edges e ON (e.src = n.id OR e.dst = n.id)
+WHERE n.user_id = $1 AND n.id = ANY($2);
+
+-- patterns for this day-of-week
+SELECT * FROM rhythms WHERE user_id = $1 AND dow = today_dow;</pre>
+
+<h3>tools</h3>
+<table>
+<thead><tr><th>tool</th><th>what it does</th></tr></thead>
+<tbody>
+<tr><td><code>get_day(date)</code></td><td>moments WHERE date = ? ORDER BY ts</td></tr>
+<tr><td><code>query_moments({ kind?, range?, entity?, origin? })</code></td><td>flexible filter</td></tr>
+<tr><td><code>get_entity(name_or_id)</code></td><td>entity + edges + recent moments touching it</td></tr>
+<tr><td><code>get_rhythms()</code></td><td>typical-day patterns</td></tr>
+<tr><td><code>search_text(query)</code></td><td>pgvector over <code>body</code> across all moments</td></tr>
+<tr><td><code>trace(moment_id)</code></td><td>follow caused_by chains back to observed moments</td></tr>
+</tbody>
+</table>
+
+<div class="aside">
+  <strong>one of the wins:</strong> a single tool surface scales. as donna learns new tricks, new questions, new patterns — they're all just queries against moments. you don't add new tables, you add new queries.
+</div>
+</section>
+
+<section>
+<h2>5. worked example — the 5pm dentist nudge</h2>
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  participant U as user
+  participant D as donna
+  participant M as moments
+
+  U->>D: "remind me to book the dentist tomorrow"
+  D->>M: moment(kind=message, origin=observed, actor=user)
+  D->>M: moment(kind=commitment, origin=inferred, caused_by=^, payload={what, due:tmr 5pm})
+  D->>M: moment(kind=mention, origin=inferred, entity_refs=[dentist], caused_by=^^)
+
+  Note over D,M: 5pm today
+  D->>M: moment(kind=donna_notification, origin=acted, actor=donna, caused_by=commitment_id)
+  D->>U: "did you book the dentist?"
+
+  U->>D: "yeah, booked for next tue"
+  D->>M: moment(kind=message, origin=observed)
+  D->>M: moment(kind=meeting, origin=inferred, payload={title:dentist, when:next_tue})
+  D->>M: moment(kind=commitment_resolved, origin=inferred, supersedes=commitment_id)
+</pre>
+</div>
+
+<p>three weeks later: <code>moments WHERE date='2026-05-21' AND kind='donna_notification' AND entity_refs @> '{dentist_id}'</code> returns donna's nudge. one query. one table.</p>
+</section>
+
+<section>
+<h2>6. rhythms — patterns emerge from one table</h2>
+<p>nightly job groups moments by user × day-of-week × kind × normalized signature. counts recurrences, computes confidence, writes rhythm rows. because everything lives in <code>moments</code>, this is a single SQL pass — no joining across event/entry tables.</p>
+
+<pre>-- gist of the rhythm detection
+SELECT
+  user_id,
+  extract(dow from date) as dow,
+  kind,
+  normalize_signature(payload) as sig,
+  count(*) as n,
+  mode() within group (order by extract(hour from ts)) as hour
+FROM moments
+WHERE user_id = $1
+  AND ts > now() - interval '60 days'
+GROUP BY 1,2,3,4
+HAVING count(*) >= 4;</pre>
+</section>
+
+<section>
+<h2>7. tradeoffs</h2>
+<div class="pros-cons pros">
+<div>
+  <h4>good at</h4>
+  <ul class="tight">
+    <li><strong>mental simplicity</strong> — one table, one shape, one tool family</li>
+    <li>cross-day queries are native, not orchestrated</li>
+    <li>pattern detection lives where it should — over the stream</li>
+    <li>fewer schema decisions over time (just add a kind)</li>
+    <li>provenance chain via <code>caused_by</code> is explicit</li>
+  </ul>
+</div>
+<div>
+  <h4>costs</h4>
+  <ul class="tight">
+    <li>discipline lives in conventions, not types (kind enum, payload shapes)</li>
+    <li>one massive table — partitioning matters early</li>
+    <li>truth vs interpretation lives in <code>origin</code> column, not separate tables</li>
+    <li>replay = "supersede inferred moments" — subtler than dropping a table</li>
+    <li>hard to enforce schema on payload jsonb without convention</li>
+  </ul>
+</div>
+</div>
+</section>
+
+<section>
+<h2>8. when to pick this</h2>
+<p>pick this if you believe donna's value comes from <em>cross-time pattern recognition</em>, not isolated day-rollups. it's the cleanest model conceptually — and the closest to how donna actually thinks ("what has this person done across many moments"), but demands schema discipline you can't get from the database alone.</p>
+
+<p class="note">opt 1 trades this for stricter types. opt 2 trades it for stricter replay purity.</p>
+</section>
+
+</body>
+</html>

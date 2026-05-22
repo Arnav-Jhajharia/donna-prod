@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>donna — kg option 3 · read path + loop</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true, theme: 'base',
+    themeVariables: {
+      fontFamily: 'Inter, sans-serif', fontSize: '13px',
+      primaryColor: '#E8EDDF', primaryTextColor: '#1E1A18',
+      primaryBorderColor: '#4F5E45', lineColor: '#4F5E45',
+      secondaryColor: '#FBF7F5', tertiaryColor: '#E8EDDF',
+      mainBkg: '#E8EDDF'
+    },
+    flowchart: { curve: 'basis', padding: 14, htmlLabels: true },
+    sequence: { mirrorActors: false, bottomMarginAdj: 8 }
+  });
+</script>
+<style>
+:root {
+  --ivory:#FBF7F5; --tan:#E8EDDF; --ink:#1E1A18; --soft:#6B6360;
+  --accent:#4F5E45; --accent-deep:#2E3B27; --rule:#D6DBC9;
+  --hot:#A8513E;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--ivory); color: var(--ink); margin: 0; }
+body { font-family: 'Inter', system-ui, sans-serif; line-height: 1.6; padding: 72px 32px 140px; max-width: 1080px; margin: 0 auto; }
+.optnav { display: flex; gap: 4px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 32px; flex-wrap: wrap; }
+.optnav a { padding: 6px 14px; border: 1px solid var(--rule); color: var(--soft); text-decoration: none; }
+.optnav a.cur { background: var(--accent); color: var(--ivory); border-color: var(--accent); }
+.optnav .sep { color: var(--rule); padding: 6px 0; }
+header { padding-bottom: 48px; border-bottom: 1px solid var(--rule); margin-bottom: 56px; }
+h1, h2, h3, h4 { font-family: 'EB Garamond', Georgia, serif; font-weight: 400; letter-spacing: -0.01em; color: var(--ink); }
+h1 { font-size: 52px; line-height: 1.05; margin: 0 0 16px; }
+h1 em { color: var(--accent); font-style: italic; }
+h2 { font-size: 30px; margin: 80px 0 14px; padding-top: 24px; border-top: 1px solid var(--rule); }
+h3 { font-size: 21px; margin: 40px 0 10px; }
+h4 { font-size: 16px; margin: 24px 0 6px; font-weight: 500; }
+p, li { font-size: 15px; }
+.lede { font-size: 19px; color: var(--soft); max-width: 740px; }
+.lede em { color: var(--accent); font-style: italic; font-family: 'EB Garamond', Georgia, serif; }
+small.kicker { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 600; display: block; margin-bottom: 12px; }
+code, pre { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; background: var(--tan); color: var(--accent-deep); }
+code { padding: 2px 5px; border-radius: 3px; }
+pre { padding: 16px 20px; margin: 14px 0 22px; border-left: 3px solid var(--accent); line-height: 1.5; overflow-x: auto; }
+.diagram { background: var(--tan); border: 1px solid var(--rule); padding: 24px; margin: 18px 0 28px; }
+.diagram svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+table { width: 100%; border-collapse: collapse; margin: 14px 0 28px; font-size: 13.5px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); border-bottom: 1px solid var(--accent-deep); }
+.aside { border-left: 3px solid var(--accent); padding: 12px 18px; margin: 18px 0; background: rgba(79,94,69,0.07); font-size: 14px; color: var(--soft); }
+.aside strong { color: var(--ink); font-weight: 500; }
+.aside.warn { border-left-color: var(--hot); background: rgba(168,81,62,0.06); }
+.aside.warn strong { color: var(--hot); }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; background: rgba(79,94,69,0.18); color: var(--accent-deep); margin-right: 4px; }
+.pill.eager { background: var(--ink); color: var(--ivory); }
+.pill.lazy  { background: rgba(168,81,62,0.18); color: var(--hot); }
+ul.tight li { margin-bottom: 3px; }
+hr { border: none; border-top: 1px solid var(--rule); margin: 48px 0; }
+.note { font-size: 13px; color: var(--soft); font-style: italic; }
+.bigq { font-family: 'EB Garamond', Georgia, serif; font-size: 22px; line-height: 1.4; color: var(--ink); border-left: 3px solid var(--accent); padding: 8px 18px; margin: 24px 0; font-style: italic; }
+
+/* bundle visualization */
+.bundle { border: 1px solid var(--rule); margin: 24px 0 36px; background: var(--tan); }
+.bundle .row { display: grid; grid-template-columns: 200px 1fr 90px 80px; gap: 0; border-top: 1px solid var(--rule); align-items: center; font-size: 13.5px; }
+.bundle .row:first-child { border-top: none; }
+.bundle .row.head { background: var(--ink); color: var(--ivory); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+.bundle .row.head > div { padding: 10px 14px; color: var(--ivory); }
+.bundle .row > div { padding: 14px; border-right: 1px solid var(--rule); }
+.bundle .row > div:last-child { border-right: none; }
+.bundle .row .name { font-family: 'EB Garamond', Georgia, serif; font-size: 17px; color: var(--ink); }
+.bundle .row .desc { color: var(--soft); }
+.bundle .row .tok { font-family: 'JetBrains Mono', monospace; font-size: 12px; text-align: right; color: var(--accent-deep); }
+.bundle .row .mode { font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: center; text-transform: uppercase; color: var(--accent); }
+.bundle .total { font-weight: 600; background: rgba(79,94,69,0.08); }
+.bundle .total .name { font-style: italic; }
+
+.lane { display: grid; grid-template-columns: 140px 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--rule); align-items: start; }
+.lane:last-child { border-bottom: none; }
+.lane > .label { font-family: 'EB Garamond', Georgia, serif; font-size: 18px; color: var(--accent); padding-top: 2px; }
+.lane > .label small { display:block; font-family: 'Inter'; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--soft); margin-top: 2px; }
+.lane > .body { font-size: 14.5px; }
+.lane > .body pre { margin-top: 8px; font-size: 11.5px; padding: 12px 14px; }
+</style>
+</head>
+<body>
+
+<div class="optnav">
+  <a href="kg-v1-ledger.html">opt 1 · ledger</a>
+  <a href="kg-v2-replay.html">opt 2 · event-first</a>
+  <a href="kg-v3-stream.html">opt 3 · moments stream</a>
+  <span class="sep">›</span>
+  <a href="kg-v3-read-loop.html" class="cur">read path + loop</a>
+</div>
+
+<header>
+  <small class="kicker">option 3 · read path</small>
+  <h1>how moments become <em>context.</em></h1>
+  <p class="lede">writes were the easy half. this is how the <em>moments</em> table becomes a usable prompt and a usable tool surface — and how it plays with the brain loop turn by turn. the unsexy crux. get this wrong and the whole stream is dead weight.</p>
+</header>
+
+<section>
+<h2>1. the problem</h2>
+
+<p class="bigq">"load today's moments into context" is a one-line idea that doesn't survive contact with token budgets.</p>
+
+<p>back of envelope, for a normal day:</p>
+<ul class="tight">
+  <li>~250 moments in a busy day, average ~80 tokens serialized → <strong>~20k tokens just for today</strong></li>
+  <li>last 7 days → ~140k tokens. that's the whole context window for one bundle, before the user's message, before the conversation, before tools.</li>
+  <li>and 95% of that is noise the model won't use this turn.</li>
+</ul>
+
+<p>so the question isn't "what do we store" — that's already solved. the question is: <strong>given a stream of moments, how do you assemble the right ~3k tokens for this turn, and let the model pull more on demand when it isn't enough?</strong></p>
+
+<div class="aside">
+  <strong>two-mode answer.</strong> some context is <em>always</em> needed — a thin curated bundle, computed eagerly per turn. some context is <em>sometimes</em> needed — exposed as tools the model can call. hybrid. anything else is broken at the extremes.
+</div>
+</section>
+
+<section>
+<h2>2. the bundle — eager context, per turn</h2>
+<p>computed before the model sees the turn. target: 2-4k tokens. constant cost per turn regardless of stream size.</p>
+
+<div class="bundle">
+  <div class="row head">
+    <div>component</div>
+    <div>contents</div>
+    <div>tokens</div>
+    <div>mode</div>
+  </div>
+
+  <div class="row">
+    <div class="name">identity ribbon</div>
+    <div class="desc">who the user is. name, role, city, key relationships. derived from <code>entities</code> graph. cached for the day.</div>
+    <div class="tok">~150</div>
+    <div class="mode">eager</div>
+  </div>
+
+  <div class="row">
+    <div class="name">today, compressed</div>
+    <div class="desc">structured digest of today's moments. counts + key payloads per kind. "3 meetings done, 2 commitments open: book dentist (due 5pm), call mom. donna already sent 1 nudge."</div>
+    <div class="tok">~400</div>
+    <div class="mode">eager</div>
+  </div>
+
+  <div class="row">
+    <div class="name">recent narratives</div>
+    <div class="desc">last 3-7 sealed <code>day_narrative</code> rows. summary field only. ambient sense of the week.</div>
+    <div class="tok">~800</div>
+    <div class="mode">eager</div>
+  </div>
+
+  <div class="row">
+    <div class="name">rhythm hint</div>
+    <div class="desc">rows from <code>rhythms</code> matching today's day-of-week, top by confidence. "tuesday: gym 7am usually, standup 10am, dinner home."</div>
+    <div class="tok">~120</div>
+    <div class="mode">eager</div>
+  </div>
+
+  <div class="row">
+    <div class="name">active threads</div>
+    <div class="desc">unresolved commitments + open threads across last 14 days. derived: moments(kind=commitment) with no superseding resolution.</div>
+    <div class="tok">~300</div>
+    <div class="mode">eager</div>
+  </div>
+
+  <div class="row">
+    <div class="name">entity hot-cache</div>
+    <div class="desc">entities mentioned in the last few turns of this conversation → 1-hop graph snippets. updated as the conversation moves.</div>
+    <div class="tok">~250</div>
+    <div class="mode">eager</div>
+  </div>
+
+  <div class="row">
+    <div class="name">conversation window</div>
+    <div class="desc">last 20 messages of this whatsapp/imessage thread, raw. the model needs actual phrasing, not summaries.</div>
+    <div class="tok">~1200</div>
+    <div class="mode">eager</div>
+  </div>
+
+  <div class="row total">
+    <div class="name">total per turn</div>
+    <div class="desc">budget — every turn, regardless of how big the stream is</div>
+    <div class="tok">~3200</div>
+    <div class="mode">—</div>
+  </div>
+</div>
+
+<div class="aside">
+  <strong>the bundle is itself a query plan.</strong> seven components, seven queries against moments + entities + narrative + rhythms. all parallelizable. assembly takes ~50-150ms on a warm db.
+</div>
+</section>
+
+<section>
+<h2>3. lazy tools — the model pulls more on demand</h2>
+<p>for the ~20% of turns where the bundle isn't enough, the model has tools. it iterates, the loop responds, more moments load only when needed.</p>
+
+<table>
+<thead><tr><th>tool</th><th>shape</th><th>typical use</th></tr></thead>
+<tbody>
+<tr>
+  <td><code>get_day(date)</code></td>
+  <td>all moments for one date, grouped by kind</td>
+  <td>"what happened last tuesday"</td>
+</tr>
+<tr>
+  <td><code>query_moments({kind?, range?, entity?, origin?})</code></td>
+  <td>flexible filter, paginated</td>
+  <td>"every commitment about marc this month"</td>
+</tr>
+<tr>
+  <td><code>get_entity(name_or_id)</code></td>
+  <td>node + edges + last N moments touching it</td>
+  <td>"refresh me on sarah"</td>
+</tr>
+<tr>
+  <td><code>search_text(q, k=10)</code></td>
+  <td>pgvector search over <code>moments.body</code></td>
+  <td>"that thing they mentioned about the apartment"</td>
+</tr>
+<tr>
+  <td><code>trace(moment_id)</code></td>
+  <td>follow <code>caused_by</code> chain back to observed roots</td>
+  <td>"why does donna believe X" — provenance</td>
+</tr>
+<tr>
+  <td><code>get_narrative(date_range)</code></td>
+  <td>sealed narratives for a span</td>
+  <td>"what was last month like"</td>
+</tr>
+<tr>
+  <td><code>get_rhythms({dow?, confidence_min?})</code></td>
+  <td>pattern rows</td>
+  <td>"what's normal for them on fridays"</td>
+</tr>
+</tbody>
+</table>
+
+<div class="aside warn">
+  <strong>tool-call cost is real.</strong> each tool call = another round-trip through the model. budget 2-3 tool calls average per turn before it starts feeling slow. design tools to return enough that the model doesn't need to iterate ten times.
+</div>
+</section>
+
+<section>
+<h2>4. the loop, end to end</h2>
+<p>a single turn from message arrival to donna's response, showing every read and every write.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant U as user
+  participant B as brain.ts
+  participant M as moments
+  participant CTX as assemble_context
+  participant LLM as anthropic
+  participant T as tools
+
+  U->>B: "did you remind me about the dentist?"
+  B->>M: write moment(observed, message, user)
+
+  B->>CTX: build bundle for user_id, conversation
+  par parallel reads
+    CTX->>M: today compressed
+    CTX->>M: recent narratives (7d)
+    CTX->>M: active threads
+    CTX->>M: conversation window (20)
+  and
+    CTX->>M: rhythms WHERE dow=today
+    CTX->>M: entity hot-cache
+  end
+  CTX-->>B: bundle (~3.2k tok)
+
+  B->>LLM: system + bundle + history + user_msg + tools
+
+  LLM-->>B: tool_call: query_moments(kind=donna_notification, range=today)
+  B->>T: query_moments(...)
+  T->>M: SELECT
+  T-->>B: 1 result: 5pm dentist nudge
+  B->>M: write moment(acted, tool_call, donna)
+  B->>LLM: tool_result
+
+  LLM-->>B: send_burst("yeah, hit you at 5. you book it?")
+  B->>M: write moment(acted, donna_message, donna)
+  B->>U: send text
+</pre>
+</div>
+
+<h3>annotated pseudocode</h3>
+<pre>async function runTurn(user_id, user_input, conversation_id) {
+  // 1. write the inbound moment immediately
+  const in_moment = await writeMoment({
+    user_id, origin: 'observed', actor: 'user',
+    kind: 'message', body: user_input
+  });
+
+  // 2. assemble eager bundle (parallel queries)
+  const bundle = await assembleContext({
+    user_id,
+    conversation_id,
+    mentioned: extractMentions(user_input),
+  });
+
+  // 3. build messages array
+  const messages = [
+    ...conversationHistory(conversation_id, last=20),
+    { role: 'user', content: user_input }
+  ];
+  const system = SYSTEM_PROMPT + '\n\n' + bundle.render();
+
+  // 4. tool loop — exit on terminator or max_iter
+  for (let i = 0; i &lt; MAX_ITER; i++) {
+    const resp = await anthropic.messages.create({
+      system, messages, tools: TOOLS
+    });
+
+    for (const block of resp.content) {
+      if (block.type === 'tool_use') {
+        const result = await TOOLS[block.name](block.input, { user_id });
+        // every tool call becomes a moment — donna's actions are traceable
+        await writeMoment({
+          user_id, origin: 'acted', actor: 'donna',
+          kind: 'tool_call',
+          payload: { tool: block.name, input: block.input, result_summary: ... }
+        });
+        messages.push({ role: 'tool', content: result });
+      }
+      if (block.type === 'tool_use' && TERMINATORS.has(block.name)) {
+        // send_burst — write outbound moments and exit
+        for (const burst of block.input.bursts) {
+          await writeMoment({
+            user_id, origin: 'acted', actor: 'donna',
+            kind: 'donna_message', body: burst,
+            caused_by: in_moment.id,
+          });
+          await sendToUser(burst);
+        }
+        return;
+      }
+    }
+  }
+
+  // 5. async — extractor processes new moments → emits inferred moments
+  enqueueExtraction(in_moment.id);
+}</pre>
+</section>
+
+<section>
+<h2>5. assemble_context — the function that matters</h2>
+<p>this is the engineering centerpiece. seven small functions, parallel, each producing a slice of the bundle.</p>
+
+<div class="lane">
+  <div class="label">today<small>compressed</small></div>
+  <div class="body">
+    raw query: <code>SELECT kind, payload, ts FROM moments WHERE user_id=$1 AND date=today ORDER BY ts</code>. then a per-kind renderer collapses to one-liners. counts where it makes sense, key fields where it matters.
+    <pre>render(moments) ⟶
+"today so far (2026-05-21, tue):
+  meetings: standup 10:00 ✓, marc 1:1 14:00 ✓
+  commitments open: book dentist (due 17:00), call mom
+  donna sent: 1 morning brief, 1 nudge re dentist 17:00
+  mood signal: replies slower than usual"</pre>
+  </div>
+</div>
+
+<div class="lane">
+  <div class="label">recent narratives<small>last 7 days</small></div>
+  <div class="body">
+    cheap join. one row per day. summary field only.
+    <pre>SELECT date, summary, energy
+FROM day_narrative
+WHERE user_id=$1 AND sealed=true
+  AND date BETWEEN today-7 AND today-1
+ORDER BY date DESC;</pre>
+  </div>
+</div>
+
+<div class="lane">
+  <div class="label">active threads<small>not yet closed</small></div>
+  <div class="body">
+    moments of kind=commitment where no superseding resolution exists, within a recency window so it doesn't grow forever.
+    <pre>SELECT m.* FROM moments m
+LEFT JOIN moments r
+  ON r.supersedes = m.id
+  AND r.kind = 'commitment_resolved'
+WHERE m.user_id=$1
+  AND m.kind='commitment'
+  AND m.ts > now() - interval '14 days'
+  AND r.id IS NULL;</pre>
+  </div>
+</div>
+
+<div class="lane">
+  <div class="label">entity hot-cache<small>conversational</small></div>
+  <div class="body">
+    maintained per-conversation in redis (or in-memory). every turn extracts mentioned entity ids, unions with rolling window, evicts oldest. when assembling, fetch node + 1-hop edges for each.
+  </div>
+</div>
+
+<div class="lane">
+  <div class="label">conversation window<small>raw</small></div>
+  <div class="body">
+    last N message-kind moments for this conversation_id. cheap. raw text. the model needs actual phrasing here, not compressed.
+  </div>
+</div>
+
+<div class="lane">
+  <div class="label">rhythm hint<small>day-of-week</small></div>
+  <div class="body">
+    <pre>SELECT kind, signature, typical_time, confidence
+FROM rhythms
+WHERE user_id=$1
+  AND dow = extract(dow from today)
+  AND confidence > 0.5
+ORDER BY confidence DESC
+LIMIT 6;</pre>
+  </div>
+</div>
+
+<div class="lane">
+  <div class="label">identity ribbon<small>cached</small></div>
+  <div class="body">
+    one query at sign-in, refreshed daily. user node + top edges by recency × confidence. cached in memory per process.
+  </div>
+</div>
+</section>
+
+<section>
+<h2>6. caching — what's recomputed when</h2>
+<table>
+<thead><tr><th>artifact</th><th>recompute cadence</th><th>where it lives</th></tr></thead>
+<tbody>
+<tr><td>identity ribbon</td><td>once per day per user</td><td>process-local LRU</td></tr>
+<tr><td>recent narratives</td><td>per turn (cheap) or per minute cache</td><td>process-local</td></tr>
+<tr><td>active threads</td><td>per turn</td><td>db</td></tr>
+<tr><td>today compressed</td><td>per turn (moments change live)</td><td>db</td></tr>
+<tr><td>entity hot-cache</td><td>per turn, with rolling state</td><td>redis or per-conversation in-mem</td></tr>
+<tr><td>rhythm hint</td><td>per turn, but rhythms recomputed nightly</td><td>db</td></tr>
+<tr><td>day_narrative</td><td>nightly seal job</td><td>db (write-once per day)</td></tr>
+<tr><td>rhythms</td><td>nightly batch</td><td>db</td></tr>
+</tbody>
+</table>
+
+<p>the rule: <strong>nothing in the bundle is more expensive than 50ms in steady state.</strong> if it gets slower, push it to a cache or a precomputed view.</p>
+</section>
+
+<section>
+<h2>7. cost per turn</h2>
+<p>rough estimate, sonnet-class pricing, single user.</p>
+<table>
+<thead><tr><th>component</th><th>tokens</th><th>cost (input)</th></tr></thead>
+<tbody>
+<tr><td>system prompt</td><td>~1500</td><td>cacheable, ~0.1¢</td></tr>
+<tr><td>bundle</td><td>~3200</td><td>~0.4¢</td></tr>
+<tr><td>conversation history</td><td>~1200</td><td>~0.15¢</td></tr>
+<tr><td>user message</td><td>~50</td><td>negligible</td></tr>
+<tr><td>output (1 send_burst)</td><td>~120</td><td>~0.2¢</td></tr>
+<tr><td>+ 1 tool call avg</td><td>~600 round trip</td><td>~0.2¢</td></tr>
+<tr><td><strong>total / turn</strong></td><td><strong>~6.6k</strong></td><td><strong>~1¢</strong></td></tr>
+</tbody>
+</table>
+
+<p>at 50 turns/day/user: <strong>~50¢/user/day</strong>. budget for tool iteration and you're closer to ~80¢. on the order of single-digit dollars per active user per week.</p>
+</section>
+
+<section>
+<h2>8. failure modes</h2>
+<table>
+<thead><tr><th>failure</th><th>symptom</th><th>fix</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>bundle too thin</strong></td>
+  <td>model tool-calls every turn, latency creeps up, cost rises</td>
+  <td>measure tool-call rate; promote frequently-pulled data into the bundle</td>
+</tr>
+<tr>
+  <td><strong>bundle too fat</strong></td>
+  <td>cost balloons, signal-to-noise drops, model starts ignoring the bundle</td>
+  <td>shrink each component; rotate stale narratives out; compress more</td>
+</tr>
+<tr>
+  <td><strong>stale entity cache</strong></td>
+  <td>model talks about sarah using week-old facts</td>
+  <td>invalidate entity cache when graph edges change</td>
+</tr>
+<tr>
+  <td><strong>rhythm hint misleads</strong></td>
+  <td>"unusual for tuesday" fires on weeks when life isn't on rails</td>
+  <td>cap rhythm assertions in voice; only act on multi-week patterns</td>
+</tr>
+<tr>
+  <td><strong>extraction lag</strong></td>
+  <td>this turn's moments aren't extracted yet → bundle missing fresh inferences</td>
+  <td>fine — inferences land in next turn's bundle. extractor is async by design</td>
+</tr>
+<tr>
+  <td><strong>moments table grows fast</strong></td>
+  <td>queries slow as table hits hundreds of millions of rows</td>
+  <td>partition by (user_id, month); archive cold partitions to s3 after 1y</td>
+</tr>
+</tbody>
+</table>
+</section>
+
+<section>
+<h2>9. the through-line</h2>
+<p class="bigq">writes are easy. reads are where the architecture either earns its keep or doesn't.</p>
+
+<p>moments-stream gives you one table to write to and one table to query from. but the model can't query a million rows — so the engineering job is <strong>context assembly</strong>: a small, fast, parallel set of queries that produce ~3k tokens of curated signal every turn, plus tools that let the model fetch more when the bundle isn't enough.</p>
+
+<p>the brain loop barely changes. it gets a fatter system prompt (the bundle) and a richer tool set. every action it takes writes back into moments, so donna's own behavior becomes future context. closed loop.</p>
+
+<div class="aside">
+  <strong>the underrated property:</strong> because donna's actions are moments too, she can reason about herself. "did i nudge them about this already" is a query, not a guess. that's the difference between a stateful assistant and one who forgets she just texted you.
+</div>
+</section>
+
+</body>
+</html>

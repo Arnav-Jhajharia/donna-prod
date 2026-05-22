@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>donna — knowledge graph</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '13px',
+      primaryColor: '#F0EAE4',
+      primaryTextColor: '#1E1A18',
+      primaryBorderColor: '#4A2F23',
+      lineColor: '#4A2F23',
+      secondaryColor: '#FBF7F5',
+      tertiaryColor: '#F0EAE4',
+      noteBkgColor: '#F0EAE4',
+      noteTextColor: '#1E1A18',
+      mainBkg: '#F0EAE4',
+    },
+    flowchart: { curve: 'basis', padding: 16, htmlLabels: true },
+    sequence: { mirrorActors: false, bottomMarginAdj: 8 },
+  });
+</script>
+<style>
+:root {
+  --ivory:    #FBF7F5;
+  --tan:      #F0EAE4;
+  --ink:      #1E1A18;
+  --soft:     #6B6360;
+  --rust:     #7B5544;
+  --umber:    #4A2F23;
+  --rule:     #DCD2C9;
+  --moss:     #4F5E45;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--ivory); color: var(--ink); margin: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+  line-height: 1.62;
+  letter-spacing: 0.005em;
+  padding: 80px 32px 160px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+header { padding-bottom: 56px; border-bottom: 1px solid var(--rule); margin-bottom: 64px; }
+h1, h2, h3, h4 {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+h1 { font-size: 60px; line-height: 1.02; margin: 0 0 22px; }
+h1 em { color: var(--rust); font-style: italic; }
+h2 { font-size: 36px; line-height: 1.15; margin: 96px 0 18px; padding-top: 28px; border-top: 1px solid var(--rule); }
+h3 { font-size: 24px; line-height: 1.2; margin: 56px 0 12px; }
+h4 { font-size: 17px; line-height: 1.3; margin: 32px 0 8px; font-weight: 500; }
+p, li { font-size: 15.5px; color: var(--ink); }
+.lede { font-size: 20px; color: var(--soft); max-width: 760px; margin-top: 4px; line-height: 1.5; }
+.lede em { color: var(--rust); font-style: italic; font-family: 'EB Garamond', Georgia, serif; }
+small.kicker {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--rust);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 14px;
+}
+code, kbd, pre {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  font-size: 13px;
+  background: var(--tan);
+  border-radius: 3px;
+  padding: 2px 5px;
+  color: var(--umber);
+}
+pre {
+  display: block;
+  padding: 18px 22px;
+  margin: 18px 0 24px;
+  overflow-x: auto;
+  background: var(--tan);
+  border-left: 3px solid var(--rust);
+  line-height: 1.55;
+}
+.diagram {
+  background: var(--tan);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 28px;
+  margin: 24px 0 36px;
+  overflow-x: auto;
+}
+.diagram svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+.caption {
+  color: var(--soft);
+  font-size: 13px;
+  font-style: italic;
+  margin: -18px 0 36px;
+  padding-left: 4px;
+}
+section.dark {
+  background: var(--ink);
+  color: var(--ivory);
+  margin: 96px -32px;
+  padding: 72px 32px;
+  border-radius: 0;
+}
+section.dark h2 { color: var(--ivory); border-top-color: rgba(251,247,245,0.18); }
+section.dark h3, section.dark h4 { color: var(--ivory); }
+section.dark p, section.dark li { color: rgba(251,247,245,0.84); }
+section.dark code, section.dark pre { background: rgba(251,247,245,0.06); color: var(--ivory); border-left-color: var(--rust); }
+section.dark .diagram { background: rgba(251,247,245,0.04); border-color: rgba(251,247,245,0.16); }
+section.dark .caption { color: rgba(251,247,245,0.6); }
+section.dark .aside { background: rgba(251,247,245,0.05); color: rgba(251,247,245,0.85); }
+section.dark h1 em, section.dark .lede em { color: #E8C9B7; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0 36px;
+  font-size: 14px;
+}
+th, td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+th {
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rust);
+  border-bottom: 1px solid var(--umber);
+}
+tr:hover td { background: rgba(123,85,68,0.04); }
+.pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 99px;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.pill.immut    { background: var(--ink);            color: var(--ivory); }
+.pill.derived  { background: rgba(123,85,68,0.18);  color: var(--umber); }
+.pill.mutable  { background: rgba(79,94,69,0.15);   color: var(--moss); }
+ul.tight li { margin-bottom: 4px; }
+hr { border: none; border-top: 1px solid var(--rule); margin: 56px 0; }
+nav.toc {
+  position: sticky;
+  top: 16px;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  margin: 0 0 32px;
+  padding: 18px 22px;
+  background: var(--tan);
+  border-radius: 4px;
+}
+nav.toc ol { list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 32px; }
+nav.toc li { padding: 3px 0; }
+nav.toc a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; }
+nav.toc a:hover { border-bottom-color: var(--rust); color: var(--rust); }
+.aside {
+  border-left: 3px solid var(--rust);
+  padding: 14px 20px;
+  margin: 24px 0;
+  background: rgba(123,85,68,0.05);
+  font-size: 14.5px;
+  color: var(--soft);
+}
+.aside strong { color: var(--ink); font-weight: 500; }
+.kvgrid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 8px 24px;
+  margin: 16px 0 32px;
+  font-size: 14px;
+}
+.kvgrid > dt { color: var(--rust); font-weight: 500; padding-top: 4px; }
+.kvgrid > dd { margin: 0; padding-top: 4px; }
+
+/* layer stack diagram */
+.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  margin: 32px auto 12px;
+  max-width: 720px;
+}
+.stack .row {
+  display: grid;
+  grid-template-columns: 120px 1fr 140px;
+  align-items: center;
+  gap: 18px;
+}
+.stack .row .label { font-family: 'EB Garamond', Georgia, serif; font-size: 20px; text-align: right; color: var(--ink); }
+.stack .row .label small { display:block; font-family: 'Inter'; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--soft); margin-top: 2px; }
+.stack .row .bar {
+  height: 64px;
+  border: 1px solid var(--umber);
+  display: flex;
+  align-items: center;
+  padding: 0 22px;
+  font-family: 'JetBrains Mono';
+  font-size: 12px;
+  color: var(--umber);
+  background: var(--tan);
+}
+.stack .row.events .bar  { background: var(--ink); color: var(--ivory); border-color: var(--ink); }
+.stack .row.snap .bar    { background: rgba(123,85,68,0.18); }
+.stack .row.graph .bar   { background: rgba(79,94,69,0.14); border-color: var(--moss); color: var(--moss); }
+.stack .row .meta { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--soft); }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin: 24px 0 36px; }
+.two-col > div h4:first-child { margin-top: 0; }
+
+.numbered { counter-reset: step; list-style: none; padding-left: 0; }
+.numbered > li { counter-increment: step; padding: 14px 0 14px 56px; position: relative; border-bottom: 1px solid var(--rule); font-size: 15px; }
+.numbered > li:last-child { border-bottom: none; }
+.numbered > li::before {
+  content: counter(step, decimal-leading-zero);
+  position: absolute;
+  left: 0; top: 14px;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 22px;
+  color: var(--rust);
+  font-style: italic;
+}
+
+.thesis {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 28px;
+  line-height: 1.35;
+  color: var(--ink);
+  max-width: 760px;
+  margin: 40px 0 8px;
+}
+.thesis em { color: var(--rust); }
+</style>
+</head>
+
+<body>
+
+<header>
+  <small class="kicker">donna v0.3 · knowledge graph</small>
+  <h1>one immutable log. <em>everything else is a view.</em></h1>
+  <p class="lede">the bedrock layer of donna's understanding. three persisted shapes — <em>events, daily snapshots, graph</em> — but only one of them is the truth. the rest is replayable.</p>
+</header>
+
+<nav class="toc">
+  <ol>
+    <li>1. <a href="#thesis">thesis</a></li>
+    <li>2. <a href="#three-layers">the three layers</a></li>
+    <li>3. <a href="#events">events — the only truth</a></li>
+    <li>4. <a href="#snapshots">daily snapshots</a></li>
+    <li>5. <a href="#graph">the graph</a></li>
+    <li>6. <a href="#replay">replay as a superpower</a></li>
+    <li>7. <a href="#loop">how the brain reads</a></li>
+    <li>8. <a href="#hard">the actually hard problems</a></li>
+    <li>9. <a href="#build">build order</a></li>
+  </ol>
+</nav>
+
+<section id="thesis">
+<h2>1. thesis</h2>
+
+<p class="thesis">
+the only invariant donna keeps is the <em>event log</em>. everything she "knows" — the graph, today's vibe, this week's threads — is a projection of that log, regenerable from scratch.
+</p>
+
+<div class="aside">
+  <strong>why this matters:</strong> personal AI fails when its understanding silently drifts from reality. an event-sourced foundation gives us two non-negotiables: <em>provenance</em> (every belief traces back to an event) and <em>recovery</em> (when extraction logic gets smarter, old data gets smarter too).
+</div>
+
+<h3>the rule, stated once</h3>
+<ul class="tight">
+  <li><span class="pill immut">immutable</span> &nbsp; <strong>events</strong> — append-only. corrections are new events, not mutations.</li>
+  <li><span class="pill derived">derived</span> &nbsp; <strong>daily snapshots</strong> — persisted, but rebuildable.</li>
+  <li><span class="pill mutable">mutable</span> &nbsp; <strong>graph</strong> — working representation. mutate freely. if it gets wrong, nuke and replay.</li>
+</ul>
+</section>
+
+<section id="three-layers">
+<h2>2. the three layers</h2>
+<p>each layer compresses the layer below it. events are high-fidelity and high-volume. snapshots compress a day. the graph compresses across time.</p>
+
+<div class="diagram">
+  <div class="stack">
+    <div class="row graph">
+      <div class="label">graph<small>entities + edges</small></div>
+      <div class="bar">people · places · projects · habits · preferences</div>
+      <div class="meta">mutable</div>
+    </div>
+    <div class="row snap">
+      <div class="label">snapshots<small>one per day</small></div>
+      <div class="bar">meetings · commitments · mentions · mood · pending</div>
+      <div class="meta">derived</div>
+    </div>
+    <div class="row events">
+      <div class="label">events<small>append-only</small></div>
+      <div class="bar">messages · integration events · facts asserted · corrections</div>
+      <div class="meta">immutable</div>
+    </div>
+  </div>
+  <p class="caption">the foundation is wide and dense. each layer above is a compression — a different way to ask "what is true about this person."</p>
+</div>
+
+<h3>different shapes, different jobs</h3>
+<table>
+  <thead><tr><th>layer</th><th>shape</th><th>what it answers</th><th>cost to query</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>events</strong></td>
+      <td>append-only log</td>
+      <td>"what literally happened, in order"</td>
+      <td>scan / index by ts + source</td>
+    </tr>
+    <tr>
+      <td><strong>snapshots</strong></td>
+      <td>one row per day, structured + narrative</td>
+      <td>"what was today / last tuesday like"</td>
+      <td>O(1) per day</td>
+    </tr>
+    <tr>
+      <td><strong>graph</strong></td>
+      <td>entities + edges, latest-true</td>
+      <td>"who is sarah, where do they live, what do they care about"</td>
+      <td>traverse from entity</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+<section id="events">
+<h2>3. events — the only truth</h2>
+<p>everything donna ever sees gets written as an event before anything else happens. extractions, snapshots, graph updates — all downstream of this write.</p>
+
+<h3>shape</h3>
+<pre>{
+  id:         uuid,
+  ts:         iso8601,            // when it happened
+  ingested_at: iso8601,           // when donna saw it
+  source:     'whatsapp' | 'imessage' | 'gmail' | 'cal' | 'donna' | ...,
+  actor:      'user' | 'donna' | 'system' | external_id,
+  kind:       'message' | 'fact_asserted' | 'fact_corrected' |
+              'integration_event' | 'tool_call' | 'observation' | ...,
+  payload:    jsonb,              // shape depends on kind
+  supersedes: uuid?               // if this event corrects/replaces an earlier one
+}</pre>
+
+<div class="two-col">
+<div>
+  <h4>what counts as an event</h4>
+  <ul class="tight">
+    <li>every inbound and outbound message</li>
+    <li>every integration delta (new gmail thread, calendar change, etc)</li>
+    <li>every fact donna asserts about the user ("user mentioned they're moving to NYC")</li>
+    <li>every correction ("actually it's seattle, not NYC")</li>
+    <li>every tool call donna makes — observable, audit-able</li>
+  </ul>
+</div>
+<div>
+  <h4>what does <em>not</em> get logged here</h4>
+  <ul class="tight">
+    <li>model thoughts / chain-of-thought</li>
+    <li>intermediate prompt construction</li>
+    <li>cache state, retrieval scores</li>
+    <li>anything that's pure compute over events</li>
+  </ul>
+</div>
+</div>
+
+<h3>corrections via <code>supersedes</code></h3>
+<p>the log is never edited. when a prior fact turns out wrong, you append a new event that points at the one it replaces. the graph reads "latest non-superseded fact." the history stays intact, so you can always answer "when did donna start believing this."</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  E1["event #142<br/>fact_asserted<br/>sarah works at stripe"]:::old
+  E2["event #389<br/>fact_corrected<br/>sarah works at anthropic<br/><i>supersedes #142</i>"]:::new
+  G["graph: edge<br/>(sarah, works_at, anthropic)"]:::graph
+
+  E1 -. superseded .-> E2
+  E2 --> G
+
+  classDef old fill:#F0EAE4,stroke:#6B6360,color:#6B6360
+  classDef new fill:#FBF7F5,stroke:#4A2F23,color:#1E1A18
+  classDef graph fill:#E8EDDF,stroke:#4F5E45,color:#4F5E45
+</pre>
+</div>
+
+<div class="aside">
+  <strong>provenance:</strong> every edge in the graph carries the event id(s) it came from. "why does donna think i live in SF?" → trace to event → see the message that said it. trust is built on traceability.
+</div>
+</section>
+
+<section id="snapshots">
+<h2>4. daily snapshots</h2>
+<p>one row per day. structured fields the agent can query directly, plus a narrative the model can read. sealed at end of day, but updated continuously until then.</p>
+
+<h3>shape</h3>
+<pre>{
+  date:           '2026-05-20',
+  sealed:         boolean,
+
+  // structured — queryable
+  meetings:       [{ time, title, with[], notes? }],
+  commitments:    [{ what, to_whom?, due?, status }],
+  people_seen:    [string],
+  topics:         [string],
+  integrations:   { gmail_threads, cal_changes, ... },
+  mood_signals:   ['flat', 'energized', 'anxious', ...],
+
+  // narrative — for the model
+  summary:        text,   // 3-6 sentences. what the day felt like.
+  open_threads:   text,   // what's hanging, what to revisit
+
+  // links back
+  source_event_ids: uuid[]
+}</pre>
+
+<h3>the seal job</h3>
+<p>at the user's local midnight (or first message after), the day's events get rolled up. structured fields populated by deterministic extractors. narrative fields generated by the model with the day's events as context. then the row is marked sealed.</p>
+
+<p>sealed rows are still regenerable — if the rollup logic improves, you can re-seal historical days from events. but in normal operation, sealed = read-only.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant E as event log
+  participant S as snapshot worker
+  participant D as snapshots table
+  participant G as graph
+
+  Note over E,G: through the day
+  E->>D: live updates to today's row (unsealed)
+
+  Note over E,G: at local midnight
+  S->>E: read all events for date
+  S->>S: extract structured fields
+  S->>S: generate narrative
+  S->>D: write sealed snapshot
+  S->>G: enrich edges with day's patterns
+</pre>
+</div>
+
+<h3>why snapshots are the unlock</h3>
+<p>the graph tells you <em>sarah is your sister</em>. the snapshot tells you <em>you called sarah tuesday and she sounded off</em>. together that's the kind of context a sharp chief of staff brings. neither alone is enough.</p>
+
+<p>snapshots are also what you hand to the model when the user asks "what was last week like" — without dumping ten thousand tokens of raw chat.</p>
+</section>
+
+<section id="graph">
+<h2>5. the graph</h2>
+<p>entities and edges. mutable. no temporal validity baked in — the events already have that, and the graph can be rebuilt at any time. keep the schema simple and let it evolve.</p>
+
+<h3>what's in it</h3>
+<div class="kvgrid">
+  <dt>entities</dt>
+  <dd>people, places, projects, organizations, recurring things (gym, therapy, the dog), preferences, habits, beliefs the user holds.</dd>
+
+  <dt>edges</dt>
+  <dd>typed relations between entities. (user, dating, sarah). (user, works_at, anthropic). (sarah, lives_in, brooklyn). (user, dislikes, surprises).</dd>
+
+  <dt>provenance</dt>
+  <dd>each edge keeps the event id(s) it was derived from. cheap audit trail.</dd>
+
+  <dt>confidence</dt>
+  <dd>a single float. extractions are not certain. low-confidence edges get verified before use.</dd>
+</div>
+
+<h3>resolution at write time</h3>
+<p>the hardest part of running a personal graph isn't storage — it's making sure "sarah" and "sarah k" and "@sarah_k" and "my sister" point at the same node. resolve at ingest, not at query. a fragmented graph silently corrupts every answer downstream.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart TB
+  E[event arrives<br/>'i'm grabbing dinner with sarah tomorrow'] --> EX[extract entities + relations]
+  EX --> RES{entity resolution}
+  RES -->|known| LINK[link to existing node]
+  RES -->|ambiguous| ASK[mark low confidence<br/>or ask user]
+  RES -->|new| CREATE[create node]
+  LINK --> WRITE[write/update edges]
+  ASK --> WRITE
+  CREATE --> WRITE
+</pre>
+</div>
+
+<h3>decay, gently</h3>
+<p>facts go stale silently. "sarah works at stripe" was true a year ago. two defenses:</p>
+<ul class="tight">
+  <li><strong>confidence decay over time</strong> — older edges with no reinforcement lose confidence. donna hedges before asserting.</li>
+  <li><strong>periodic reconfirmation</strong> — high-stakes edges (relationships, employers, addresses) get gently re-checked in conversation when stale.</li>
+</ul>
+</section>
+
+<section class="dark" id="replay">
+<h2>6. replay as a superpower</h2>
+<p class="lede">because the graph and snapshots are pure functions of the event log, you can throw them away and rebuild. this is not a recovery feature — it is the central design unlock.</p>
+
+<h3>what it buys</h3>
+<ul class="tight">
+  <li><strong>smarter past.</strong> when extraction prompts get better, re-run them over old events. yesterday's data gets smarter without re-collecting.</li>
+  <li><strong>debuggability.</strong> "why does donna think X" → find the event, read it. no black box.</li>
+  <li><strong>schema freedom.</strong> the graph schema can change in any release. snapshots can take new fields. the log doesn't care.</li>
+  <li><strong>trust recovery.</strong> if the graph gets corrupted by a bad extraction pass, drop the table and replay. nothing is lost.</li>
+</ul>
+
+<div class="aside">
+  the price: <strong>extraction must be a pure function over events.</strong> no hidden state. no "this only works if you process events in order with the previous graph loaded." pure in, pure out. that discipline is what makes replay safe.
+</div>
+</section>
+
+<section id="loop">
+<h2>7. how the brain reads</h2>
+<p>per turn, the brain assembles context by pulling from all three layers in a specific pattern. the goal is enough signal to act like a sharp chief of staff — not a token-dump.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  U[user message arrives] --> W[write event]
+  W --> CTX[context assembly]
+
+  subgraph CTX[" "]
+    direction TB
+    A1[today's snapshot<br/><i>full</i>]
+    A2[last 7 days snapshots<br/><i>summaries only</i>]
+    A3[graph: entities mentioned<br/><i>1-hop neighborhood</i>]
+    A4[recent events<br/><i>last 24h, raw</i>]
+  end
+
+  CTX --> BRAIN[brain.ts<br/>tool loop]
+  BRAIN --> ACT[tools / send_burst]
+  ACT --> W2[write outbound event]
+</pre>
+</div>
+
+<h3>retrieval pattern, per turn</h3>
+<ol class="numbered">
+  <li><strong>today's snapshot</strong> — full. this is what's live. always loaded.</li>
+  <li><strong>recent snapshot summaries</strong> — last 7 days, narrative field only. ambient context without bloat.</li>
+  <li><strong>graph: 1-hop from mentioned entities</strong> — if the message mentions sarah, pull sarah's node + edges. don't pull the whole graph.</li>
+  <li><strong>recent raw events</strong> — last 24h, in order. the model needs to see actual phrasing, not just compressed structure.</li>
+  <li><strong>on-demand graph queries</strong> — exposed as a tool. the model can ask "what do i know about X" when context isn't enough.</li>
+</ol>
+
+<div class="aside">
+  <strong>retrieval, not storage, is the unsexy bottleneck.</strong> a perfect graph the brain never queries is dead weight. the design only pays off when context assembly is sharp.
+</div>
+</section>
+
+<section id="hard">
+<h2>8. the actually hard problems</h2>
+<p>storage is easy. these are not.</p>
+
+<table>
+  <thead><tr><th>problem</th><th>why it's hard</th><th>where it lives</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>entity resolution</strong></td>
+      <td>"sarah" / "sarah k" / "@sarah_k" / "my sister". get this wrong at ingest and the graph fragments.</td>
+      <td>extraction pipeline</td>
+    </tr>
+    <tr>
+      <td><strong>fact decay</strong></td>
+      <td>silent staleness. donna confidently says something true 18 months ago.</td>
+      <td>graph + retrieval</td>
+    </tr>
+    <tr>
+      <td><strong>extraction discipline</strong></td>
+      <td>pure functions over events. no hidden state. or replay breaks.</td>
+      <td>extractors</td>
+    </tr>
+    <tr>
+      <td><strong>context bloat</strong></td>
+      <td>easy to dump everything into the prompt. expensive and worse, not better.</td>
+      <td>retrieval / context assembly</td>
+    </tr>
+    <tr>
+      <td><strong>seal correctness</strong></td>
+      <td>the daily rollup runs once. if it gets the day wrong, downstream feels it for weeks.</td>
+      <td>snapshot worker</td>
+    </tr>
+    <tr>
+      <td><strong>cost of writes</strong></td>
+      <td>every inbound triggers extraction. needs to be cheap or batched smartly.</td>
+      <td>write path</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+<section id="build">
+<h2>9. build order</h2>
+<p>line-by-line, in this order. nothing built ahead of when it pays off.</p>
+
+<ol class="numbered">
+  <li><strong>event schema + write path.</strong> every inbound and outbound goes through it. nothing else exists yet — events alone are useful as an audit log.</li>
+  <li><strong>extraction over events.</strong> a single pass that pulls entities + relations from each event. write to a flat <code>extractions</code> table first; graph shape comes later.</li>
+  <li><strong>entity resolution.</strong> the moment you have two events naming the same person, this matters. invest here early.</li>
+  <li><strong>graph from extractions.</strong> derive nodes + edges. keep schema simple. start mutable, no temporal fields.</li>
+  <li><strong>daily snapshot worker.</strong> end-of-day rollup. structured first, narrative second.</li>
+  <li><strong>retrieval in brain.ts.</strong> wire context assembly. measure what the model actually uses.</li>
+  <li><strong>confidence + decay.</strong> only once the graph has been live long enough that staleness shows up in the product.</li>
+  <li><strong>replay tooling.</strong> a script that rebuilds graph + snapshots from events. cheap insurance.</li>
+</ol>
+
+<hr/>
+
+<p class="lede" style="margin-top: 40px;">
+  the goal is not a clever graph. the goal is a foundation that lets donna grow sharper over time without ever losing what she's seen. the event log is the promise. everything else serves it.
+</p>
+</section>
+
+</body>
+</html>

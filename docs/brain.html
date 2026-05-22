@@ -1,0 +1,1444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>donna — the brain</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '13px',
+      primaryColor: '#F0EAE4',
+      primaryTextColor: '#1E1A18',
+      primaryBorderColor: '#4A2F23',
+      lineColor: '#4A2F23',
+      secondaryColor: '#FBF7F5',
+      tertiaryColor: '#F0EAE4',
+      noteBkgColor: '#F0EAE4',
+      noteTextColor: '#1E1A18',
+      mainBkg: '#F0EAE4',
+    },
+    flowchart: { curve: 'basis', padding: 16, htmlLabels: true },
+    sequence: { mirrorActors: false, bottomMarginAdj: 8 },
+  });
+</script>
+<style>
+:root {
+  --ivory:    #FBF7F5;
+  --tan:      #F0EAE4;
+  --ink:      #1E1A18;
+  --soft:     #6B6360;
+  --rust:     #7B5544;
+  --umber:    #4A2F23;
+  --rule:     #DCD2C9;
+  --moss:     #4F5E45;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--ivory); color: var(--ink); margin: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+  line-height: 1.62;
+  letter-spacing: 0.005em;
+  padding: 80px 32px 160px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+header { padding-bottom: 56px; border-bottom: 1px solid var(--rule); margin-bottom: 64px; }
+h1, h2, h3, h4 {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+h1 { font-size: 60px; line-height: 1.02; margin: 0 0 22px; }
+h1 em { color: var(--rust); font-style: italic; }
+h2 { font-size: 36px; line-height: 1.15; margin: 96px 0 18px; padding-top: 28px; border-top: 1px solid var(--rule); }
+h3 { font-size: 24px; line-height: 1.2; margin: 56px 0 12px; }
+h4 { font-size: 17px; line-height: 1.3; margin: 32px 0 8px; font-weight: 500; }
+p, li { font-size: 15.5px; color: var(--ink); }
+.lede { font-size: 20px; color: var(--soft); max-width: 760px; margin-top: 4px; line-height: 1.5; }
+.lede em { color: var(--rust); font-style: italic; font-family: 'EB Garamond', Georgia, serif; }
+small.kicker {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--rust);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 14px;
+}
+code, kbd, pre {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  font-size: 13px;
+  background: var(--tan);
+  border-radius: 3px;
+  padding: 2px 5px;
+  color: var(--umber);
+}
+pre {
+  display: block;
+  padding: 18px 22px;
+  margin: 18px 0 24px;
+  overflow-x: auto;
+  background: var(--tan);
+  border-left: 3px solid var(--rust);
+  line-height: 1.55;
+  white-space: pre;
+}
+pre .c { color: var(--soft); font-style: italic; }
+pre .k { color: var(--rust); font-weight: 500; }
+pre .s { color: var(--moss); }
+pre .n { color: var(--umber); font-weight: 500; }
+pre .d { color: var(--ink); opacity: 0.55; }
+.diagram {
+  background: var(--tan);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 28px;
+  margin: 24px 0 36px;
+  overflow-x: auto;
+}
+.diagram svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+.caption {
+  color: var(--soft);
+  font-size: 13px;
+  font-style: italic;
+  margin: -18px 0 36px;
+  padding-left: 4px;
+}
+section.dark {
+  background: var(--ink);
+  color: var(--ivory);
+  margin: 96px -32px;
+  padding: 72px 32px;
+  border-radius: 0;
+}
+section.dark h2 { color: var(--ivory); border-top-color: rgba(251,247,245,0.18); }
+section.dark h3, section.dark h4 { color: var(--ivory); }
+section.dark p, section.dark li { color: rgba(251,247,245,0.84); }
+section.dark code, section.dark pre { background: rgba(251,247,245,0.06); color: var(--ivory); border-left-color: var(--rust); }
+section.dark .diagram { background: rgba(251,247,245,0.04); border-color: rgba(251,247,245,0.16); }
+section.dark .caption { color: rgba(251,247,245,0.6); }
+section.dark .aside { background: rgba(251,247,245,0.05); color: rgba(251,247,245,0.85); }
+section.dark h1 em, section.dark .lede em, section.dark .thesis em { color: #E8C9B7; }
+section.dark .step-card, section.dark .layer-card, section.dark .shape-card { background: rgba(251,247,245,0.06); border-color: rgba(251,247,245,0.18); color: var(--ivory); }
+section.dark .step-card .desc, section.dark .layer-card .desc, section.dark .shape-card .desc { color: rgba(251,247,245,0.78); }
+section.dark .step-card .name, section.dark .layer-card .name, section.dark .shape-card .name { color: #E8C9B7; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0 36px;
+  font-size: 14px;
+}
+th, td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+th {
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rust);
+  border-bottom: 1px solid var(--umber);
+}
+tr:hover td { background: rgba(123,85,68,0.04); }
+section.dark table th { color: #E8C9B7; border-bottom-color: rgba(251,247,245,0.4); }
+section.dark table td { border-bottom-color: rgba(251,247,245,0.12); }
+section.dark tr:hover td { background: rgba(251,247,245,0.05); }
+.pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 99px;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.pill.step    { background: var(--ink);            color: var(--ivory); }
+.pill.io      { background: rgba(123,85,68,0.18);  color: var(--umber); }
+.pill.safety  { background: rgba(79,94,69,0.15);   color: var(--moss); }
+.pill.future  { background: rgba(123,85,68,0.10);  color: var(--rust); border: 1px dashed var(--rust); }
+.pill.live    { background: rgba(79,94,69,0.18);   color: var(--moss); }
+ul.tight li { margin-bottom: 4px; }
+hr { border: none; border-top: 1px solid var(--rule); margin: 56px 0; }
+nav.toc {
+  position: sticky;
+  top: 16px;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  margin: 0 0 32px;
+  padding: 18px 22px;
+  background: var(--tan);
+  border-radius: 4px;
+  z-index: 10;
+}
+nav.toc ol { list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 32px; }
+nav.toc li { padding: 3px 0; }
+nav.toc a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; }
+nav.toc a:hover { border-bottom-color: var(--rust); color: var(--rust); }
+.aside {
+  border-left: 3px solid var(--rust);
+  padding: 14px 20px;
+  margin: 24px 0;
+  background: rgba(123,85,68,0.05);
+  font-size: 14.5px;
+  color: var(--soft);
+}
+.aside strong { color: var(--ink); font-weight: 500; }
+.kvgrid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 8px 24px;
+  margin: 16px 0 32px;
+  font-size: 14px;
+}
+.kvgrid > dt { color: var(--rust); font-weight: 500; padding-top: 4px; }
+.kvgrid > dd { margin: 0; padding-top: 4px; }
+
+/* step strip */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin: 24px 0 36px;
+}
+.step-card {
+  background: var(--tan);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 16px 14px;
+  position: relative;
+  font-size: 13px;
+  color: var(--ink);
+}
+.step-card .num {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 22px;
+  color: var(--rust);
+  font-style: italic;
+  display: block;
+  margin-bottom: 4px;
+}
+.step-card .name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--umber);
+  font-weight: 500;
+  display: block;
+  margin-bottom: 6px;
+}
+.step-card .desc { color: var(--soft); font-size: 12.5px; line-height: 1.4; }
+
+/* layer + shape cards */
+.layers {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin: 30px 0 36px;
+}
+.layer-card {
+  background: var(--tan);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 22px 22px 20px;
+  position: relative;
+}
+.layer-card .badge {
+  position: absolute; top: 16px; right: 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 99px;
+}
+.layer-card.live .badge   { background: var(--moss); color: var(--ivory); }
+.layer-card.next .badge   { background: var(--rust); color: var(--ivory); }
+.layer-card.later .badge  { background: var(--tan); color: var(--soft); border: 1px solid var(--rule); }
+.layer-card .name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; color: var(--umber); font-weight: 500;
+  display: block; margin-bottom: 10px;
+}
+.layer-card h3 { margin: 0 0 8px; font-size: 22px; }
+.layer-card .desc { font-size: 14px; color: var(--ink); line-height: 1.5; }
+
+.shapes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin: 24px 0 32px;
+}
+.shape-card {
+  background: var(--tan);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 20px;
+}
+.shape-card h4 {
+  margin: 0 0 6px;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 20px;
+}
+.shape-card .role {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--rust);
+  letter-spacing: 0.05em;
+  margin-bottom: 8px; display: block;
+}
+.shape-card .desc { font-size: 13.5px; color: var(--ink); line-height: 1.5; }
+.shape-card .term {
+  margin-top: 12px; padding-top: 12px;
+  border-top: 1px dashed var(--rule);
+  font-size: 12px; color: var(--soft);
+}
+.shape-card .term strong { color: var(--umber); }
+
+.thesis {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 28px;
+  line-height: 1.35;
+  color: var(--ink);
+  max-width: 800px;
+  margin: 40px 0 28px;
+}
+.thesis em { color: var(--rust); font-style: italic; }
+
+.numbered { counter-reset: step; list-style: none; padding-left: 0; }
+.numbered > li {
+  counter-increment: step;
+  padding: 16px 0 16px 56px;
+  position: relative;
+  border-bottom: 1px solid var(--rule);
+  font-size: 15px;
+}
+.numbered > li:last-child { border-bottom: none; }
+.numbered > li::before {
+  content: counter(step, decimal-leading-zero);
+  position: absolute;
+  left: 0; top: 16px;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 22px;
+  color: var(--rust);
+  font-style: italic;
+}
+.numbered > li strong { color: var(--umber); }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin: 24px 0 36px; }
+.two-col > div h4:first-child { margin-top: 0; }
+
+.principle {
+  padding: 18px 22px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  margin: 14px 0;
+}
+.principle h4 {
+  margin: 0 0 6px;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 19px;
+}
+.principle .desc { font-size: 14.5px; color: var(--soft); }
+
+.compare {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 24px 0 36px;
+}
+.compare > div {
+  padding: 22px 20px;
+  border-right: 1px solid var(--rule);
+  background: var(--tan);
+}
+.compare > div:last-child { border-right: none; }
+.compare .name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--rust);
+  letter-spacing: 0.04em;
+  display: block;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.compare h4 {
+  margin: 0 0 10px;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 19px;
+}
+.compare .desc { font-size: 13.5px; line-height: 1.5; color: var(--ink); }
+.compare .meta {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--rule);
+  font-size: 12px;
+  color: var(--soft);
+}
+
+footer { margin-top: 120px; padding-top: 28px; border-top: 1px solid var(--rule); color: var(--soft); font-size: 13px; }
+footer code { background: transparent; padding: 0; color: var(--rust); }
+</style>
+</head>
+
+<body>
+
+<header>
+  <small class="kicker">brain v0.2 · current as of 2026-05-21</small>
+  <h1>the <em>brain</em>.</h1>
+  <p class="lede">
+    this page is the brain — how it works today, and how everything we want to add hangs off it tomorrow. <em>skills, sub-agents, ptc, complicated tools, draft-and-approve flows.</em> we're building each one as a configuration of the same primitive: <code>runTurn</code>.
+  </p>
+</header>
+
+<nav class="toc">
+  <ol>
+    <li>1 · <a href="#brain-today">the brain today</a></li>
+    <li>2 · <a href="#principles">why it's shaped this way</a></li>
+    <li>3 · <a href="#expansion">the shape of more</a></li>
+    <li>4 · <a href="#skills">skills</a></li>
+    <li>5 · <a href="#complicated">complicated tools</a></li>
+    <li>6 · <a href="#ptc">ptc — python tool calling</a></li>
+    <li>7 · <a href="#subagents">sub-agents</a></li>
+    <li>8 · <a href="#layers">the tool layers</a></li>
+    <li>9 · <a href="#endstate">the end state</a></li>
+    <li>10 · <a href="#roadmap">roadmap</a></li>
+    <li>11 · <a href="#discipline">the discipline</a></li>
+  </ol>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 1 · THE BRAIN TODAY                                                 -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="brain-today">1 · the brain today</h2>
+
+<p class="thesis">
+the brain is a <em>single function</em> that takes a conversation and returns what to show the user. between input and output sits a tiny loop that talks to claude, runs tools, and stops when she says she's done.
+</p>
+
+<h3>the mental model</h3>
+
+<p>claude is a function: text in, text out. she can't <em>do</em> anything by herself — she can only describe what she'd like to do. the brain is what gives her hands.</p>
+
+<p>think of claude as an assistant in a sealed room. she can only:</p>
+
+<ul class="tight">
+  <li>read whatever notes we slip under the door (the prompt + conversation)</li>
+  <li>slip notes back out (her response)</li>
+</ul>
+
+<p>some of her notes are answers. others say <em>"please check the time, then tell me what you find."</em> those are <strong>tool calls</strong>. the brain's job is to read each note, run the action she requested, write down the result, slip it back. repeat until she says <em>"this is the final reply for the user"</em> — which she signals by calling one specific tool: <code>send_burst</code>. that's the <strong>terminator</strong>.</p>
+
+<div class="aside">
+  <strong>one turn</strong> = one user message in, one terminator out. inside that turn, claude might call ten tools or zero — the brain runs them all and only stops when she calls the terminator (or when the safety cap trips).
+</div>
+
+<h3>one turn, end to end</h3>
+
+<p>here's the simplest case: the user asks the time. claude needs one tool to answer, then terminates.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant U as user (cli)
+  participant B as brain (runTurn)
+  participant C as claude (anthropic)
+  participant T as tools
+
+  U->>B: "what time is it"
+  B->>C: messages + system + tools
+  C-->>B: tool_use: get_current_time
+  B->>T: run get_current_time
+  T-->>B: "14:32 UTC"
+  B->>C: tool_result: "14:32 UTC"
+  C-->>B: tool_use: send_burst([{type:"text",text:"it's 2:32pm"}])
+  B->>T: run send_burst (records bursts)
+  T-->>B: ack
+  Note over B: terminator reached
+  B-->>U: [TextMessage("it's 2:32pm")]
+</pre>
+</div>
+<p class="caption">two model calls, two tool calls. the second tool call is the terminator, which carries the user-visible reply.</p>
+
+<h3>the pipeline</h3>
+
+<p>every iteration of <code>runTurn</code> walks the same five steps. they're named functions so each one is independently testable, swappable, and — most importantly — <em>visible</em>.</p>
+
+<div class="steps">
+  <div class="step-card">
+    <span class="num">i</span>
+    <span class="name">buildPayload</span>
+    <span class="desc">assemble the exact bytes-to-api: system + tools + history + per-turn knobs + cache markers.</span>
+  </div>
+  <div class="step-card">
+    <span class="num">ii</span>
+    <span class="name">messages.create</span>
+    <span class="desc">the one network call. everything around it is local.</span>
+  </div>
+  <div class="step-card">
+    <span class="num">iii</span>
+    <span class="name">filterAssistantContent</span>
+    <span class="desc">drop leaked reasoning text from claude's response before persisting.</span>
+  </div>
+  <div class="step-card">
+    <span class="num">iv</span>
+    <span class="name">dispatchToolCalls</span>
+    <span class="desc">run each tool_use sequentially, wrap results as tool_result blocks.</span>
+  </div>
+  <div class="step-card">
+    <span class="num">v</span>
+    <span class="name">terminator check</span>
+    <span class="desc">if a terminator was called, extract bursts and return. else loop.</span>
+  </div>
+</div>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  start([runTurn called]) --> build[buildPayload<br/>system + tools + history + cache markers]
+  build --> call[client.messages.create]
+  call --> filter[filterAssistantContent<br/>drop leaked text]
+  filter --> any{any tool_use<br/>blocks?}
+  any -- no --> bail[return sends=&lbrack;&rbrack;<br/>no terminator]
+  any -- yes --> dispatch[dispatchToolCalls<br/>run handlers, collect results]
+  dispatch --> term{terminator<br/>among them?}
+  term -- yes --> done[extract bursts<br/>return]
+  term -- no --> cap{iter &lt; 10?}
+  cap -- yes --> build
+  cap -- no --> safety[return sends=&lbrack;&rbrack;<br/>max_iterations]
+
+  classDef step fill:#F0EAE4,stroke:#4A2F23,stroke-width:1px,color:#1E1A18;
+  classDef terminal fill:#1E1A18,stroke:#1E1A18,color:#FBF7F5;
+  classDef decision fill:#FBF7F5,stroke:#7B5544,color:#4A2F23;
+  class build,call,filter,dispatch step;
+  class done,bail,safety terminal;
+  class any,term,cap decision;
+</pre>
+</div>
+<p class="caption">one pass through the loop. the only way out is a terminator or the safety cap.</p>
+
+<h3>the burst vocabulary — what claude can send</h3>
+
+<p>a burst is a list of <strong>OutboundMessage</strong> items — claude can mix freely. three texts plus a button, an image with a caption plus a list, a cta-url then a pause then a follow-up text. nine types, all rendered by the channel (cli today, whatsapp and mobile later).</p>
+
+<table>
+  <thead>
+    <tr><th style="width:140px">type</th><th>shape</th><th>use it for</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>text</code></td><td><code>{type, text}</code></td><td>default bubble. one or two sentences.</td></tr>
+    <tr><td><code>buttons</code></td><td><code>{type, text, buttons:[{id,label}]}</code></td><td>1–3 quick replies for a clear choice. never make the user type a number.</td></tr>
+    <tr><td><code>list</code></td><td><code>{type, text, button_label, sections:[{rows}]}</code></td><td>4+ choices. expand-on-tap.</td></tr>
+    <tr><td><code>cta_url</code></td><td><code>{type, text, label, url}</code></td><td>deep-link into the mobile app for actions that are better done visually.</td></tr>
+    <tr><td><code>image</code></td><td><code>{type, url, caption?}</code></td><td>chart, photo, generated image. caption is optional.</td></tr>
+    <tr><td><code>document</code></td><td><code>{type, url, filename, caption?}</code></td><td>pdf, csv, ical export.</td></tr>
+    <tr><td><code>video</code></td><td><code>{type, url, caption?}</code></td><td>any video. caption optional.</td></tr>
+    <tr><td><code>audio</code></td><td><code>{type, url}</code></td><td>voice note, audio clip.</td></tr>
+    <tr><td><code>delay</code></td><td><code>{type, seconds}</code></td><td>pause before the next bubble. 0.5–2s feels natural.</td></tr>
+  </tbody>
+</table>
+
+<p>every type carries hard caps matching the strictest renderer we expect (whatsapp interactive messages). <strong>button label ≤20 chars, list rows ≤10 total, no captions inside <code>audio</code>, etc.</strong> these caps live in <code>messages.ts</code> as both the json-schema for the tool input (so claude gets a 400 and self-corrects) and a runtime validator (so malformed items get dropped, the rest of the burst still ships).</p>
+
+<h3>the five functions</h3>
+
+<h4><code>buildPayload</code> <span class="pill step">step i</span></h4>
+<p>assembles the request. nothing about it is interesting except that it exists as its own function — that's what makes <code>npm run inspect</code> possible. one place owns the wire format. when we add prompt caching, thinking, tool_choice, or per-turn skill overlays, they all change here.</p>
+
+<pre><span class="k">export function</span> <span class="n">buildPayload</span>(
+  messages: MessageParam[],
+  config: TurnConfig = {},
+): MessageCreateParamsNonStreaming {
+  <span class="k">const</span> system = config.systemOverlay
+    ? <span class="s">`${SYSTEM_PROMPT}\n\n${config.systemOverlay}`</span>
+    : SYSTEM_PROMPT;
+
+  <span class="c">// cache marker on the trailing tool. system + tools + this marker</span>
+  <span class="c">// caches; messages don't (they change every iteration).</span>
+  <span class="k">const</span> tools = withTrailingCacheMarker(sdk_tools);
+
+  <span class="k">return</span> { model, max_tokens, system, tools, messages };
+}</pre>
+
+<h4><code>filterAssistantContent</code> <span class="pill step">step iii</span> <span class="pill safety">safety</span></h4>
+<p>when claude calls a tool, her response often includes a <code>text</code> block <em>before</em> the <code>tool_use</code>. that text is her thinking out loud. <strong>donna's rule is that every user-visible word goes through <code>send_burst</code>.</strong> the pre-tool text isn't for the user. but if we persist it into history, the next turn shows claude her own scratch as if it were part of the conversation. that warps her behavior over time.</p>
+
+<table>
+  <thead><tr><th>block</th><th>keep?</th><th>why</th></tr></thead>
+  <tbody>
+    <tr><td><code>text</code> + tool_use present</td><td>no</td><td>leaked reasoning; user-facing text belongs in send_burst</td></tr>
+    <tr><td><code>text</code> alone</td><td>yes</td><td>escape hatch; shouldn't happen but don't lose it if it does</td></tr>
+    <tr><td><code>tool_use</code></td><td>yes</td><td>api requires matching tool_use ↔ tool_result pairs</td></tr>
+    <tr><td><code>thinking</code> / <code>redacted_thinking</code></td><td>yes</td><td>api-private, signed, required for round-trip</td></tr>
+  </tbody>
+</table>
+
+<h4><code>dispatchTool</code> <span class="pill step">step iv</span></h4>
+<p>one tool, one call. looks up the handler in the registry, runs it, wraps the result. if it throws, the error becomes the tool result — claude sees the failure and can recover on the next iteration. <strong>a failing tool never crashes the loop.</strong> each invocation is wrapped in a langsmith span named after the tool, so traces show <em>"get_current_time took 12ms"</em>, not <em>"dispatchTool took 12ms."</em></p>
+
+<h4><code>dispatchToolCalls</code> <span class="pill step">step iv</span></h4>
+<p>a single response can contain multiple <code>tool_use</code> blocks. this just runs them in order and collects their results. <strong>sequential, not parallel</strong> — fan-out belongs inside a dedicated sandbox tool (see <a href="#ptc">§6 ptc</a>), not inside the loop. that decision keeps the loop legible and the audit deterministic.</p>
+
+<h4><code>runTurn</code> <span class="pill step">composer</span></h4>
+<p>the only function that <em>does</em> something end-to-end. composes the four steps above into a bounded loop. wrapped in a langsmith <code>traceable</code> chain so every per-iteration <code>messages.create</code> nests as a sub-span. capped at <code>MAX_ITERATIONS = 10</code> so a runaway tool chain can't hang the process.</p>
+
+<dl class="kvgrid">
+  <dt>three exit points</dt>
+  <dd>terminator hit · no tool calls (model went silent) · max iterations</dd>
+  <dt>two invariants</dt>
+  <dd>every tool_use gets a matching tool_result · history is always well-formed for the next turn</dd>
+  <dt>one knob the caller owns</dt>
+  <dd><code>TurnConfig</code> — model, max_tokens, system overlay, userId, threadId</dd>
+</dl>
+
+<h3>where things live</h3>
+
+<table>
+  <thead><tr><th style="width:280px">file</th><th>job</th></tr></thead>
+  <tbody>
+    <tr><td><code>src/donna/brain.ts</code></td><td>the loop, the pipeline functions, the public <code>runTurn</code></td></tr>
+    <tr><td><code>src/donna/prompt.ts</code></td><td>the system prompt — claude's standing instructions</td></tr>
+    <tr><td><code>src/donna/messages.ts</code></td><td>the <code>OutboundMessage</code> union + runtime validators</td></tr>
+    <tr><td><code>src/donna/tools/index.ts</code></td><td>tool registry: definitions, handlers, terminators set</td></tr>
+    <tr><td><code>src/donna/tools/send_burst.ts</code></td><td>the terminator — donna's only voice</td></tr>
+    <tr><td><code>src/donna/tools/time.ts</code></td><td>get_current_time — the one non-terminator tool today</td></tr>
+    <tr><td><code>src/donna/ledger.ts</code></td><td>per-turn JSONL ledger (model calls, tool calls, finish, errors)</td></tr>
+    <tr><td><code>src/inspect.ts</code></td><td>"show me exactly what would be sent" — no api call</td></tr>
+    <tr><td><code>src/index.ts</code></td><td>the cli driver — readline, render bursts, print runId</td></tr>
+  </tbody>
+</table>
+
+<h3>the contract</h3>
+
+<p>seven invariants the brain commits to. they're listed here so you can break them <em>on purpose</em>, not by accident.</p>
+
+<ul class="tight">
+  <li>every <code>tool_use</code> emitted by claude is matched by exactly one <code>tool_result</code> in the same turn. <em>well-formedness.</em></li>
+  <li>the assistant content persisted into history has been filtered. raw text alongside tool_use never enters the next turn.</li>
+  <li>the terminator is always one of the tools in <code>TERMINATORS</code>. today, only <code>send_burst</code>.</li>
+  <li>the loop is bounded by <code>MAX_ITERATIONS = 10</code>. infinite tool chains return cleanly with <code>terminator: null</code>.</li>
+  <li>handler errors never escape <code>runTurn</code>. they become <code>is_error: true</code> tool_results, visible to claude on the next iteration.</li>
+  <li>the only side effects of <code>runTurn</code> are: the network call to anthropic, the tool handlers it dispatches, and the ledger / langsmith writes. it does not touch the filesystem, postgres, or the user — those happen in the caller.</li>
+  <li>per-turn knobs live in <code>TurnConfig</code>. defaults are constants at the top of <code>brain.ts</code>. <em>granular control means the caller decides.</em></li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 2 · WHY IT'S SHAPED THIS WAY                                        -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="principles">2 · why it's shaped this way</h2>
+
+<p class="thesis">
+the brain is small on purpose. every line in it should be doing work that <em>can't</em> be pushed into a tool, a prompt, or a configuration.
+</p>
+
+<p>six principles, in order of how often they bite back when violated:</p>
+
+<div class="principle">
+  <h4>one terminator, never silent</h4>
+  <p class="desc">every turn ends with exactly one tool call from a known terminator set. silence (no tool call) is a bug, not a feature. by making "i'm done" a structured event, we never have to guess when to stop the loop or what to show the user.</p>
+</div>
+
+<div class="principle">
+  <h4>private text vs public text are different channels</h4>
+  <p class="desc">claude's free-form text is reasoning. the user-visible content lives inside the terminator's structured input. mixing the two would mean every text block is ambiguous — is this for the user or muttering? the rule lets us strip leaked thoughts safely.</p>
+</div>
+
+<div class="principle">
+  <h4>history is always well-formed for the next call</h4>
+  <p class="desc">tool_use blocks always have matching tool_result blocks; assistant content is filtered before persisting; thinking blocks are kept (signed, required). these aren't bookkeeping — they're prerequisites for the api accepting the next turn.</p>
+</div>
+
+<div class="principle">
+  <h4>granular control means the caller decides</h4>
+  <p class="desc"><code>TurnConfig</code> exposes model, max_tokens, system overlay, identity. when we add per-turn tool_choice, thinking budgets, or skill overlays, they go there. the brain itself has no opinions — it composes whatever the caller hands it.</p>
+</div>
+
+<div class="principle">
+  <h4>composition over framework</h4>
+  <p class="desc">the loop is named steps. each step is a function. swapping any one of them is a 5-line change. there's no inheritance, no plugin system, no middleware tower. when we add sub-agents we won't add a "sub-agent framework" — we'll call <code>runTurn</code> from inside a tool handler.</p>
+</div>
+
+<div class="principle">
+  <h4>observability is first-class, not bolted on</h4>
+  <p class="desc">two surfaces run every turn: a langsmith span tree (named tools, nested model calls) and a local JSONL ledger keyed by runId. <code>npm run inspect</code> prints the exact bytes-to-api without sending. <strong>there is no request to anthropic you cannot see locally first.</strong></p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 3 · THE SHAPE OF MORE                                               -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="expansion">3 · the shape of more</h2>
+
+<p class="thesis">
+everything else hangs off the brain as <em>configuration plus tools</em>. the loop stays the same. capabilities layer on by changing what's in <code>TurnConfig</code>, what's in the tool registry, and what other instances of <code>runTurn</code> exist.
+</p>
+
+<p>four expansion vectors, in dependency order:</p>
+
+<div class="layers">
+
+  <div class="layer-card live">
+    <span class="badge">live</span>
+    <span class="name">layer 0 · the brain</span>
+    <h3>runTurn + tool registry</h3>
+    <p class="desc">a manual loop on the raw anthropic sdk. direct tools only. one model, one system prompt, one terminator. exactly what this page documented in §1.</p>
+  </div>
+
+  <div class="layer-card next">
+    <span class="badge">next</span>
+    <span class="name">layer 1 · skills</span>
+    <h3>capability packs that lazy-load</h3>
+    <p class="desc">a skill is <code>{ systemOverlay, toolGroup, examples? }</code>. a detector decides per turn which skills are relevant, the loader appends their overlay to the system prompt and merges their tools into the registry. the brain doesn't know skills exist.</p>
+  </div>
+
+  <div class="layer-card next">
+    <span class="badge">next</span>
+    <span class="name">layer 2 · complicated tools</span>
+    <h3>handlers that aren't just functions</h3>
+    <p class="desc">most tools are pure functions. some are stateful: they produce drafts (typed artifacts with ids), start async work and return early, paginate large results, or compose multiple downstream calls. all of this is "still just a handler" — but the patterns are worth naming.</p>
+  </div>
+
+  <div class="layer-card later">
+    <span class="badge">later</span>
+    <span class="name">layer 3 · ptc (python tool calling)</span>
+    <h3>fan-out via code execution</h3>
+    <p class="desc">anthropic's <code>code_execution_20250825</code> beta lets claude write python that calls a curated set of our tools. used for parallel reads: "fetch last 20 emails + last 5 calendar events + open todos in one breath." the loop is unchanged — ptc is just another tool with a special sandbox.</p>
+  </div>
+
+  <div class="layer-card later">
+    <span class="badge">later</span>
+    <span class="name">layer 4 · sub-agents</span>
+    <h3>runTurn inside a tool handler</h3>
+    <p class="desc">a sub-agent is its own configured brain — its own system prompt, its own tool list, its own terminator. called by a parent agent via a tool. the realization here is that <code>runTurn</code> is a primitive, not a feature: every agent in the system is an instance of it.</p>
+  </div>
+
+  <div class="layer-card later">
+    <span class="badge">later</span>
+    <span class="name">layer 5 · workflows</span>
+    <h3>orchestrators that compose agents over time</h3>
+    <p class="desc">multi-turn coordinated flows. research → draft → review → revise → execute. each step is potentially a different agent. lives above the brain, not inside it. only worth building when we have ≥3 agents that need to talk.</p>
+  </div>
+
+</div>
+
+<div class="aside">
+  <strong>the invariant across all layers:</strong> a single <code>runTurn</code> call is one agent's one turn. anything more complex is composed out of multiple <code>runTurn</code> calls, not built into the loop. <em>the brain doesn't grow; the catalog does.</em>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 4 · SKILLS                                                          -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="skills">4 · skills</h2>
+
+<p class="thesis">
+a skill is what claude doesn't know until you load it in.
+</p>
+
+<p>by default claude knows english, common sense, and the tools currently in the registry. she does <em>not</em> know donna's domain — how we structure calorie logs, what counts as an "open loop", what the user's living profile looks like. a skill is the unit that <strong>teaches her how to do one thing</strong> and gives her the tools to do it.</p>
+
+<h3>what a skill is, structurally</h3>
+
+<pre><span class="k">export interface</span> Skill {
+  id: <span class="s">string</span>;                       <span class="c">// e.g. "calorie-logging"</span>
+  systemOverlay: <span class="s">string</span>;            <span class="c">// fragment appended to SYSTEM_PROMPT</span>
+  tools: Tool[];                      <span class="c">// merged into the registry for this turn</span>
+  handlers: Record&lt;<span class="s">string</span>, Handler&gt;; <span class="c">// matching handlers</span>
+  examples?: ExampleTurn[];           <span class="c">// optional few-shot pairs</span>
+}</pre>
+
+<p>three pieces, doing distinct work:</p>
+
+<ul class="tight">
+  <li><strong>systemOverlay</strong> — teaches the model the <em>concepts</em>: "a meal is composed of items. each item has kcal, protein, carbs, fat. when the user describes food, parse it into items, then log."</li>
+  <li><strong>tools + handlers</strong> — gives her the <em>actions</em>: <code>log_meal</code>, <code>lookup_food</code>, <code>get_daily_summary</code>.</li>
+  <li><strong>examples</strong> — optional. for ambiguous cases ("a big mac and fries" → which fries, which size). few-shot turns get injected as messages before the user input.</li>
+</ul>
+
+<h3>how a skill gets loaded</h3>
+
+<p>a single <strong>detector</strong> step runs at the very start of the pipeline, before <code>buildPayload</code>. it decides which skills are relevant for this turn. the loader then merges their overlays and tools into <code>TurnConfig</code> and the tool registry.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  start([runTurn called]) --> detect[skill detector<br/>cheap classifier or rule]
+  detect --> active[active skills =<br/>matched + always-on]
+  active --> merge[merge overlays + tools<br/>into TurnConfig + registry]
+  merge --> build[buildPayload<br/>system + overlay + tools]
+  build --> loop[... rest of the loop ...]
+
+  classDef step fill:#F0EAE4,stroke:#4A2F23,stroke-width:1px,color:#1E1A18;
+  classDef new fill:#FBF7F5,stroke:#7B5544,stroke-width:1.5px,color:#4A2F23;
+  class detect,active,merge new;
+  class build,loop step;
+</pre>
+</div>
+<p class="caption">skills as a pre-step. the loop downstream doesn't change.</p>
+
+<h3>example: the "calorie logging" skill</h3>
+
+<pre>{
+  id: <span class="s">"calorie-logging"</span>,
+  systemOverlay: <span class="s">`
+    you can log meals. a meal has:
+    - items[]: {name, quantity, unit, kcal, protein_g, carbs_g, fat_g}
+    - occurred_at: when it happened (default: now)
+    - source: "text" | "photo" | "alias"
+
+    when the user describes food:
+    1. parse_food_text() to extract items
+    2. confirm uncertain quantities via send_burst with buttons
+    3. log_meal() once confirmed
+  `</span>,
+  tools: [parseFoodTool, lookupFoodTool, logMealTool, getDailySummaryTool],
+  handlers: { parse_food_text, lookup_food, log_meal, get_daily_summary },
+  examples: [
+    { user: <span class="s">"had a big mac"</span>,
+      assistant_burst: [
+        { type: <span class="s">"text"</span>, text: <span class="s">"big mac on its own or with fries?"</span> },
+        { type: <span class="s">"buttons"</span>, text: <span class="s">"which"</span>, buttons: [
+          { id: <span class="s">"meal_size:single"</span>,  label: <span class="s">"just the burger"</span> },
+          { id: <span class="s">"meal_size:medium"</span>,  label: <span class="s">"medium meal"</span> }
+        ]}
+      ]
+    }
+  ]
+}</pre>
+
+<h3>what skills are not</h3>
+
+<ul class="tight">
+  <li><strong>not a framework.</strong> a skill is a plain object. the loader is one function. no plugin system.</li>
+  <li><strong>not a knowledge base.</strong> skills teach <em>how</em>, not <em>what</em>. user-specific facts live in memory, not skills.</li>
+  <li><strong>not always on.</strong> the whole point is selective activation. a turn about "what time is it" doesn't load the calorie skill.</li>
+  <li><strong>not stateful between turns.</strong> a skill is a configuration of one turn. state lives in postgres / memory.</li>
+</ul>
+
+<div class="aside">
+  <strong>the detector matters more than the skill format.</strong> a perfect skill catalog with a noisy detector is worse than a small catalog with a sharp one. start with three skills and a deterministic rule-based detector before reaching for an llm classifier.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 5 · COMPLICATED TOOLS                                               -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="complicated">5 · complicated tools</h2>
+
+<p class="thesis">
+a tool handler is a function. but a <em>function</em> can be a lot of things — return synchronously, return an id and finish later, produce a typed artifact, paginate, compose other tools. naming these patterns helps us write them well.</p>
+
+<h3>five patterns worth recognizing</h3>
+
+<table>
+  <thead>
+    <tr><th style="width:170px">pattern</th><th>shape</th><th>example</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>pure read</strong></td>
+      <td>function in, structured result out. idempotent. cheap.</td>
+      <td><code>get_current_time</code>, <code>list_open_loops</code></td>
+    </tr>
+    <tr>
+      <td><strong>pure write</strong></td>
+      <td>side effect on our own data. returns confirmation.</td>
+      <td><code>log_meal</code>, <code>remember</code>, <code>track_open_loop</code></td>
+    </tr>
+    <tr>
+      <td><strong>draft-producing</strong></td>
+      <td>returns an artifact + id. doesn't act on the world yet. <em>requires an explicit follow-up tool to execute.</em></td>
+      <td><code>compose_email</code> → <code>draftId</code>, then <code>execute_draft</code></td>
+    </tr>
+    <tr>
+      <td><strong>async / deferred</strong></td>
+      <td>kicks off work, returns "queued + jobId" immediately. result delivered later via proactive turn.</td>
+      <td><code>research</code>, <code>scan_inbox</code>, <code>generate_image</code></td>
+    </tr>
+    <tr>
+      <td><strong>paginated</strong></td>
+      <td>returns the first slice + a cursor. claude can call again with the cursor for more.</td>
+      <td><code>list_gmail_recent(cursor?)</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>drafts as first-class artifacts</h3>
+
+<p>the draft pattern is worth its own section because it changes how donna touches the world. <strong>any tool that's hard to undo should be split in two:</strong> one tool produces a draft (typed, ided, stored), another executes it. the user (or the main agent) approves between.</p>
+
+<div class="two-col">
+  <div>
+    <h4>without drafts</h4>
+    <pre><span class="c">// send the email immediately.</span>
+<span class="c">// no review, no cancel.</span>
+send_email({
+  to: <span class="s">"bob@..."</span>,
+  subject: <span class="s">"lunch tomorrow"</span>,
+  body: <span class="s">"..."</span>,
+})
+<span class="d">→ { ok: true }</span></pre>
+  </div>
+  <div>
+    <h4>with drafts</h4>
+    <pre><span class="c">// step 1: compose, get an id</span>
+compose_email({ to, subject, body })
+<span class="d">→ { draftId: <span class="s">"draft_a1b2"</span> }</span>
+
+<span class="c">// step 2: user approves via burst button</span>
+<span class="c">// step 3: execute by id</span>
+execute_draft({ draftId: <span class="s">"draft_a1b2"</span> })
+<span class="d">→ { ok: true, message_id: <span class="s">"msg_..."</span> }</span></pre>
+  </div>
+</div>
+
+<p>drafts are the bridge between <strong>plans</strong> (cheap, reversible) and <strong>acts</strong> (expensive, irreversible). they're also the thing sub-agents return when they delegate work back to the main brain — see <a href="#subagents">§7 sub-agents</a>.</p>
+
+<h3>async tools and proactive delivery</h3>
+
+<p>some work doesn't finish within one turn. <code>research("compare these three frameworks")</code> might take 30 seconds. claude can't sit and wait — that holds the loop. instead the tool:</p>
+
+<ol>
+  <li>kicks off a background job, persists <code>{ jobId, kind, args }</code></li>
+  <li>returns <code>{ status: "queued", jobId, eta: "~30s" }</code> immediately</li>
+  <li>worker finishes the job, writes the result to db</li>
+  <li>scheduler enqueues a <strong>proactive cause</strong> with <code>{ kind: "job_complete", jobId }</code></li>
+  <li>a fresh <code>runTurn</code> fires with the cause in context — donna messages the user with the result</li>
+</ol>
+
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant U as user
+  participant M as main agent
+  participant T as research tool
+  participant W as worker
+  participant S as scheduler
+
+  U->>M: "research X for me"
+  M->>T: research({ query })
+  T-->>M: { status: queued, jobId }
+  M-->>U: "on it. back in ~30s."
+  Note over M: turn ends
+  W->>W: do the work
+  W->>S: enqueue cause(job_complete, jobId)
+  S->>M: runProactiveTurn(cause)
+  M-->>U: "here's what i found: ..."
+</pre>
+</div>
+<p class="caption">async tools split the user-facing experience across two turns. the second turn is donna-initiated.</p>
+
+<h3>tools that compose other tools</h3>
+
+<p>a tool's handler can call other handlers directly. <code>log_meal_from_alias("morning coffee")</code> internally calls <code>resolve_alias()</code> then <code>log_meal()</code>. this is fine and often cleaner than asking claude to do both. <strong>rule of thumb:</strong> if the composition is deterministic, hardcode it inside the handler. if it requires judgment, expose both as separate tools and let claude orchestrate.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 6 · PTC                                                             -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="ptc">6 · ptc — python tool calling</h2>
+
+<p class="thesis">
+sometimes claude needs to call five tools in parallel. ptc lets her write the python that does it, instead of we-need-five-round-trips.
+</p>
+
+<h3>what it is</h3>
+
+<p>anthropic's <code>code_execution_20250825</code> beta. enabled via a header. when on, claude can emit a <code>tool_use</code> block of type <code>code_execution</code> whose input is python source. the api executes that python in an ephemeral sandbox. inside the sandbox, a curated subset of our tool handlers are exposed as importable functions. the sandbox prints its results; we read stdout; the loop continues.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant C as claude
+  participant L as loop (runTurn)
+  participant P as python sandbox
+  participant T as tools (ptc-eligible)
+
+  C->>L: tool_use: code_execution(<br/>"import asyncio, ...")
+  L->>P: run code
+  par fan out
+    P->>T: gmail_search("q1")
+  and
+    P->>T: gmail_search("q2")
+  and
+    P->>T: list_calendar()
+  end
+  T-->>P: results (parallel)
+  P->>P: aggregate, format
+  P-->>L: stdout = compact summary
+  L->>C: tool_result: stdout
+  C-->>L: tool_use: send_burst([...])
+  Note over L: terminator
+</pre>
+</div>
+<p class="caption">three reads, one round-trip. without ptc this would be three iterations of the outer loop.</p>
+
+<h3>why fan-out matters</h3>
+
+<p>each iteration of the loop costs:</p>
+
+<ul class="tight">
+  <li>one model call (latency: 1–3s, tokens: full history each time)</li>
+  <li>tool dispatch (~ms, but sequential)</li>
+</ul>
+
+<p>three sequential tool reads = three iterations = three model calls. with ptc, three reads happen inside one iteration's tool dispatch — one model call before, one after. <strong>latency drops by 2x; tokens drop more.</strong></p>
+
+<h3>which tools are ptc-eligible</h3>
+
+<p>only pure reads. specifically:</p>
+
+<ul class="tight">
+  <li><strong>idempotent</strong> — re-running them produces the same result</li>
+  <li><strong>side-effect-free</strong> — doesn't touch user-visible state</li>
+  <li><strong>cheap to serialize</strong> — results fit in the sandbox's stdout</li>
+</ul>
+
+<p>terminators (<code>send_burst</code>), state-changers (<code>log_meal</code>, <code>integration_connect</code>), and stateful-by-design tools (drafts, async jobs) are <strong>never</strong> ptc-eligible. they live in the registry too, but with <code>allowed_callers: ["direct"]</code>.</p>
+
+<table>
+  <thead><tr><th style="width:180px">caller</th><th>access</th><th>example tools</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>direct</strong></td>
+      <td>everything in the registry. claude calls these as normal tool_use blocks.</td>
+      <td>send_burst, integration_connect, log_meal, get_current_time</td>
+    </tr>
+    <tr>
+      <td><strong>code_execution_20250825</strong></td>
+      <td>only the <code>PTC_ELIGIBLE</code> set. exposed as python functions inside the sandbox.</td>
+      <td>gmail_list_recent, gmail_search, list_calendar, lookup_food</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>when not to use ptc</h3>
+
+<ul class="tight">
+  <li><strong>single tool calls.</strong> ptc adds overhead. one tool, no fan-out, just call it directly.</li>
+  <li><strong>sequential dependencies.</strong> if call B depends on call A's result, sequential outer-loop iterations are clearer.</li>
+  <li><strong>writes or terminators.</strong> see above. these change user-visible state and must be auditable in the main loop.</li>
+</ul>
+
+<div class="aside">
+  <strong>the loop is unchanged.</strong> ptc is just a tool in the registry whose handler is "ask anthropic to run python in a sandbox." everything downstream — filterAssistantContent, dispatchToolCalls, the terminator check — operates identically.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 7 · SUB-AGENTS                                                      -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section class="dark">
+
+<h2 id="subagents" style="margin-top:0">7 · sub-agents</h2>
+
+<p class="thesis"><em>runTurn is a primitive, not a feature.</em><br/>every agent in the system — main, drafter, researcher, expert — is the same function with different configuration. a sub-agent is what happens when one tool handler calls another runTurn.</p>
+
+<h3>the realization</h3>
+
+<p>look at <code>runTurn</code>'s signature. it takes <em>messages</em>, returns <em>sends + new messages + a terminator</em>. it doesn't care about ingress, persistence, who started the turn. <strong>anyone can call it.</strong> including a tool handler.</p>
+
+<p>this means the brain naturally composes. a parent agent can delegate by calling a sub-agent's <code>runTurn</code> from inside a tool. the sub-agent has its own system prompt, its own tool registry, its own terminator — but it's the same loop, the same observability, the same contract.</p>
+
+<pre><span class="c">// the realization, as code:</span>
+<span class="k">export interface</span> AgentConfig {
+  system: <span class="s">string</span>;
+  tools: Tool[];
+  handlers: <span class="n">Record</span>&lt;<span class="s">string</span>, Handler&gt;;
+  terminators: <span class="n">Set</span>&lt;<span class="s">string</span>&gt;;
+  model?: <span class="s">string</span>;
+  maxIterations?: <span class="s">number</span>;
+}
+
+<span class="c">// the existing runTurn is one instance:</span>
+<span class="k">export const</span> mainAgent: AgentConfig = {
+  system: SYSTEM_PROMPT,
+  tools: [getCurrentTimeTool, sendBurstTool],
+  handlers: { get_current_time, send_burst },
+  terminators: <span class="k">new</span> Set([<span class="s">"send_burst"</span>]),
+};
+
+<span class="c">// a sub-agent is just another instance:</span>
+<span class="k">export const</span> emailDrafter: AgentConfig = {
+  system: EMAIL_DRAFTER_PROMPT,
+  tools: [getContactTool, produceDraftTool],
+  handlers: { get_contact_email, produce_draft },
+  terminators: <span class="k">new</span> Set([<span class="s">"produce_draft"</span>]),
+};
+
+<span class="c">// runAgent generalizes runTurn:</span>
+<span class="k">export async function</span> <span class="n">runAgent</span>(
+  agent: AgentConfig,
+  messages: MessageParam[],
+  config: TurnConfig = {},
+): Promise&lt;AgentResult&gt; { <span class="c">/* identical to today's runTurn */</span> }
+
+<span class="c">// today's runTurn becomes a one-liner:</span>
+<span class="k">export const</span> <span class="n">runTurn</span> = (m, c) =&gt; runAgent(mainAgent, m, c);</pre>
+
+<h3>different brains have different terminators</h3>
+
+<p>the main brain terminates on <code>send_burst</code> — its job is to talk to the user. a drafter brain terminates on <code>produce_draft</code> — its job is to make a typed artifact. a researcher brain terminates on <code>compile_brief</code> — its job is to write a structured summary.</p>
+
+<p>generalizing the terminator unlocks the entire pattern. <strong>the terminator is the agent's product.</strong></p>
+
+<h3>four canonical sub-agent shapes</h3>
+
+<div class="shapes">
+
+  <div class="shape-card">
+    <h4>the executor</h4>
+    <span class="role">do work, return result</span>
+    <p class="desc">delegated task, completes within the parent's turn. parent passes args, sub-agent does the work, returns a result. like a normal function call but with claude's judgment inside.</p>
+    <div class="term"><strong>terminator:</strong> <code>return_result</code> with structured payload</div>
+  </div>
+
+  <div class="shape-card">
+    <h4>the drafter</h4>
+    <span class="role">propose, await approval</span>
+    <p class="desc">produces a typed artifact (email draft, calendar invite, expense entry) and returns its id. parent surfaces the draft for approval; a later turn executes by id.</p>
+    <div class="term"><strong>terminator:</strong> <code>produce_draft</code> → <code>draftId</code></div>
+  </div>
+
+  <div class="shape-card">
+    <h4>the researcher</h4>
+    <span class="role">deep work, return brief</span>
+    <p class="desc">runs many tool calls, often async. consumes long context. compresses the answer into a brief. parent gets a structured summary, not the raw transcript.</p>
+    <div class="term"><strong>terminator:</strong> <code>compile_brief</code> → markdown + sources</div>
+  </div>
+
+  <div class="shape-card">
+    <h4>the expert</h4>
+    <span class="role">domain specialist</span>
+    <p class="desc">narrow scope (calorie reasoning, calendar wrangling, expense categorization). own prompt, own tools, own examples. called when a domain question is too detailed to clutter the main prompt.</p>
+    <div class="term"><strong>terminator:</strong> domain-specific structured return</div>
+  </div>
+
+</div>
+
+<h3>worked example: <em>"email bob about lunch tomorrow"</em></h3>
+
+<p>this is the poke-style drafter pattern, in our shape. two turns: turn 1 produces a draft and surfaces it; turn 2 (triggered by the user tapping a button) executes.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant U as user
+  participant M as main agent
+  participant E as email drafter<br/>(sub-agent)
+  participant D as drafts table
+
+  Note over U,M: turn 1 — produce + ask
+  U->>M: "email bob about lunch tomorrow"
+  M->>E: delegate_email_drafter({task})
+  Note over E: own runTurn:<br/>own prompt, own tools
+  E->>E: get_contact_email("bob")
+  E->>E: produce_draft({to,subject,body})
+  E->>D: store draft (draftId)
+  E-->>M: { draftId, to, subject, preview }
+  M-->>U: send_burst([<br/>  text("drafted to bob — lunch tomorrow ~12"),<br/>  buttons("send it?", [send, edit, cancel])<br/>])
+
+  Note over U,M: turn 2 — execute
+  U->>M: tap "send" → button id "approve:draftId"
+  M->>D: execute_draft(draftId)
+  D-->>M: { ok, message_id }
+  M-->>U: send_burst([text("sent.")])
+</pre>
+</div>
+<p class="caption">two turns, one sub-agent invocation. the drafter has its own loop nested inside the parent's tool dispatch.</p>
+
+<h3>nesting in the loop, in detail</h3>
+
+<p>here's what happens during turn 1, iteration 0 of the main agent:</p>
+
+<ol class="numbered">
+  <li><strong>main agent</strong>'s <code>buildPayload</code> assembles the request with the main system prompt and a tool list that includes <code>delegate_email_drafter</code>.</li>
+  <li>claude responds with <code>tool_use: delegate_email_drafter({task: "email bob about lunch tomorrow"})</code>.</li>
+  <li><strong><code>dispatchTool</code> invokes the handler.</strong> the handler isn't a leaf — it calls <code>runAgent(emailDrafter, [{role:"user", content: task}])</code>.</li>
+  <li>now a <em>nested</em> <code>runTurn</code> runs. the drafter's prompt is loaded, its tools (get_contact, produce_draft) are exposed, its loop iterates. it calls <code>get_contact_email("bob")</code>, then <code>produce_draft(...)</code>. <code>produce_draft</code> is the drafter's terminator — the nested loop exits with the draft as its product.</li>
+  <li>the handler returns the draft (id + preview) to <code>dispatchTool</code>, which wraps it as a <code>tool_result</code>.</li>
+  <li>the main agent's next iteration sees the result. claude decides to ask the user for approval — calls <code>send_burst</code>. terminator. turn 1 done.</li>
+</ol>
+
+<h3>what each agent sees, in its system prompt</h3>
+
+<div class="two-col">
+  <div>
+    <h4>main agent</h4>
+    <pre><span class="s">"you are donna. talk to the user.
+when they ask you to email someone:
+1. call delegate_email_drafter(task)
+2. surface the draft with buttons
+3. on approval, execute_draft(draftId)
+4. confirm 'sent.' via send_burst."</span></pre>
+  </div>
+  <div>
+    <h4>email drafter sub-agent</h4>
+    <pre><span class="s">"you draft emails. you do not send.
+given a task description:
+1. look up the recipient (get_contact_email)
+2. compose subject and body
+3. produce_draft({to, subject, body})
+   — that's how you finish.
+your output is a structured draft,
+not a chat reply. no send_burst."</span></pre>
+  </div>
+</div>
+
+<h3>observability across the nest</h3>
+
+<p>each <code>runAgent</code> call generates its own <code>runId</code> and ledger trail. the parent's tool dispatch logs a <code>tool_calls</code> event for <code>delegate_email_drafter</code>; the sub-agent's run gets stamped with <code>parent_run_id</code>. <strong>in langsmith, the sub-agent's spans nest under the parent's tool span.</strong> in the JSONL ledger, both <code>runId</code>s coexist; <code>grep parent_run_id=&lt;id&gt;</code> shows the whole tree.</p>
+
+<h3>when not to use a sub-agent</h3>
+
+<table>
+  <thead><tr><th style="width:280px">if it's...</th><th>do this instead</th></tr></thead>
+  <tbody>
+    <tr><td>a deterministic computation</td><td>a plain tool with a tight handler</td></tr>
+    <tr><td>parallel reads</td><td>ptc fan-out (§6)</td></tr>
+    <tr><td>swapping the prompt for one turn</td><td>a <code>systemOverlay</code> via <code>TurnConfig</code></td></tr>
+    <tr><td>teaching a domain</td><td>a skill (§4)</td></tr>
+    <tr><td>any case where the parent agent can handle it itself</td><td>let it. sub-agents are expensive — extra model calls, extra context.</td></tr>
+  </tbody>
+</table>
+
+<p>sub-agents earn their place when the work needs <strong>a different prompt, a different terminator, or a different tool set</strong>. anything less, keep it flat.</p>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 8 · TOOL LAYERS                                                     -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="layers">8 · the tool layers</h2>
+
+<p class="thesis">
+every "thing donna can do" is a tool. but tools come in tiers — direct, ptc-callable, sub-agent-wrapping, skill-gated. picking the right tier for a capability is the most consequential design choice in the catalog.
+</p>
+
+<h3>four tiers, in increasing complexity</h3>
+
+<table>
+  <thead>
+    <tr><th style="width:160px">tier</th><th>shape</th><th>when to reach for it</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>direct tool</strong> <span class="pill live">live</span></td>
+      <td>a function in the registry. claude calls it via <code>tool_use</code>. handler runs in process. result returned synchronously.</td>
+      <td><em>default.</em> if it's a discrete, well-defined action, start here.</td>
+    </tr>
+    <tr>
+      <td><strong>ptc tool</strong> <span class="pill future">layer 3</span></td>
+      <td>also a direct tool, but marked <code>allowed_callers: ["code_execution"]</code>. claude can call it from inside python sandbox code for fan-out.</td>
+      <td>pure read, called often, often called in groups. promotes from direct → ptc as patterns emerge.</td>
+    </tr>
+    <tr>
+      <td><strong>sub-agent tool</strong> <span class="pill future">layer 4</span></td>
+      <td>a tool whose handler runs <code>runAgent(otherAgent, ...)</code>. parent sees one tool call; nested loop does the work.</td>
+      <td>different prompt, different terminator, different tool set. drafts, deep research, domain experts.</td>
+    </tr>
+    <tr>
+      <td><strong>skill-gated tool</strong> <span class="pill future">layer 1</span></td>
+      <td>a direct tool that's only in the registry <em>when its skill is loaded</em>. selective exposure.</td>
+      <td>large catalogs. teaches claude when each tool applies via the skill overlay; avoids prompt bloat.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>the same job, four tiers — a comparison</h3>
+
+<p>imagine the capability is "summarize my unread email." here's how it looks at each tier:</p>
+
+<div class="compare">
+
+  <div>
+    <span class="name">direct tool</span>
+    <h4>summarize_inbox()</h4>
+    <p class="desc">one handler. inside, it fetches recent emails, formats a summary, returns markdown. simple, fast, fixed shape.</p>
+    <div class="meta">cost: 1 model call · latency: 1× tool</div>
+  </div>
+
+  <div>
+    <span class="name">ptc fan-out</span>
+    <h4>multiple read tools<br/>orchestrated by claude</h4>
+    <p class="desc">claude writes python that calls <code>gmail_list_recent</code>, <code>gmail_search("important")</code>, and <code>get_unread_count</code> in parallel. she summarizes the combined result.</p>
+    <div class="meta">cost: 2 model calls · latency: max(tool_a, tool_b, tool_c)</div>
+  </div>
+
+  <div>
+    <span class="name">sub-agent</span>
+    <h4>inbox_triage<br/>specialist</h4>
+    <p class="desc">its own prompt: "you triage inboxes." its own tools. its own multi-step logic (categorize, prioritize, score). returns a typed brief.</p>
+    <div class="meta">cost: 2+ model calls · latency: full nested loop · gain: better judgment</div>
+  </div>
+
+</div>
+
+<p>the right tier depends on the size and judgment of the task. <strong>"summarize my unread email" is probably a direct tool. "go through my inbox and tell me what's important and draft replies" is a sub-agent.</strong></p>
+
+<h3>decision: which tier should this be?</h3>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  start([new capability]) --> det{deterministic?<br/>no judgment needed}
+  det -- yes --> direct[direct tool<br/>one handler, done]
+  det -- no --> fan{fan-out of<br/>independent reads?}
+  fan -- yes --> ptc[ptc tools<br/>let claude orchestrate]
+  fan -- no --> diff{different prompt<br/>or terminator?}
+  diff -- yes --> sub[sub-agent<br/>own runAgent]
+  diff -- no --> overlay[direct tool<br/>+ skill overlay or systemOverlay]
+
+  classDef step fill:#F0EAE4,stroke:#4A2F23,stroke-width:1px,color:#1E1A18;
+  classDef terminal fill:#1E1A18,stroke:#1E1A18,color:#FBF7F5;
+  classDef decision fill:#FBF7F5,stroke:#7B5544,color:#4A2F23;
+  class direct,ptc,sub,overlay terminal;
+  class det,fan,diff decision;
+</pre>
+</div>
+<p class="caption">walking the tree gives you the tier. when in doubt, start direct and promote.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 9 · END STATE                                                       -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="endstate">9 · the end state</h2>
+
+<p class="thesis">
+when all the layers are in place, donna is a small loop in the middle, with skills choosing capabilities, sub-agents handling specialized work, ptc handling fan-out, and a memory layer feeding context in.
+</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart TB
+  subgraph ingress
+    cli[cli]
+    wa[whatsapp]
+    app[mobile app]
+    proactive[proactive scheduler]
+  end
+
+  ingress --> resolve[resolve user<br/>+ load history]
+  resolve --> context[ContextBuilder<br/>recent + retrieved + facts]
+  context --> detect[skill detector]
+  detect --> loader[skill loader<br/>merge overlay + tools]
+  loader --> brain((runTurn<br/>main agent))
+
+  brain -->|direct tool| dt[handlers]
+  brain -->|code_execution| ptc[python sandbox<br/>+ ptc tools]
+  brain -->|sub-agent tool| sub[runAgent<br/>specialist]
+  sub --> brain
+
+  brain -->|terminator| out[OutboundMessage&lbrack;&rbrack;]
+  out --> render[render to channel]
+  render --> cli
+  render --> wa
+  render --> app
+
+  dt -.->|writes| mem[(memory<br/>postgres + pgvector)]
+  brain -.->|persist| mem
+  mem -.->|read| context
+
+  brain -.-> ledger[(ledger + langsmith)]
+  sub -.-> ledger
+
+  classDef ing fill:#FBF7F5,stroke:#7B5544,color:#4A2F23;
+  classDef step fill:#F0EAE4,stroke:#4A2F23,color:#1E1A18;
+  classDef brain fill:#1E1A18,stroke:#1E1A18,color:#FBF7F5;
+  classDef storage fill:#F0EAE4,stroke:#4F5E45,color:#4F5E45;
+  class cli,wa,app,proactive ing;
+  class resolve,context,detect,loader,dt,ptc,sub,out,render step;
+  class brain brain;
+  class mem,ledger storage;
+</pre>
+</div>
+<p class="caption">the brain stays small in the middle. everything else is approach roads.</p>
+
+<h3>reading the diagram</h3>
+
+<dl class="kvgrid">
+  <dt>ingress (top)</dt>
+  <dd>the brain doesn't know how the user arrived. cli, whatsapp, mobile, proactive — all funnel into the same shape.</dd>
+  <dt>resolve + history + context</dt>
+  <dd>before <code>runTurn</code> fires, we know who's talking and what they've said. ContextBuilder decides what to actually include — recent N + retrieved K + facts + budget.</dd>
+  <dt>skill detect + load</dt>
+  <dd>just-in-time configuration. the brain receives a config that already has the right overlay and tools merged in.</dd>
+  <dt>the brain (center, dark)</dt>
+  <dd>still <code>runTurn</code>. still the five-step pipeline from §1. it doesn't grow.</dd>
+  <dt>three tool tiers (right)</dt>
+  <dd>direct handlers, ptc sandbox, sub-agent runAgent. all three are "tools" to the loop.</dd>
+  <dt>render (bottom)</dt>
+  <dd>OutboundMessage[] flows to the channel-specific renderer. cli prints stubs; whatsapp posts interactive messages; mobile renders native ui.</dd>
+  <dt>memory + observability (sides)</dt>
+  <dd>memory is read into context, written by handlers. ledger and langsmith capture every model call, tool call, sub-agent invocation.</dd>
+</dl>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 10 · ROADMAP                                                        -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="roadmap">10 · roadmap</h2>
+
+<p>ordered by what unlocks what. don't jump ahead. each step earns the next.</p>
+
+<ol class="numbered">
+  <li><strong>prompt iteration.</strong> with the new outbound vocabulary live, refine the system prompt until claude's choices (text vs buttons vs cta_url vs list) feel right across a wide range of user inputs. nothing built downstream matters if her voice and judgment aren't there.</li>
+  <li><strong>postgres + users + chat_messages.</strong> persistence. lift the schema from the ts archive almost as-is. now history survives a restart and we can run more than one user at a time.</li>
+  <li><strong>MemoryStore (pgvector).</strong> one interface — <code>remember(fact)</code> / <code>recall(query)</code> / <code>recallRecent(n)</code>. expose as two tools. start small. resist the urge to build five backends.</li>
+  <li><strong>ContextBuilder.</strong> when raw history starts hitting token caps, this is the layer that decides what enters the payload. budget-aware, retrieval-aware. until then, <code>messages</code> is enough.</li>
+  <li><strong>refactor: <code>runTurn</code> → <code>runAgent</code>.</strong> generalize the loop to take an <code>AgentConfig</code>. the existing main brain becomes one config. <em>nothing user-visible changes</em> — but every layer below this point becomes trivial.</li>
+  <li><strong>first sub-agent: the email drafter.</strong> the poke-style drafter pattern. teaches us the nesting, the draft artifact, the approve-and-execute flow. small enough to ship.</li>
+  <li><strong>skills (loader + first three).</strong> calorie logging, calendar wrangling, inbox triage. each is one overlay + a tool group. rule-based detector first.</li>
+  <li><strong>ptc.</strong> add the <code>code_execution_20250825</code> tool. promote read-heavy tools to <code>PTC_ELIGIBLE</code>. the gain is latency on fan-out.</li>
+  <li><strong>second + third sub-agents.</strong> researcher (long-running, async). expert (e.g. expense categorizer with its own examples).</li>
+  <li><strong>mobile delivery + native rendering.</strong> the OutboundMessage shape is already there; the mobile renderer is just a new channel.</li>
+  <li><strong>proactive runtime.</strong> schedule + arbiter + executor. now <code>runTurn</code> can fire from a cron with <code>mode: "proactive"</code> in the system overlay. cleanly composed on top of everything below.</li>
+</ol>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 11 · DISCIPLINE                                                     -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="discipline">11 · the discipline</h2>
+
+<p class="thesis">
+the brain stays small because we say no a lot. these are the things we won't do, and the bar each addition has to clear.
+</p>
+
+<h3>what we won't do</h3>
+
+<ul class="tight">
+  <li><strong>no framework.</strong> not langgraph, not autogen, not crewai. we just left one framework so we could see every byte. we won't pick up another.</li>
+  <li><strong>no nine memory backends on day one.</strong> the python archive had nine. we'll start with one (pgvector) and add backends only when we've felt the actual limitation.</li>
+  <li><strong>no shadow attention promoter.</strong> the python <code>promote.py</code> cycle is interesting but expensive. proactive earns its way in via a simple schedule + arbiter — not a confidence-decayed shadow queue.</li>
+  <li><strong>no implicit pre/post hooks.</strong> handlers are functions, not pipelines of plugins. if a handler needs to write to memory, it imports the memory module — it doesn't get magicked in by a hook system.</li>
+  <li><strong>no compatibility shims.</strong> when we change the shape of <code>RunTurnResult</code> or <code>OutboundMessage</code>, we change every caller. no <code>v2()</code> functions, no migration stubs.</li>
+  <li><strong>no "what if we someday" abstractions.</strong> three similar lines beat a premature interface. when there are five, we abstract.</li>
+</ul>
+
+<h3>the bar each addition must clear</h3>
+
+<ol>
+  <li><strong>can it be a tool first?</strong> if yes, do that. tools are the cheapest addition.</li>
+  <li><strong>does it earn its complexity?</strong> a sub-agent costs an extra model call per turn. a skill costs prompt tokens. justify the cost with the gain.</li>
+  <li><strong>can the user see it work?</strong> features that don't show up in the burst, or in <code>npm run inspect</code>, or in the ledger, are invisible. invisible features rot.</li>
+  <li><strong>will it survive the next rewrite?</strong> if the next person looking at this code wouldn't keep it, it's debt. write it like you're the one reading it again next quarter.</li>
+</ol>
+
+<div class="aside">
+  <strong>the brain stays small because every line in it should be doing work that can't be pushed into a tool, a prompt, or a configuration.</strong> when we feel the urge to add to <code>brain.ts</code>, the first question is: can this live as a tool? as a handler? as a skill? <em>almost always, yes.</em>
+</div>
+
+<footer>
+  source: <code>src/donna/brain.ts</code> · <code>src/donna/ledger.ts</code> · <code>src/donna/messages.ts</code> · <code>src/donna/tools/*</code> · <code>src/inspect.ts</code>. roughly 600 lines today. revise this page when the loop, the contract, or the layer set changes shape.
+</footer>
+
+</body>
+</html>

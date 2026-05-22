@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>poke — architecture (from the leaked prompts)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '13px',
+      primaryColor: '#F0EAE4',
+      primaryTextColor: '#1E1A18',
+      primaryBorderColor: '#4A2F23',
+      lineColor: '#4A2F23',
+      secondaryColor: '#FBF7F5',
+      tertiaryColor: '#F0EAE4',
+      noteBkgColor: '#F0EAE4',
+      noteTextColor: '#1E1A18',
+      mainBkg: '#F0EAE4',
+    },
+    flowchart: { curve: 'basis', padding: 16, htmlLabels: true },
+    sequence: { mirrorActors: false, bottomMarginAdj: 8 },
+  });
+</script>
+<style>
+:root {
+  --ivory:    #FBF7F5;
+  --tan:      #F0EAE4;
+  --ink:      #1E1A18;
+  --soft:     #6B6360;
+  --rust:     #7B5544;
+  --umber:    #4A2F23;
+  --rule:     #DCD2C9;
+  --moss:     #4F5E45;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--ivory); color: var(--ink); margin: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+  line-height: 1.62;
+  letter-spacing: 0.005em;
+  padding: 80px 32px 160px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+header { padding-bottom: 56px; border-bottom: 1px solid var(--rule); margin-bottom: 64px; }
+h1, h2, h3, h4 {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+h1 { font-size: 60px; line-height: 1.02; margin: 0 0 22px; }
+h1 em { color: var(--rust); font-style: italic; }
+h2 { font-size: 36px; line-height: 1.15; margin: 96px 0 18px; padding-top: 28px; border-top: 1px solid var(--rule); }
+h3 { font-size: 24px; line-height: 1.2; margin: 56px 0 12px; }
+h4 { font-size: 17px; line-height: 1.3; margin: 32px 0 8px; font-weight: 500; }
+p, li { font-size: 15.5px; color: var(--ink); }
+.lede { font-size: 20px; color: var(--soft); max-width: 760px; margin-top: 4px; line-height: 1.5; }
+.lede em { color: var(--rust); font-style: italic; font-family: 'EB Garamond', Georgia, serif; }
+small.kicker {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--rust);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 14px;
+}
+code, kbd, pre {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  font-size: 13px;
+  background: var(--tan);
+  border-radius: 3px;
+  padding: 2px 5px;
+  color: var(--umber);
+}
+pre {
+  display: block;
+  padding: 18px 22px;
+  margin: 18px 0 24px;
+  overflow-x: auto;
+  background: var(--tan);
+  border-left: 3px solid var(--rust);
+  line-height: 1.55;
+  white-space: pre;
+}
+.diagram {
+  background: var(--tan);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 28px;
+  margin: 24px 0 36px;
+  overflow-x: auto;
+}
+.diagram svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+.caption {
+  color: var(--soft);
+  font-size: 13px;
+  font-style: italic;
+  margin: -18px 0 36px;
+  padding-left: 4px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0 36px;
+  font-size: 14px;
+}
+th, td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+th {
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rust);
+  border-bottom: 1px solid var(--umber);
+}
+tr:hover td { background: rgba(123,85,68,0.04); }
+ul.tight li { margin-bottom: 4px; }
+hr { border: none; border-top: 1px solid var(--rule); margin: 56px 0; }
+nav.toc {
+  position: sticky;
+  top: 16px;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  margin: 0 0 32px;
+  padding: 18px 22px;
+  background: var(--tan);
+  border-radius: 4px;
+}
+nav.toc ol { list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 32px; }
+nav.toc li { padding: 3px 0; }
+nav.toc a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; }
+nav.toc a:hover { border-bottom-color: var(--rust); color: var(--rust); }
+.aside {
+  border-left: 3px solid var(--rust);
+  padding: 14px 20px;
+  margin: 24px 0;
+  background: rgba(123,85,68,0.05);
+  font-size: 14.5px;
+  color: var(--soft);
+}
+.aside strong { color: var(--ink); font-weight: 500; }
+.aside.warn { border-left-color: #8B3A2E; background: rgba(139,58,46,0.06); }
+.aside.warn strong { color: #8B3A2E; }
+.kvgrid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 8px 24px;
+  margin: 16px 0 32px;
+  font-size: 14px;
+}
+.kvgrid > dt { color: var(--rust); font-weight: 500; padding-top: 4px; }
+.kvgrid > dd { margin: 0; padding-top: 4px; }
+blockquote {
+  margin: 18px 0;
+  padding: 4px 20px;
+  border-left: 2px solid var(--rust);
+  color: var(--soft);
+  font-style: italic;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 17px;
+  line-height: 1.5;
+}
+blockquote cite {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-style: normal;
+  font-size: 12px;
+  color: var(--rust);
+  margin-top: 6px;
+  letter-spacing: 0.04em;
+}
+footer { margin-top: 120px; padding-top: 28px; border-top: 1px solid var(--rule); color: var(--soft); font-size: 13px; }
+footer code { background: transparent; padding: 0; color: var(--rust); }
+</style>
+</head>
+<body>
+
+<header>
+  <small class="kicker">competitor read · sourced from leaked prompts · 2026-05-21</small>
+  <h1>poke, <em>from the inside</em>.</h1>
+  <p class="lede">
+    in september 2025 someone got poke to email its own system prompts out. seven files surfaced. what follows is what those files actually say poke <em>is</em> — not what the marketing says, not what the clones guessed. just the prompts, read closely.
+  </p>
+</header>
+
+<nav class="toc">
+  <ol>
+    <li><a href="#sources">0. sources &amp; gaps</a></li>
+    <li><a href="#shape">1. the shape: three tiers</a></li>
+    <li><a href="#triggers">2. proactivity = triggers</a></li>
+    <li><a href="#drafts">3. the draft / confirm dance</a></li>
+    <li><a href="#memory">4. memory: invisible by rule</a></li>
+    <li><a href="#links">5. the tappable-link trick</a></li>
+    <li><a href="#channels">6. channel awareness</a></li>
+    <li><a href="#discipline">7. output discipline</a></li>
+    <li><a href="#subagents">8. sub-agent prompting style</a></li>
+    <li><a href="#exfil">9. the exfil vector</a></li>
+    <li><a href="#missing">10. what's notably absent</a></li>
+    <li><a href="#donna">11. for donna</a></li>
+  </ol>
+</nav>
+
+<!-- ─── 0. sources ─────────────────────────────────────────────── -->
+<h2 id="sources">0 · sources &amp; gaps</h2>
+
+<p>everything below was read directly out of the leaked prompt files mirrored at <code>EliFuzz/awesome-system-prompts/leaks/poke/</code> (also at <code>x1xhlol/system-prompts-and-models-of-ai-tools/Poke</code>, same leak, different split).</p>
+
+<p>five files read in full:</p>
+<ul class="tight">
+  <li><code>agent.md</code> — the execution engine's system prompt (the meat)</li>
+  <li><code>agent-protocol.md</code> — agent-to-agent rules &amp; identity unification</li>
+  <li><code>email-protocols.md</code> — link-label conventions</li>
+  <li><code>memory-guidelines.md</code> — how memory surfaces (and doesn't)</li>
+  <li><code>platform-guidelines.md</code> — whatsapp / imessage channel rules</li>
+</ul>
+
+<p>two files refused by the fetch model on length/security grounds and are <em>gaps</em> in this writeup:</p>
+<ul class="tight">
+  <li><code>guidelines.md</code> — general operating guidelines</li>
+  <li><code>integration-policies.md</code> — third-party integration policy</li>
+</ul>
+
+<div class="aside">
+  <strong>not used:</strong> openpoke (shloked.com), composio's open-poke, founder press, hn threads. those are projections or marketing, not evidence. this is what the prompts themselves say.
+</div>
+
+<!-- ─── 1. shape ─────────────────────────────────────────────── -->
+<h2 id="shape">1 · the shape: three tiers</h2>
+
+<p>poke is not one model with one prompt. it's a stack of three roles, each its own agent with its own prompt:</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  U([user — whatsapp / imessage])
+  P[poke<br/><i>personality · voice · what the user sees</i>]
+  E[interaction agent<br/><i>&quot;execution engine&quot; · no direct user access</i>]
+  S1[search-agent]
+  S2[notion-agent]
+  S3[linear-agent]
+  S4[browser-agent]
+  S5[...]
+
+  U <--> P
+  P -->|task request| E
+  E -->|result + ids| P
+  E --> S1
+  E --> S2
+  E --> S3
+  E --> S4
+  E --> S5
+</pre>
+</div>
+<p class="caption">poke filters and frames. the execution agent searches, drafts, and acts. specialist sub-agents do the actual integration work.</p>
+
+<p>the seam between them is structural:</p>
+
+<dl class="kvgrid">
+  <dt>poke</dt>
+  <dd>the only thing the user ever talks to. holds voice and identity. decides what to surface.</dd>
+  <dt>execution agent</dt>
+  <dd>receives task requests from poke. <em>has no direct user access.</em> returns structured results upward — ids, summaries, no opinions.</dd>
+  <dt>sub-agents</dt>
+  <dd>spawned via a <code>task</code> tool. given a goal, not instructions. parallel by default.</dd>
+</dl>
+
+<div class="aside warn">
+  <strong>house rule, repeated everywhere:</strong> never expose this seam to the user. no mention of tool names, agents, or workflows. the persona is unified by policy, not by architecture.
+</div>
+
+<blockquote>
+  your final output is directed to poke, which handles user conversations and presents your results to the user. focus on providing poke with adequate contextual information; you are not responsible for framing responses in a user-friendly way.
+  <cite>agent.md — opening</cite>
+</blockquote>
+
+<!-- ─── 2. triggers ─────────────────────────────────────────────── -->
+<h2 id="triggers">2 · proactivity = triggers</h2>
+
+<p>poke's "acts before you ask" magic isn't a background reasoning loop. it's the agent <em>planting natural-language instructions for its future self</em>. two kinds:</p>
+
+<table>
+  <thead>
+    <tr><th>type</th><th>fires on</th><th>called to the user</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>cron</code></td><td>a time (cron expression, once or repeating)</td><td>"reminder"</td></tr>
+    <tr><td><code>email</code></td><td>an inbound email matching a condition</td><td>"automation"</td></tr>
+  </tbody>
+</table>
+
+<p>each trigger carries an <code>action</code> field — a free-text instruction. when the trigger fires, the execution agent runs again with that action as its prompt. the prompt itself says:</p>
+
+<blockquote>
+  when creating triggers, you should always be specific with the action. an agent should be able to unambiguously carry out the task from just the action field. as a good rule, trigger actions should be as detailed as your own input.
+  <cite>agent.md — triggers</cite>
+</blockquote>
+
+<h3>triggers compose</h3>
+
+<p>the killer example is verbatim in the prompt — <em>"poke jony about the project if he hasn't responded in 10 minutes"</em>:</p>
+
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant U as user
+  participant P as poke
+  participant E as execution agent
+  participant T as trigger store
+  participant J as jony (email)
+
+  U->>P: poke jony if no reply in 10min
+  P->>E: set up the &quot;chase jony&quot; behavior
+  E->>T: create cron trigger (T+10min)<br/>action: &quot;email jony, then cancel the email trigger&quot;
+  E->>T: create email trigger<br/>condition: &quot;jony responded&quot;<br/>action: &quot;cancel the cron trigger&quot;
+  E-->>P: triggers set, ids: ...
+  P->>U: i'll chase him at 4:23 if he's quiet
+
+  alt jony replies before T+10
+    J-->>T: inbound email
+    T->>E: fire email trigger
+    E->>T: cancel cron trigger
+    E-->>P: jony replied, chase cancelled
+    P->>U: jony got back to you — handled
+  else 10 minutes pass
+    T->>E: fire cron trigger
+    E->>J: send email asking for status
+    E->>T: cancel email trigger
+    E-->>P: sent the nudge to jony
+    P->>U: nudged him just now
+  end
+</pre>
+</div>
+<p class="caption">the user only ever talks to poke. the &quot;magic&quot; isn't a new turn shape — it's a normal request where the agent's action happens to include planting two natural-language instructions for future-self. no scheduler service, no race conditions in code.</p>
+
+<div class="aside">
+  <strong>this is the single most important pattern in the prompt.</strong> proactivity collapses to: a tool to create natural-language todos for future-you, and a runtime that re-invokes you with them. everything "ambient" about poke is built on this primitive.
+</div>
+
+<!-- ─── 3. drafts ─────────────────────────────────────────────── -->
+<h2 id="drafts">3 · the draft / confirm dance</h2>
+
+<p>poke never sends an email or creates a calendar event directly. the flow is rigid:</p>
+
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant U as user
+  participant P as poke
+  participant E as execution agent
+
+  U->>P: email bob about lunch
+  P->>E: compose email to bob, lunch
+  E->>E: compose_draft({...}) → draftId
+  E-->>P: draftId
+  P->>U: display_draft(draftId)
+  Note over U: user sees draft + 👍/👎
+  U->>P: 👍
+  P->>E: execute_draft(draftId)
+  E-->>P: sent
+  P->>U: done.
+</pre>
+</div>
+
+<p>same machine for replies, forwards, calendar events, updates, deletions. drafts have ids that persist across agents — poke can <em>show</em> a draft the execution agent <em>composed</em>. confirmation accepts text ("yes") or emoji (👍 ❤️ 🎉 all count as yes; 👎 😡 ❌ count as no).</p>
+
+<blockquote>
+  when confirming any email drafts with the user, you MUST output them as a call to display_draft.
+  <cite>agent-protocol.md</cite>
+</blockquote>
+
+<!-- ─── 4. memory ─────────────────────────────────────────────── -->
+<h2 id="memory">4 · memory: invisible by rule</h2>
+
+<p>the memory-guidelines file is short, and its rule is essentially:</p>
+
+<ul class="tight">
+  <li>memory is automatic — no explicit <code>save</code> action</li>
+  <li>long conversations get summarized and re-injected as context</li>
+  <li>users <em>cannot see</em> memory summaries or system notes</li>
+  <li><strong>never mention memory to the user</strong> — should feel like continuation, not retrieval</li>
+  <li>if a detail isn't in current context, prefer an educated guess from what's known over asking the user to repeat themselves</li>
+</ul>
+
+<p>this is the opposite of chatgpt's "memory updated" toast. poke wants the illusion of a person who just remembers.</p>
+
+<div class="aside">
+  <strong>conspicuously absent:</strong> no mention of embeddings, vector stores, semantic search, or retrieval. memory in the prompts looks like plain-text summary + context window. (could be off-prompt infra. striking that it's not even hinted at.)
+</div>
+
+<!-- ─── 5. links ─────────────────────────────────────────────── -->
+<h2 id="links">5 · the tappable-link trick</h2>
+
+<p>whatsapp and imessage are plain text. poke needs rich, tappable actions inside that text. the solution is a hardcoded link-label convention:</p>
+
+<pre>[28_view-email](poke.com/email/abc123)
+[02_accept](poke.com/draft/xyz789)
+[29_track-order](poke.com/order/...)</pre>
+
+<p>there are <strong>29 approved labels</strong>, numbered <code>01_view-details</code> through <code>29_track-order</code>. the client renders each label as an emoji shortlink — so what arrives in the user's bubble is a clickable emoji button, not the raw label string.</p>
+
+<p>this is how poke gets a button-y interactive ui inside a channel that fundamentally only supports text.</p>
+
+<!-- ─── 6. channels ─────────────────────────────────────────────── -->
+<h2 id="channels">6 · channel awareness</h2>
+
+<p>baked into the prompt, not handled at the transport layer:</p>
+
+<blockquote>
+  poke can only send free-form messages within 24 hours of receiving a user message. outside this timeframe, responses must use pre-approved templates that lack natural conversational qualities.
+  <cite>platform-guidelines.md</cite>
+</blockquote>
+
+<p>this is whatsapp's business-messaging policy. poke can't engineer around it, so it prompts around it: if the 24h window is closed, the agent is told to <em>transparently explain the limitation and suggest switching to imessage or sms</em>. the model itself is the workaround.</p>
+
+<p>emoji-as-confirmation is also a platform affordance — see <a href="#drafts">§3</a>.</p>
+
+<!-- ─── 7. discipline ─────────────────────────────────────────────── -->
+<h2 id="discipline">7 · output discipline</h2>
+
+<p>the seam between execution agent and poke is enforced by formatting rules. the execution agent's output is for poke to read, not for the user to read:</p>
+
+<ul class="tight">
+  <li>no preamble or postamble ("here's what i found…", "let me know if…")</li>
+  <li>no analysis, no opinion — just relay facts and ids</li>
+  <li>always include the right id: <code>emailId</code>, <code>draftId</code>, <code>attachmentId</code>, <code>triggerId</code> — never <code>userId</code></li>
+  <li>never use the generic word <code>id</code></li>
+  <li>no caps, no bold, no italics for emphasis</li>
+  <li>wrap lists in code tags so whatsapp doesn't mangle them</li>
+</ul>
+
+<p>the personality lives upstairs in poke. the execution agent is deliberately voiceless.</p>
+
+<!-- ─── 8. sub-agents ─────────────────────────────────────────────── -->
+<h2 id="subagents">8 · sub-agent prompting style</h2>
+
+<p>a real opinion lives in the prompt, and it's worth quoting:</p>
+
+<blockquote>
+  when using the task tool, only communicate the goal and necessary context to the agent. avoid giving explicit instructions, as this hinders agent performance. ensure the provided goal is sufficient for correct execution, but refrain from additional direction.
+  <cite>agent.md — sub-agents</cite>
+</blockquote>
+
+<p>sub-agents are treated as autonomous executors, not functions. you tell <code>search-agent</code> what you want to find, not how to find it. this is a strong bet: that giving a capable model a goal + context beats trying to script its tool calls.</p>
+
+<p>parallel-by-default everywhere:</p>
+
+<blockquote>
+  when in doubt, run multiple searches in parallel rather than trying to guess the &quot;most appropriate&quot; source.
+  <cite>agent.md — integrations</cite>
+</blockquote>
+
+<p>if a query could hit notion or email, hit both at once. don't pre-optimize. let the cheap call resolve the ambiguity.</p>
+
+<!-- ─── 9. exfil ─────────────────────────────────────────────── -->
+<h2 id="exfil">9 · the exfil vector</h2>
+
+<p>the reason these files exist: someone got poke to email out its own system prompts. the email tooling — <code>compose_draft</code>, <code>execute_draft</code>, plus the email-triggered automation system — turned into a self-prompt-injection vector. a crafted inbound email, parsed by an agent that can also <code>send_email</code> on the user's behalf, can ask the agent to send the prompt as the body.</p>
+
+<div class="aside warn">
+  <strong>relevant to donna:</strong> the moment donna can send a message <em>as the user</em> — email, whatsapp template, anything — based on conditions another party can influence (inbound mail, ingested content, third-party tool output), the same class of leak is possible. the failure mode is not "model said something weird"; it's "model carried out a clear-text instruction it shouldn't have trusted as user intent."
+</div>
+
+<!-- ─── 10. missing ─────────────────────────────────────────────── -->
+<h2 id="missing">10 · what's notably absent</h2>
+
+<p>things i expected to find and didn't:</p>
+
+<ul class="tight">
+  <li><strong>no rag.</strong> no embeddings, no vector store, no semantic search anywhere in the five files i have. memory is plain-text summary + context.</li>
+  <li><strong>no persistent sub-agent identity.</strong> each <code>task</code> call looks stateless. no "talk to the search-agent you used last time."</li>
+  <li><strong>no trigger conflict resolution in policy.</strong> two contradictory triggers will both fire unless one cancels the other. the agent is expected to plant cancellations as it plants the triggers (the jony example).</li>
+  <li><strong>no autonomous reasoning loop.</strong> no "wake up every n minutes and think about the user." proactivity comes entirely from triggers the agent itself plants, in response to user requests.</li>
+  <li><strong>no pricing or model selection in-prompt.</strong> referenced in press as ~$50/user/month in inference; nothing in the prompts about which model handles which tier.</li>
+</ul>
+
+<p>the missing pieces could live in the two unread files (<code>guidelines.md</code>, <code>integration-policies.md</code>) or off-prompt. worth flagging as gaps, not as facts.</p>
+
+<!-- ─── 11. donna ─────────────────────────────────────────────── -->
+<h2 id="donna">11 · for donna</h2>
+
+<p>what's worth borrowing, what's worth refusing:</p>
+
+<h3>borrow</h3>
+<ul class="tight">
+  <li><strong>triggers-as-natural-language.</strong> the &quot;trigger action = future prompt to self&quot; primitive is genuinely elegant. donna's proactive layer should look more like this and less like a cron worker.</li>
+  <li><strong>self-cancelling trigger pairs.</strong> the jony pattern (cron + email, each cancelling the other) is the right shape for &quot;follow up if no reply.&quot;</li>
+  <li><strong>draft / confirm with emoji.</strong> rigid state machine, low surprise, plays nicely with bursty voice.</li>
+  <li><strong>parallel-by-default tool calls.</strong> already a habit, worth keeping explicit.</li>
+  <li><strong>id discipline.</strong> never <code>id</code>; always the typed name.</li>
+</ul>
+
+<h3>refuse</h3>
+<ul class="tight">
+  <li><strong>three-tier agent split.</strong> poke needs it because voice and execution are at war (whatsapp templates, persona unification across many integrations). donna's voice is the product — the burst contract already lives at the leaf. one engine, one voice, no execution-engine intermediary.</li>
+  <li><strong>memory as &quot;automatic and invisible.&quot;</strong> per <code>feedback_donna_memory_own_layer</code> — donna owns memory as the product. it's not a hidden convenience; it's the thing you're paying for. memory may surface (gently) when it's load-bearing.</li>
+  <li><strong>whatsapp 24h workaround.</strong> imessage-first. don't inherit a regulatory wart that isn't ours.</li>
+  <li><strong>&quot;give sub-agents a goal, not instructions.&quot;</strong> tentatively keep, but donna's tools are small and few. premature autonomy is just &quot;model wanders.&quot; revisit when there are real sub-agents.</li>
+</ul>
+
+<h3>watch for</h3>
+<ul class="tight">
+  <li><strong>the exfil vector.</strong> the day donna sends mail/messages as the user based on inbound content, the same class of leak applies. design the send path with a hard human-in-loop confirmation for anything sourced from non-user input.</li>
+</ul>
+
+<footer>
+  <p>read on <code>2026-05-21</code> from <code>github.com/EliFuzz/awesome-system-prompts</code> &amp; <code>github.com/x1xhlol/system-prompts-and-models-of-ai-tools</code>. five of seven files read in full; <code>guidelines.md</code> and <code>integration-policies.md</code> are gaps.</p>
+</footer>
+
+</body>
+</html>
