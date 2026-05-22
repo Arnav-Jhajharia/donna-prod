@@ -6,6 +6,7 @@
   "description": "donna — minimal cli tool-loop on the raw anthropic SDK. starting point.",
   "scripts": {
     "dev": "tsx src/index.ts",
+    "server": "tsx src/server.ts",
     "inspect": "tsx src/inspect.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc"
@@ -15,7 +16,9 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.93.0",
+    "@hono/node-server": "^2.0.3",
     "dotenv": "^17.4.2",
+    "hono": "^4.12.22",
     "langsmith": "^0.7.1"
   },
   "devDependencies": {
