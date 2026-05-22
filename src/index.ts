@@ -1,147 +1,105 @@
+// minimal cli loop. reads a line from stdin, runs one brain turn, renders any
+// send_burst output. conversation history lives in memory for the process
+// lifetime — no persistence yet.
+//
+// run with: npm run dev
+// exits on "exit", "quit", or ctrl-d.
+
 import "dotenv/config";
-import * as readline from "node:readline/promises";
-import { stdin, stdout } from "node:process";
+import { createInterface } from "node:readline";
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
-import { MODEL, runTurn } from "./donna/brain.js";
-import { loadRecentMessages, saveMessages } from "./donna/memory/chat.js";
-import { getSql, closeDb } from "./donna/db.js";
-import {
-  createExecutionRun,
-  finishExecutionRun,
-  recordExecutionEvent,
-} from "./donna/observability/execution.js";
+import { runTurn } from "./donna/brain.js";
+import type { OutboundMessage } from "./donna/messages.js";
 
-async function main(): Promise<void> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  const dbUrl = process.env.DATABASE_URL;
-  const userId = process.env.DONNA_USER_ID;
+const rl = createInterface({ input: process.stdin, output: process.stdout });
+const history: MessageParam[] = [];
 
-  if (!apiKey) {
-    console.error(
-      "error: ANTHROPIC_API_KEY not set. copy .env.example to .env and paste your key.",
-    );
-    process.exit(1);
-  }
-  if (!dbUrl) {
-    console.error(
-      "error: DATABASE_URL not set. add the session-pooler url to .env.",
-    );
-    process.exit(1);
-  }
-  if (!userId) {
-    console.error(
-      "error: DONNA_USER_ID not set. add a uuid to .env.",
-    );
-    process.exit(1);
-  }
-
-  // db health check
-  try {
-    const sql = getSql();
-    await sql`select 1`;
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(
-      `donna can't reach her memory. fix the database url and try again. (${msg})`,
-    );
-    await closeDb();
-    process.exit(1);
-  }
-
-  // load history
-  let messages: MessageParam[];
-  try {
-    messages = await loadRecentMessages(userId, 50);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(`donna couldn't load her memory. (${msg})`);
-    await closeDb();
-    process.exit(1);
-  }
-
-  const rl = readline.createInterface({ input: stdin, output: stdout });
-
-  console.log("donna v0.1. type /quit to exit.\n");
-
-  while (true) {
-    let line: string;
-    try {
-      line = (await rl.question("you: ")).trim();
-    } catch {
-      // ctrl-c or stream close
-      break;
+// the cli is one of three render targets for OutboundMessage (alongside
+// whatsapp and the mobile app, later). it prints plain-text stubs that show
+// what claude chose. delay is honored — `delay` items actually sleep.
+async function render(msg: OutboundMessage): Promise<void> {
+  switch (msg.type) {
+    case "text":
+      console.log(`donna: ${msg.text}`);
+      return;
+    case "buttons": {
+      const btns = msg.buttons
+        .map((b) => `${b.label} [${b.id}]`)
+        .join("  |  ");
+      console.log(`donna: ${msg.text}\n        ⟦ ${btns} ⟧`);
+      return;
     }
-
-    if (!line) continue;
-    if (line === "/quit") break;
-
-    const runId = await createExecutionRun({
-      userId,
-      channel: "cli",
-      mode: "reactive",
-      model: MODEL,
-      metadata: { input_preview: line.slice(0, 200) },
-    });
-    await recordExecutionEvent(runId, "inbound_received", "cli", {
-      length: line.length,
-    });
-
-    let result;
-    try {
-      result = await runTurn({
-        mode: "reactive",
-        messages,
-        userInput: line,
-        userId,
-        source: "cli",
-        runId,
-      });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error(
-        `\ndonna couldn't reach the model. try again. (${msg})\n`,
+    case "list": {
+      const lines: string[] = [];
+      for (const section of msg.sections) {
+        if (section.title) lines.push(`        — ${section.title} —`);
+        for (const row of section.rows) {
+          const desc = row.description ? ` — ${row.description}` : "";
+          lines.push(`        · ${row.title}${desc}  [${row.id}]`);
+        }
+      }
+      console.log(
+        `donna: ${msg.text}\n        ⟦ list: ${msg.button_label} ⟧\n${lines.join("\n")}`,
       );
-      await finishExecutionRun(runId, { status: "failed", error: msg });
-      // do NOT mutate messages on failure
-      continue;
+      return;
     }
-
-    messages = result.messages;
-
-    // best-effort persist
-    try {
-      await saveMessages(userId, result.newMessages, "reactive");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error(`couldn't write to memory: ${msg}`);
-    }
-
-    await finishExecutionRun(runId, {
-      status: "completed",
-      terminator: result.terminator,
-      finalSends: result.sends,
-      voiceViolations: result.voiceViolations,
-    });
-    console.log(`\n[run ${runId.slice(0, 8)}] terminator=${result.terminator} iterations=${result.iterations} ptc=${result.ptcInvocations}`);
-
-    // print each visible send on its own line, separated by a blank line
-    for (const send of result.sends) {
-      console.log(`\ndonna: ${send}`);
-    }
-    if (result.sends.length > 0) console.log();
-
-    if (result.terminator === "cap_hit") {
-      console.error("[cap_hit]");
-    }
+    case "cta_url":
+      console.log(`donna: ${msg.text}\n        ⟦ ${msg.label} → ${msg.url} ⟧`);
+      return;
+    case "image":
+      console.log(
+        `donna: 🖼  ${msg.url}${msg.caption ? `\n        caption: ${msg.caption}` : ""}`,
+      );
+      return;
+    case "document":
+      console.log(
+        `donna: 📄 ${msg.filename} (${msg.url})${msg.caption ? `\n        caption: ${msg.caption}` : ""}`,
+      );
+      return;
+    case "video":
+      console.log(
+        `donna: 🎞  ${msg.url}${msg.caption ? `\n        caption: ${msg.caption}` : ""}`,
+      );
+      return;
+    case "audio":
+      console.log(`donna: 🔊 ${msg.url}`);
+      return;
+    case "delay":
+      console.log(`donna: … (pause ${msg.seconds}s)`);
+      await new Promise((r) => setTimeout(r, msg.seconds * 1000));
+      return;
   }
-
-  rl.close();
-  await closeDb();
-  console.log("\nbye.");
 }
 
-main().catch(async (err) => {
-  console.error("fatal:", err);
-  await closeDb();
-  process.exit(1);
-});
+function ask(): void {
+  rl.question("you: ", async (line) => {
+    const text = line.trim();
+    if (!text) return ask();
+    if (text === "exit" || text === "quit") {
+      rl.close();
+      return;
+    }
+
+    history.push({ role: "user", content: text });
+
+    try {
+      const result = await runTurn(history);
+      history.push(...result.newMessages);
+      for (const msg of result.sends) {
+        await render(msg);
+      }
+      if (result.terminator === null) {
+        console.log("(no terminator — model didn't call send_burst this turn)");
+      }
+      console.log(`(run: ${result.runId})`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`error: ${msg}`);
+    }
+
+    ask();
+  });
+}
+
+rl.on("close", () => process.exit(0));
+ask();

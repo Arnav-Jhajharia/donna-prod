@@ -1,29 +1,25 @@
 import type { Tool } from "@anthropic-ai/sdk/resources/messages";
-import type { BrainMode } from "../brain.js";
 
-export const getCurrentTimeTool: Tool & { modes: ReadonlySet<BrainMode> } = {
+// example of a non-terminator tool. demonstrates the pattern:
+// - export a `Tool` describing name/description/input_schema for the model
+// - export a handler that takes `unknown` input and returns a string result
+//
+// brain.ts wires the two together via tools/index.ts: model emits a tool_use
+// block with this name, brain calls the handler, sends back a tool_result.
+export const getCurrentTimeTool: Tool = {
   name: "get_current_time",
   description: `returns the current wall-clock time in the requested IANA timezone.
 
-when to use:
-- the user asks what time it is, anywhere
-- the user mentions a deadline, meeting, or schedule and you need "now" to reason about it
-- any reasoning where the answer changes depending on what time it currently is
-
-when NOT to use:
-- the user gives you a specific time and asks you to reason about it (no need to fetch "now")
-- converting between two named times that don't involve "now"
-- the user asks about a date in the past or future where current wall-clock time is irrelevant`,
+use when reasoning depends on "now" (deadlines, "what time is it", scheduling).`,
   input_schema: {
     type: "object",
     properties: {
       timezone: {
         type: "string",
-        description: "IANA timezone, e.g. 'Asia/Tokyo'. Defaults to 'UTC'.",
+        description: "IANA timezone, e.g. 'Asia/Tokyo'. defaults to 'UTC'.",
       },
     },
   },
-  modes: new Set<BrainMode>(["reactive", "proactive"]),
 };
 
 interface GetCurrentTimeInput {
@@ -33,7 +29,8 @@ interface GetCurrentTimeInput {
 export async function getCurrentTimeHandler(input: unknown): Promise<string> {
   const { timezone = "UTC" } = (input ?? {}) as GetCurrentTimeInput;
 
-  // throws RangeError on invalid IANA timezone — caller catches and surfaces
+  // throws RangeError on invalid IANA timezone — brain.ts catches and surfaces
+  // it back to the model as is_error: true so it can recover.
   const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
     year: "numeric",
@@ -46,8 +43,7 @@ export async function getCurrentTimeHandler(input: unknown): Promise<string> {
   });
 
   const parts = formatter.formatToParts(new Date());
-  const get = (type: string) =>
-    parts.find((p) => p.type === type)?.value ?? "";
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
   const iso = `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:${get("second")}`;
 
   return `${iso} (${timezone})`;

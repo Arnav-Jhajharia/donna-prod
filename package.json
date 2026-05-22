@@ -3,42 +3,23 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "donna v2 — whatsapp-native personal ai. v0: cli tool-loop bootstrap.",
+  "description": "donna — minimal cli tool-loop on the raw anthropic SDK. starting point.",
   "scripts": {
     "dev": "tsx src/index.ts",
-    "wa": "tsx watch --clear-screen=false src/server.ts",
-    "wa:once": "tsx src/server.ts",
-    "inspect": "tsx scripts/inspect-context.ts",
-    "test": "tsx --test tests/**/*.test.ts",
-    "test:once": "tsx --test",
-    "setup:imessage": "tsx scripts/setup-linq-webhook.ts",
-    "worker": "tsx watch --clear-screen=false src/proactive-worker.ts",
-    "worker:once": "tsx src/proactive-worker.ts",
-    "start:worker": "node dist/proactive-worker.js",
-    "seed:proactive": "tsx scripts/seed-proactive-schedule.ts",
-    "world:tick": "tsx scripts/world-tick.ts",
-    "world:worker": "tsx scripts/world-worker.ts",
-    "start": "node dist/server.js",
+    "inspect": "tsx src/inspect.ts",
     "typecheck": "tsc --noEmit",
-    "build": "tsc",
-    "migrate": "supabase db push"
+    "build": "tsc"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.93.0",
-    "@composio/core": "^0.9.0",
-    "chart.js": "^4.5.1",
-    "chartjs-node-canvas": "^5.0.0",
     "dotenv": "^17.4.2",
-    "langsmith": "^0.6.1",
-    "postgres": "^3.4.9",
-    "supermemory": "^4.21.1"
+    "langsmith": "^0.7.1"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
-    "supabase": "^2.98.2",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }
