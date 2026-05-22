@@ -9,8 +9,8 @@ import type {
 import { randomUUID } from "node:crypto";
 import { wrapAnthropic } from "langsmith/wrappers/anthropic";
 import { traceable, getCurrentRunTree } from "langsmith/traceable";
-import { sdk_tools, tool_handlers, TERMINATORS } from "./tools/index.js";
-import { SYSTEM_PROMPT } from "./prompt.js";
+import type { AgentBundle } from "./agents/types.js";
+import { voiceBundle } from "./agents/voice.js";
 import { extractMessages } from "./tools/send_burst.js";
 import type { OutboundMessage } from "./messages.js";
 import { startLedger } from "./ledger.js";
@@ -28,8 +28,11 @@ const client = wrapAnthropic(new Anthropic());
 export interface TurnConfig {
   model?: string;
   maxTokens?: number;
-  // appended to SYSTEM_PROMPT for this turn only — useful for mode switches
-  // (reactive vs proactive) and one-off steering.
+  // which agent runs this turn. defaults to voiceBundle (donna talking to the
+  // user). when we add executor / specialist bundles, callers pick one here.
+  agent?: AgentBundle;
+  // appended to the agent's systemPrompt for this turn only — useful for mode
+  // switches (reactive vs proactive) and one-off steering.
   systemOverlay?: string;
   // identity stamped onto the langsmith parent trace as metadata. when set,
   // the langsmith UI can filter "show every turn for this user / thread."
@@ -64,10 +67,11 @@ export function buildPayload(
   messages: MessageParam[],
   config: TurnConfig = {},
 ): MessageCreateParamsNonStreaming {
+  const agent = config.agent ?? voiceBundle;
 
   const system = config.systemOverlay
-    ? `${SYSTEM_PROMPT}\n\n${config.systemOverlay}`
-    : SYSTEM_PROMPT;
+    ? `${agent.systemPrompt}\n\n${config.systemOverlay}`
+    : agent.systemPrompt;
 
   // mark the last tool with cache_control: ephemeral. anthropic caches every
   // byte before this breakpoint — the system prompt plus all tool definitions.
@@ -76,15 +80,15 @@ export function buildPayload(
   // ~10% cost. we don't cache the messages array: it grows each iteration so
   // the breakpoint would move and the write cost wouldn't amortize.
   const tools =
-    sdk_tools && sdk_tools.length > 0
+    agent.tools && agent.tools.length > 0
       ? [
-          ...sdk_tools.slice(0, -1),
+          ...agent.tools.slice(0, -1),
           {
-            ...sdk_tools[sdk_tools.length - 1]!,
+            ...agent.tools[agent.tools.length - 1]!,
             cache_control: { type: "ephemeral" as const },
           },
         ]
-      : sdk_tools;
+      : agent.tools;
 
   return {
     model: config.model ?? DEFAULT_MODEL,
@@ -110,8 +114,11 @@ export function filterAssistantContent(
 
 // step: run one tool call. handlers throw on error; we convert to is_error
 // tool_results so the model can see the failure and recover next iteration.
-async function dispatchTool(tu: ToolUseBlock): Promise<ToolResultBlockParam> {
-  const handler = tool_handlers[tu.name];
+async function dispatchTool(
+  tu: ToolUseBlock,
+  handlers: AgentBundle["handlers"],
+): Promise<ToolResultBlockParam> {
+  const handler = handlers[tu.name];
   if (!handler) {
     return {
       type: "tool_result",
@@ -149,10 +156,11 @@ async function dispatchTool(tu: ToolUseBlock): Promise<ToolResultBlockParam> {
 // belongs inside a dedicated sandbox tool (when ptc returns), not here.
 async function dispatchToolCalls(
   toolUses: ToolUseBlock[],
+  handlers: AgentBundle["handlers"],
 ): Promise<ToolResultBlockParam[]> {
   const results: ToolResultBlockParam[] = [];
   for (const tu of toolUses) {
-    results.push(await dispatchTool(tu));
+    results.push(await dispatchTool(tu, handlers));
   }
   return results;
 }
@@ -174,6 +182,7 @@ async function _runTurn(
 ): Promise<RunTurnResult> {
   const runId = randomUUID();
   const ledger = startLedger(runId, config);
+  const agent = config.agent ?? voiceBundle;
 
   // stamp identity + runId onto the langsmith parent trace so the UI can
   // filter by user/thread and ledger ↔ trace are cross-referenceable. when
@@ -221,7 +230,7 @@ async function _runTurn(
 
       // run every tool call (including terminator). this keeps the conversation
       // well-formed: tool_use blocks always get matching tool_result blocks.
-      const toolResults = await dispatchToolCalls(toolUses);
+      const toolResults = await dispatchToolCalls(toolUses, agent.handlers);
       ledger.toolCalls(toolUses, toolResults);
 
       const userMessage: MessageParam = {
@@ -231,7 +240,7 @@ async function _runTurn(
       convo.push(userMessage);
       newMessages.push(userMessage);
 
-      const terminator = toolUses.find((tu) => TERMINATORS.has(tu.name));
+      const terminator = toolUses.find((tu) => agent.terminators.has(tu.name));
       if (terminator) {
         const sends =
           terminator.name === "send_burst"
