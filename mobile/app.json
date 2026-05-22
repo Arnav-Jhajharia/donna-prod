@@ -12,9 +12,7 @@
       "expo-asset",
       "expo-dev-client",
       "expo-secure-store",
-      "expo-apple-authentication",
-      "@config-plugins/react-native-callkeep",
-      "@livekit/react-native-expo-plugin"
+      "expo-apple-authentication"
     ],
     "ios": {
       "bundleIdentifier": "com.donna.app",
