@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>donna — IA v2 · three tabs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Red+Hat+Text:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper-100:#FBF7F5; --paper-200:#F5EFEA; --paper-300:#F0EAE4; --paper-400:#E7DFD7;
+    --ink-900:#1E1A18; --ink-800:#3A3331; --ink-600:#6B615C; --ink-500:#8F837C;
+    --ink-400:#B5A89F; --ink-300:#D9CEC5;
+    --rust-700:#7B5544; --rust-300:#C9A796; --rust-100:#EBDCD2;
+    --moss-700:#5C6B4A; --amber-700:#A8804A; --oxblood-700:#8B3A2E;
+    --a-ink-08:rgba(30,26,24,.08); --a-ink-14:rgba(30,26,24,.14);
+    --font-serif:'EB Garamond',Georgia,serif;
+    --font-sans:'Red Hat Text',-apple-system,sans-serif;
+    --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px; --s-7:48px; --s-8:64px; --s-9:96px;
+  }
+  *,*::before,*::after { box-sizing:border-box }
+  html,body { margin:0; padding:0; background:var(--paper-100); color:var(--ink-900);
+              font-family:var(--font-sans); font-size:16px; line-height:1.65;
+              -webkit-font-smoothing:antialiased; }
+  .doc { max-width:1320px; margin:0 auto; padding:var(--s-9) var(--s-5); }
+  .doc-header { display:flex; justify-content:space-between; align-items:baseline;
+                margin-bottom:var(--s-7); padding-bottom:var(--s-5);
+                border-bottom:1px solid var(--a-ink-14); }
+  .wordmark { font-family:var(--font-serif); font-style:italic; font-weight:500;
+              letter-spacing:-0.01em; font-size:28px; }
+  .meta { font-size:13px; color:var(--ink-600); font-variant-numeric:tabular-nums; }
+  h1,h2,h3 { font-family:var(--font-serif); font-weight:400; margin:0; text-wrap:balance; }
+  h1 { font-size:56px; line-height:1.10; letter-spacing:-0.02em; }
+  h2 { font-size:36px; line-height:1.10; letter-spacing:-0.015em; }
+  h3 { font-size:22px; line-height:1.24; letter-spacing:-0.01em; font-weight:500; }
+  .eyebrow { font-family:var(--font-sans); font-weight:500; font-size:11px; letter-spacing:0.14em;
+             text-transform:uppercase; color:var(--ink-500); margin:0; }
+  .lead { font-size:17px; line-height:1.60; color:var(--ink-800); margin:0; text-wrap:pretty; }
+  .body { font-size:16px; line-height:1.65; margin:0; }
+  .caption { font-size:13px; line-height:1.50; color:var(--ink-600); margin:0; }
+  .tabular { font-variant-numeric:tabular-nums; }
+  hr.hairline { height:1px; background:var(--a-ink-08); border:0; margin:var(--s-7) 0; }
+
+  section { margin-bottom:var(--s-8); }
+  section header { margin-bottom:var(--s-5); max-width:62ch; }
+  section header .eyebrow { margin-bottom:var(--s-2); }
+  section header h2 { margin-bottom:var(--s-3); }
+  section header p { color:var(--ink-800); margin:0; }
+
+  .three-questions { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s-5); max-width:1100px; margin-bottom:var(--s-7); }
+  .question { background:#FDFAF8; border:1px solid var(--a-ink-08); border-radius:10px; padding:var(--s-5); }
+  .question .eyebrow { margin-bottom:var(--s-2); color:var(--rust-700); }
+  .question h3 { margin-bottom:var(--s-3); }
+  .question p { color:var(--ink-800); font-size:15px; line-height:1.55; margin:0; }
+  .question .role { font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-500); margin-top:var(--s-4); }
+
+  .diagram { background:#FDFAF8; border:1px solid var(--a-ink-08); border-radius:10px;
+             padding:var(--s-6); overflow-x:auto; margin-bottom:var(--s-6); }
+  .mermaid { font-family:var(--font-sans) !important; }
+
+  table.map { border-collapse:collapse; width:100%; max-width:1100px; }
+  table.map th { text-align:left; font-family:var(--font-sans); font-weight:500;
+                 font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
+                 color:var(--ink-500); padding:var(--s-3) var(--s-3) var(--s-3) 0;
+                 border-bottom:1px solid var(--a-ink-14); }
+  table.map td { padding:var(--s-3) var(--s-3) var(--s-3) 0;
+                 border-bottom:1px solid var(--a-ink-08); vertical-align:top;
+                 font-size:14px; color:var(--ink-800); }
+  table.map td.old { white-space:nowrap; font-variant-numeric:tabular-nums; color:var(--ink-500); }
+  table.map td.new { font-weight:500; color:var(--ink-900); white-space:nowrap; }
+  table.map td.tab { font-size:11px; letter-spacing:0.08em; text-transform:uppercase; }
+  .tab-dash { color:var(--moss-700) !important; }
+  .tab-live { color:var(--rust-700) !important; }
+  .tab-hist { color:var(--ink-600) !important; }
+  .tab-onb { color:var(--amber-700) !important; }
+  .tab-cut { color:var(--oxblood-700) !important; text-decoration:line-through; }
+
+  .open { background:#FDFAF8; border:1px solid var(--a-ink-08); border-radius:10px;
+          padding:var(--s-5); max-width:900px; }
+  .open .eyebrow { color:var(--rust-700); margin-bottom:var(--s-3); }
+  .open ol { padding-left:var(--s-5); margin:0; }
+  .open li { margin-bottom:var(--s-3); color:var(--ink-800); max-width:62ch; }
+  .open li strong { color:var(--ink-900); font-weight:600; }
+  .footer { margin-top:var(--s-9); padding-top:var(--s-7); border-top:1px solid var(--a-ink-14);
+            color:var(--ink-600); font-size:13px; }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <header class="doc-header">
+    <div class="wordmark">donna</div>
+    <div class="meta">IA v2 · three tabs · twenty → fifteen surfaces</div>
+  </header>
+
+  <section>
+    <header>
+      <p class="eyebrow">what changed</p>
+      <h1 style="margin-bottom:var(--s-5)">three tabs, three questions</h1>
+      <p class="lead">v1 had seven flows scattered across four tabs with five orphaned pages. v2 collapses the IA into three tabs, each answering a distinct question about donna. the structure deletes six surfaces by reframing — most of the inbox copilot folds into chat, and the morning brief becomes the first burst of the day rather than its own screen.</p>
+    </header>
+  </section>
+
+  <section>
+    <div class="three-questions">
+      <div class="question">
+        <p class="eyebrow">left</p>
+        <h3>dashboard</h3>
+        <p>what is donna set up to do? integrations, voice, posture, quiet hours, channels. the causes.</p>
+        <p class="role">configure</p>
+      </div>
+      <div class="question">
+        <p class="eyebrow">middle · default</p>
+        <h3>live</h3>
+        <p>what is she doing right now? chat. the morning brief lands here as bursts. drafts, drill-ins, attachments — all in chat.</p>
+        <p class="role">present</p>
+      </div>
+      <div class="question">
+        <p class="eyebrow">right</p>
+        <h3>history</h3>
+        <p>what has she done? past briefs, memories, past chats, past drafts. the record. donna's notebook about you.</p>
+        <p class="role">record</p>
+      </div>
+    </div>
+    <p class="caption" style="max-width:62ch">causes → present → record. dashboard configures, live executes, history remembers. each tab earns its existence by answering a question the others can't.</p>
+  </section>
+
+  <hr class="hairline" />
+
+  <section>
+    <header>
+      <p class="eyebrow">the diagram</p>
+      <h2>three tabs, fifteen surfaces, ten cross-tab edges</h2>
+      <p>onboarding sits outside tabs as a one-time gate. inside the app, every push lands in live. cross-tab jumps are rare and explicit — most navigation stays within a tab.</p>
+    </header>
+    <div class="diagram">
+      <div class="mermaid">
+flowchart TB
+  %% entry vectors
+  COLD1(("cold · first run"))
+  COLD2(("cold · returning"))
+  PUSH(("push · any"))
+  DEEP(("deep link"))
+
+  %% pre-tab onboarding
+  subgraph ONB ["onboarding · pre-tab gate"]
+    direction LR
+    O1["O1 splash"]
+    O2["O2 letter"]
+    O3["O3 introductions"]
+  end
+
+  %% three tabs
+  subgraph DASH ["dashboard · the causes"]
+    direction TB
+    D1["D1 root"]
+    D2["D2 integrations"]
+    D3["D3 integration configure"]
+    D4["D4 integration connect"]
+    D5["D5 voice and posture"]
+    D6["D6 quiet hours"]
+  end
+
+  subgraph LIVE ["live · the present"]
+    direction TB
+    L1["L1 chat · the main surface"]
+    L2["L2 drill-in sheet"]
+    L3["L3 long-press sheet"]
+  end
+
+  subgraph HIST ["history · the record"]
+    direction TB
+    H1["H1 root · timeline"]
+    H2["H2 memory detail"]
+    H3["H3 forget sheet"]
+    H4["H4 past brief"]
+  end
+
+  %% external
+  OAUTH[/"google oauth"/]
+  SIGNOUT[/"signed out"/]
+
+  %% entries
+  COLD1 ==> O1
+  COLD2 ==> L1
+  PUSH ==> L1
+  DEEP ==> L1
+
+  %% onboarding
+  O1 -->|begin| O2
+  O2 -->|continue| O3
+  O3 -->|save| L1
+
+  %% live internal
+  L1 -->|tap card or bubble| L2
+  L1 -->|long-press| L3
+  L2 -->|back| L1
+  L3 -->|dismiss| L1
+
+  %% history internal
+  H1 -->|tap memory| H2
+  H1 -->|tap past brief| H4
+  H2 -->|forget this| H3
+  H3 -->|forget| H1
+  H3 -->|keep it| H2
+  H2 -->|back| H1
+  H4 -->|back| H1
+
+  %% dashboard internal
+  D1 -->|integrations| D2
+  D1 -->|voice| D5
+  D1 -->|quiet hours| D6
+  D2 -->|tap connected| D3
+  D2 -->|add new| D4
+  D4 ==>|oauth| OAUTH
+  OAUTH ==>|callback| D3
+  D3 -->|back| D2
+  D2 -->|back| D1
+  D5 -->|back| D1
+  D6 -->|back| D1
+  D1 ==>|sign out| SIGNOUT
+  SIGNOUT ==> O1
+
+  %% tab nav (bottom bar — represented at roots)
+  D1 <-->|tab| L1
+  L1 <-->|tab| H1
+  D1 <-->|tab| H1
+
+  %% cross-tab edges (the rare ones)
+  L3 -. "remember this" .-> H2
+  L2 -. "see full memory" .-> H2
+  L1 -. "donna links integration" .-> D3
+  H4 -. "resume thread" .-> L1
+
+  %% styles
+  classDef onb fill:#F5EBD9,stroke:#A8804A,stroke-width:1px,color:#3A3331,font-family:Red Hat Text;
+  classDef dash fill:#EEF1E7,stroke:#5C6B4A,stroke-width:1px,color:#1E1A18,font-family:Red Hat Text;
+  classDef live fill:#EBDCD2,stroke:#7B5544,stroke-width:1px,color:#1E1A18,font-family:Red Hat Text;
+  classDef hist fill:#F0EAE4,stroke:#D9CEC5,stroke-width:1px,color:#1E1A18,font-family:Red Hat Text;
+  classDef entry fill:#FBF7F5,stroke:#7B5544,stroke-width:2px,color:#7B5544,font-family:Red Hat Text;
+  classDef external fill:#FDFAF8,stroke:#8F837C,stroke-width:1px,stroke-dasharray:4 4,color:#6B615C,font-family:Red Hat Text;
+
+  class O1,O2,O3 onb;
+  class D1,D2,D3,D4,D5,D6 dash;
+  class L1,L2,L3 live;
+  class H1,H2,H3,H4 hist;
+  class COLD1,COLD2,PUSH,DEEP entry;
+  class OAUTH,SIGNOUT external;
+      </div>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
+  <section>
+    <header>
+      <p class="eyebrow">the mapping</p>
+      <h2>where every v1 page went</h2>
+      <p>twenty pages map to fifteen surfaces. six are deleted as separate surfaces and absorbed into others. nothing is lost — the content remains, but as a special bubble type, an inline section, or a sheet.</p>
+    </header>
+    <table class="map">
+      <thead>
+        <tr><th>v1 page</th><th>name</th><th>v2 home</th><th>tab</th><th>note</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="old">01</td><td>splash</td><td class="new">O1</td><td class="tab tab-onb">pre-tab</td><td>unchanged</td></tr>
+        <tr><td class="old">02</td><td>letter</td><td class="new">O2</td><td class="tab tab-onb">pre-tab</td><td>unchanged</td></tr>
+        <tr><td class="old">03</td><td>introductions</td><td class="new">O3</td><td class="tab tab-onb">pre-tab</td><td>unchanged</td></tr>
+        <tr><td class="old">04</td><td>first burst</td><td class="new tab-cut">— deleted</td><td class="tab tab-cut">cut</td><td>it's just L1 chat in its empty state</td></tr>
+        <tr><td class="old">05</td><td>three things</td><td class="new tab-cut">— deleted</td><td class="tab tab-cut">cut</td><td>becomes the first three bubbles of the day in L1</td></tr>
+        <tr><td class="old">06</td><td>drill-in</td><td class="new">L2</td><td class="tab tab-live">live</td><td>now a sheet over L1, not a screen</td></tr>
+        <tr><td class="old">07</td><td>held back</td><td class="new">H1</td><td class="tab tab-hist">history</td><td>folded into the history timeline as a section</td></tr>
+        <tr><td class="old">08</td><td>conversation</td><td class="new">L1</td><td class="tab tab-live">live</td><td>the main surface</td></tr>
+        <tr><td class="old">09</td><td>attachment</td><td class="new">L1</td><td class="tab tab-live">live</td><td>a special bubble type inside L1</td></tr>
+        <tr><td class="old">10</td><td>long-press sheet</td><td class="new">L3</td><td class="tab tab-live">live</td><td>unchanged, now named L3</td></tr>
+        <tr><td class="old">11</td><td>memory list</td><td class="new">H1</td><td class="tab tab-hist">history</td><td>folded into the history timeline as a section</td></tr>
+        <tr><td class="old">12</td><td>memory detail</td><td class="new">H2</td><td class="tab tab-hist">history</td><td>unchanged</td></tr>
+        <tr><td class="old">13</td><td>forget sheet</td><td class="new">H3</td><td class="tab tab-hist">history</td><td>unchanged</td></tr>
+        <tr><td class="old">14</td><td>integrations list</td><td class="new">D2</td><td class="tab tab-dash">dashboard</td><td>reachable from D1</td></tr>
+        <tr><td class="old">15</td><td>connect</td><td class="new">D4</td><td class="tab tab-dash">dashboard</td><td>unchanged</td></tr>
+        <tr><td class="old">16</td><td>configure</td><td class="new">D3</td><td class="tab tab-dash">dashboard</td><td>unchanged</td></tr>
+        <tr><td class="old">17</td><td>inbox triage</td><td class="new tab-cut">— deleted</td><td class="tab tab-cut">cut</td><td>becomes a special bubble type in L1 — donna lists what your inbox holds</td></tr>
+        <tr><td class="old">18</td><td>draft reply</td><td class="new tab-cut">— deleted</td><td class="tab tab-cut">cut</td><td>becomes a special bubble type in L1 — donna shows the draft inline</td></tr>
+        <tr><td class="old">19</td><td>settings root</td><td class="new">D1</td><td class="tab tab-dash">dashboard</td><td>renamed; now hosts integrations entry</td></tr>
+        <tr><td class="old">20</td><td>quiet hours</td><td class="new">D6</td><td class="tab tab-dash">dashboard</td><td>unchanged</td></tr>
+        <tr><td class="old">—</td><td>voice/posture detail</td><td class="new">D5</td><td class="tab tab-dash">dashboard</td><td>new surface — pulled out of D1 because it's bigger than a row</td></tr>
+        <tr><td class="old">—</td><td>past brief detail</td><td class="new">H4</td><td class="tab tab-hist">history</td><td>new surface — viewing a single day's brief from the timeline</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr class="hairline" />
+
+  <section>
+    <header>
+      <p class="eyebrow">resolved · what the IA fixed</p>
+      <h2>five amber edges, gone</h2>
+    </header>
+    <div class="open" style="background:#EEF1E7; border-color:var(--moss-700)">
+      <p class="eyebrow" style="color:var(--moss-700)">cleaned</p>
+      <ol>
+        <li><strong>"held back" entry</strong> — solved. now a section in H1, reachable by tab + scroll.</li>
+        <li><strong>drill-in's three exits</strong> — solved. L2 stays a sheet inside live; cross-tab links to H2 (memory) are explicit secondary actions, not branching destinations. there's only one "main" path now.</li>
+        <li><strong>integrations orphan</strong> — solved. dashboard's whole job is to expose them. D1 → D2.</li>
+        <li><strong>inbox copilot orphan</strong> — solved by deletion. it's bubble types in L1, not a separate surface.</li>
+        <li><strong>push destination</strong> — solved. all pushes land in L1 with donna's voice carrying the news. cross-tab deep links happen via in-chat ctas ("fix it" → D3), not via the push itself.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <header>
+      <p class="eyebrow">still open</p>
+      <h2>the questions the IA created</h2>
+    </header>
+    <div class="open">
+      <p class="eyebrow">argue these</p>
+      <ol>
+        <li><strong>what's L1 (live) when nothing's happening?</strong> empty composer with a faded "she's quiet right now"? or the most recent burst still sitting there? or always the morning brief, even at 11 pm? <em>my pick:</em> the most recent burst stays visible — donna's voice persists, the composer is always ready.</li>
+        <li><strong>history as timeline or sectioned?</strong> timeline (everything by date, mixed types) is honest about donna's life-of-record. sectioned (memories / past chats / past briefs) is browseable. <em>my pick:</em> default to timeline with type chips on each row, with a filter button to constrain to one type.</li>
+        <li><strong>are past chats read-only in history?</strong> if yes, "resume thread" jumps back to L1 with context. if no, history doubles as a chat archive and the distinction with L1 blurs. <em>my pick:</em> read-only in H, tappable to "resume in live."</li>
+        <li><strong>is "dashboard" the right name?</strong> implies analytics. closer to "controls" or "setup." but "dashboard" reads as the brand-y center of donna's operation. <em>my pick:</em> ship as dashboard for v1, revisit once the actual content tells us what it really is.</li>
+        <li><strong>does morning brief deserve a distinct visual treatment in L1?</strong> if it's just three bubbles, it competes with regular chat. could be a single "brief" bubble that expands. or a date-header treatment ("thursday · brief"). <em>my pick:</em> a serif-italic eyebrow above the day's first burst — "may 21 · brief" — that visually marks the day's opening without becoming a separate surface.</li>
+      </ol>
+    </div>
+  </section>
+
+  <p class="footer">donna · IA v2 · three tabs · fifteen surfaces · five questions left.</p>
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#FDFAF8',
+      primaryColor: '#F0EAE4',
+      primaryTextColor: '#1E1A18',
+      primaryBorderColor: '#D9CEC5',
+      lineColor: '#6B615C',
+      secondaryColor: '#FBF7F5',
+      tertiaryColor: '#FBF7F5',
+      fontFamily: '"Red Hat Text", -apple-system, sans-serif',
+      fontSize: '13px',
+    },
+    flowchart: {
+      curve: 'basis',
+      padding: 16,
+      nodeSpacing: 40,
+      rankSpacing: 50,
+    },
+  });
+</script>
+</body>
+</html>

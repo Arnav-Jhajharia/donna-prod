@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "donna",
+    "slug": "donna-mobile",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "scheme": "donna",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-router",
+      "expo-asset"
+    ],
+    "ios": {
+      "bundleIdentifier": "com.donna.app",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.donna.app"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+node_modules/
+.expo/
+dist/
+web-build/
+*.log
+.DS_Store
+.env
+.env.local
+ios/
+android/
+*.tsbuildinfo
+# eas: keep eas.json checked in; ignore local credentials cache
+.eas/
+credentials.json

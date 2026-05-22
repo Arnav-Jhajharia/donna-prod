@@ -1,0 +1,1024 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>donna — user flows · 20 pages across 7 flows</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Red+Hat+Text:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* paper */
+    --paper-50:#FDFAF8; --paper-100:#FBF7F5; --paper-200:#F5EFEA;
+    --paper-300:#F0EAE4; --paper-400:#E7DFD7; --paper-500:#D6CAC0; --paper-600:#B8A89B;
+    /* ink */
+    --ink-900:#1E1A18; --ink-800:#3A3331; --ink-600:#6B615C; --ink-500:#8F837C; --ink-400:#B5A89F; --ink-300:#D9CEC5;
+    /* rust */
+    --rust-900:#4A2F23; --rust-700:#7B5544; --rust-500:#A07562; --rust-300:#C9A796; --rust-100:#EBDCD2; --rust-50:#F5EFEA;
+    /* signals */
+    --moss-700:#5C6B4A; --moss-100:#EEF1E7;
+    --amber-700:#A8804A; --amber-100:#F5EBD9;
+    --oxblood-700:#8B3A2E; --oxblood-100:#F3E0DC;
+    /* alphas */
+    --a-ink-03:rgba(30,26,24,.03); --a-ink-04:rgba(30,26,24,.04); --a-ink-05:rgba(30,26,24,.05);
+    --a-ink-08:rgba(30,26,24,.08); --a-ink-12:rgba(30,26,24,.12); --a-ink-14:rgba(30,26,24,.14);
+    --a-rust-28:rgba(123,85,68,.28);
+    --a-paper-10:rgba(251,247,245,.10); --a-paper-18:rgba(251,247,245,.18);
+    /* semantic — light */
+    --bg-canvas:var(--paper-100); --bg-surface:var(--paper-300); --bg-surface-alt:var(--paper-400);
+    --bg-inset:var(--paper-50); --bg-inverse:var(--ink-900);
+    --fg-primary:var(--ink-900); --fg-secondary:var(--ink-800); --fg-tertiary:var(--ink-600);
+    --fg-muted:var(--ink-500); --fg-placeholder:var(--ink-400);
+    --fg-inverse:var(--paper-100); --fg-on-rust:var(--paper-100);
+    --fg-accent:var(--rust-700); --bg-accent:var(--rust-700); --bg-accent-tint:var(--rust-50);
+    --fg-success:var(--moss-700); --fg-warning:var(--amber-700); --fg-danger:var(--oxblood-700);
+    --border-hairline:var(--a-ink-08); --border-strong:var(--a-ink-14);
+    /* type */
+    --font-serif:'EB Garamond',Georgia,serif;
+    --font-sans:'Red Hat Text',-apple-system,sans-serif;
+    /* space */
+    --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px; --s-7:48px; --s-8:64px; --s-9:96px;
+    /* radius */
+    --r-sm:6px; --r-md:10px; --r-lg:16px; --r-full:999px;
+  }
+
+  *,*::before,*::after { box-sizing:border-box }
+
+  html,body {
+    margin:0; padding:0;
+    background:var(--bg-canvas);
+    color:var(--fg-primary);
+    font-family:var(--font-sans);
+    font-size:16px; line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* type roles — global */
+  .wordmark { font-family:var(--font-serif); font-style:italic; font-weight:500; letter-spacing:-0.01em; }
+  h1,h2,h3 { font-family:var(--font-serif); font-weight:400; font-style:normal; margin:0; text-wrap:balance; }
+  h1 { font-size:56px; line-height:1.10; letter-spacing:-0.02em; }
+  h2 { font-size:36px; line-height:1.10; letter-spacing:-0.015em; }
+  h3 { font-size:22px; line-height:1.24; letter-spacing:-0.01em; font-weight:500; }
+  .h4 { font-family:var(--font-sans); font-weight:600; font-size:15px; line-height:1.24; margin:0; }
+  .eyebrow { font-family:var(--font-sans); font-weight:500; font-size:11px; letter-spacing:0.14em;
+             text-transform:uppercase; color:var(--fg-muted); margin:0; }
+  .lead { font-size:17px; line-height:1.60; color:var(--fg-secondary); margin:0; text-wrap:pretty; }
+  .body { font-size:16px; line-height:1.65; margin:0; text-wrap:pretty; }
+  .small { font-size:14px; line-height:1.50; margin:0; }
+  .caption { font-size:13px; line-height:1.50; color:var(--fg-tertiary); margin:0; }
+  .tabular { font-variant-numeric:tabular-nums; }
+  .hairline { height:1px; background:var(--border-hairline); border:0; margin:0; }
+  .fg-tert { color:var(--fg-tertiary); }
+  .fg-muted { color:var(--fg-muted); }
+  .fg-accent { color:var(--fg-accent); }
+  .fg-success { color:var(--fg-success); }
+  .fg-warning { color:var(--fg-warning); }
+  .fg-danger { color:var(--fg-danger); }
+
+  /* document layout */
+  .doc { max-width:1320px; margin:0 auto; padding:var(--s-9) var(--s-5) var(--s-9); }
+  .doc-header { display:flex; justify-content:space-between; align-items:baseline;
+                margin-bottom:var(--s-7); padding-bottom:var(--s-5); border-bottom:1px solid var(--border-strong); }
+  .doc-header .meta { font-size:13px; color:var(--fg-tertiary); }
+  .doc-intro { max-width:62ch; margin-bottom:var(--s-8); }
+  .doc-intro p + p { margin-top:var(--s-4); }
+  .principles { display:grid; grid-template-columns:repeat(2,1fr); gap:var(--s-4) var(--s-7);
+                margin-bottom:var(--s-9); max-width:900px; }
+  .principle .eyebrow { margin-bottom:var(--s-1); }
+  .principle p { margin:0; color:var(--fg-secondary); }
+
+  .toc { display:grid; grid-template-columns:repeat(2,1fr); gap:var(--s-3) var(--s-7); max-width:800px;
+         padding-bottom:var(--s-7); border-bottom:1px solid var(--border-hairline); margin-bottom:var(--s-9); }
+  .toc a { color:var(--fg-primary); text-decoration:none; display:flex; gap:var(--s-3); padding:var(--s-2) 0; }
+  .toc a:hover { color:var(--fg-accent); }
+  .toc .num { color:var(--fg-muted); font-variant-numeric:tabular-nums; font-size:13px; }
+
+  /* flow section */
+  .flow { margin-bottom:var(--s-9); }
+  .flow-header { max-width:62ch; margin-bottom:var(--s-6); }
+  .flow-header .eyebrow { margin-bottom:var(--s-2); }
+  .flow-header h2 { margin-bottom:var(--s-3); }
+  .flow-header p { color:var(--fg-secondary); }
+
+  .flow-row { display:flex; gap:var(--s-5); overflow-x:auto;
+              padding:var(--s-3) var(--s-1) var(--s-6); scroll-snap-type:x mandatory; }
+  .flow-row::-webkit-scrollbar { height:8px; }
+  .flow-row::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:var(--r-full); }
+  .flow-row::-webkit-scrollbar-track { background:transparent; }
+
+  .arg { background:var(--bg-inset); border:1px solid var(--border-hairline); border-radius:var(--r-md);
+         padding:var(--s-5); max-width:900px; }
+  .arg .eyebrow { color:var(--fg-accent); margin-bottom:var(--s-3); }
+  .arg ul { margin:0; padding-left:var(--s-5); }
+  .arg li { margin-bottom:var(--s-2); color:var(--fg-secondary); }
+  .arg li strong { color:var(--fg-primary); font-weight:600; }
+
+  /* phone frame */
+  .col { display:flex; flex-direction:column; gap:var(--s-3); flex-shrink:0; width:340px; scroll-snap-align:start; }
+  .frame { width:340px; height:720px; background:var(--bg-canvas); border-radius:38px;
+           border:1px solid var(--border-strong);
+           box-shadow:0 8px 24px var(--a-ink-08), 0 2px 4px var(--a-ink-04);
+           overflow:hidden; display:flex; flex-direction:column; position:relative; }
+  .frame.inverse {
+    --bg-canvas:var(--ink-900); --bg-surface:var(--ink-800); --bg-surface-alt:var(--ink-800);
+    --bg-inset:var(--ink-900);
+    --fg-primary:var(--paper-100); --fg-secondary:var(--paper-200); --fg-tertiary:var(--paper-300);
+    --fg-muted:var(--rust-300); --fg-placeholder:var(--ink-500);
+    --fg-accent:var(--rust-300);
+    --border-hairline:var(--a-paper-10); --border-strong:var(--a-paper-18);
+    background:var(--ink-900); color:var(--paper-100);
+  }
+  .status { display:flex; justify-content:space-between; align-items:center;
+            padding:var(--s-3) var(--s-5) var(--s-2);
+            font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--fg-primary); }
+  .stage { flex:1; padding:var(--s-2) var(--s-5) var(--s-5); display:flex; flex-direction:column;
+           gap:var(--s-4); overflow:hidden; }
+  .stage.with-composer { padding-bottom:var(--s-4); }
+  .stage > .eyebrow { color:var(--fg-muted); }
+  .label { font-size:12px; color:var(--fg-tertiary); }
+  .label-row { display:flex; justify-content:space-between; align-items:baseline; }
+
+  .col .caption { color:var(--fg-tertiary); padding:0 var(--s-2); }
+  .col .caption strong { color:var(--fg-primary); font-weight:600; }
+
+  /* primitives inside frames */
+  .stack-2 { display:flex; flex-direction:column; gap:var(--s-2); }
+  .stack-3 { display:flex; flex-direction:column; gap:var(--s-3); }
+  .stack-4 { display:flex; flex-direction:column; gap:var(--s-4); }
+  .stack-5 { display:flex; flex-direction:column; gap:var(--s-5); }
+  .stack-6 { display:flex; flex-direction:column; gap:var(--s-6); }
+  .row { display:flex; align-items:center; justify-content:space-between; gap:var(--s-3); }
+  .row-tight { display:flex; align-items:center; gap:var(--s-2); }
+
+  .card { background:var(--bg-surface); border-radius:var(--r-md); padding:var(--s-4); display:flex;
+          flex-direction:column; gap:var(--s-2); }
+  .card-pressed { background:var(--bg-surface-alt); }
+  .card .meta { font-size:12px; color:var(--fg-tertiary); }
+  .card .heading { font-family:var(--font-sans); font-weight:600; font-size:15px; line-height:1.24;
+                   color:var(--fg-primary); margin:0; }
+  .card .body { font-size:14px; line-height:1.50; color:var(--fg-secondary); }
+
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:var(--s-2);
+         padding:var(--s-3) var(--s-5); font-family:var(--font-sans); font-weight:500; font-size:15px;
+         line-height:1; border-radius:var(--r-sm); border:0; cursor:default;
+         min-height:44px; }
+  .btn.full { width:100%; }
+  .btn-primary { background:var(--bg-accent); color:var(--fg-on-rust); }
+  .btn-ghost { background:transparent; color:var(--fg-primary); border:1px solid var(--border-strong); }
+  .btn-danger { background:transparent; color:var(--fg-danger); border:1px solid var(--a-ink-12); }
+  .btn-ink { background:var(--ink-900); color:var(--paper-100); }
+
+  .field { border:0; border-bottom:1px solid var(--border-strong); font-family:var(--font-sans);
+           font-size:16px; padding:var(--s-3) 0; background:transparent; width:100%; outline:0; }
+  .field-label { font-size:13px; color:var(--fg-tertiary); }
+
+  .composer { display:flex; align-items:center; gap:var(--s-3); padding:var(--s-3) var(--s-4);
+              background:var(--bg-inset); border:1px solid var(--border-hairline);
+              border-radius:var(--r-full); margin-top:auto; }
+  .composer .ph { color:var(--fg-placeholder); font-size:15px; flex:1; }
+  .composer .send { color:var(--fg-accent); font-weight:500; font-size:14px; }
+
+  .bubble-donna { background:var(--bg-surface); padding:var(--s-3) var(--s-4);
+                  border-radius:14px; max-width:240px; color:var(--fg-primary);
+                  font-size:15px; line-height:1.55; align-self:flex-start; }
+  .bubble-user { background:var(--ink-900); color:var(--paper-100); padding:var(--s-3) var(--s-4);
+                 border-radius:14px; max-width:240px; font-size:15px; line-height:1.55; align-self:flex-end; }
+
+  .dot { width:8px; height:8px; border-radius:var(--r-full); display:inline-block; flex-shrink:0; }
+  .dot.moss { background:var(--moss-700); }
+  .dot.amber { background:var(--amber-700); }
+  .dot.muted { background:var(--ink-400); }
+  .dot.rust { background:var(--rust-700); }
+  .dot.oxblood { background:var(--oxblood-700); }
+
+  .pill { font-size:11px; font-weight:500; letter-spacing:0.04em; padding:3px var(--s-2);
+          border-radius:var(--r-full); background:var(--bg-accent-tint); color:var(--fg-accent); }
+  .pill.moss { background:var(--moss-100); color:var(--moss-700); }
+  .pill.amber { background:var(--amber-100); color:var(--amber-700); }
+  .pill.oxblood { background:var(--oxblood-100); color:var(--oxblood-700); }
+  .pill.muted { background:transparent; color:var(--fg-muted); border:1px solid var(--border-strong); }
+
+  .list-row { display:flex; justify-content:space-between; align-items:center; padding:var(--s-3) 0;
+              border-bottom:1px solid var(--border-hairline); gap:var(--s-3); }
+  .list-row:last-child { border-bottom:0; }
+  .list-row .lt { display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
+  .list-row .lt .t { font-weight:500; font-size:15px; color:var(--fg-primary);
+                     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .list-row .lt .s { font-size:13px; color:var(--fg-tertiary); }
+
+  .toggle { width:36px; height:22px; background:var(--bg-surface-alt); border-radius:var(--r-full); position:relative; }
+  .toggle::after { content:''; position:absolute; top:2px; left:2px; width:18px; height:18px;
+                   background:var(--paper-100); border-radius:var(--r-full); transition:.16s; }
+  .toggle.on { background:var(--bg-accent); }
+  .toggle.on::after { left:16px; }
+
+  .nav-bottom { display:flex; justify-content:space-around; padding:var(--s-3) var(--s-4);
+                border-top:1px solid var(--border-hairline); margin-top:auto;
+                background:var(--bg-canvas); }
+  .nav-bottom .n { font-size:11px; color:var(--fg-muted); letter-spacing:0.06em; text-transform:uppercase;
+                   font-weight:500; }
+  .nav-bottom .n.active { color:var(--fg-accent); }
+
+  .footer { padding-top:var(--s-7); border-top:1px solid var(--border-strong); margin-top:var(--s-9);
+            color:var(--fg-tertiary); }
+  .footer h3 { margin-bottom:var(--s-4); }
+  .footer ul { padding-left:var(--s-5); margin:0; }
+  .footer li { margin-bottom:var(--s-2); color:var(--fg-secondary); max-width:62ch; }
+
+  /* compact phone display when narrow */
+  @media (max-width:720px) {
+    .principles, .toc { grid-template-columns:1fr; }
+    .col { width:300px; } .frame { width:300px; height:640px; }
+  }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <header class="doc-header">
+    <div class="wordmark" style="font-size:28px">donna</div>
+    <div class="meta tabular">user flows · v0.1 · seven flows · twenty pages</div>
+  </header>
+
+  <section class="doc-intro">
+    <p class="eyebrow" style="margin-bottom:var(--s-3)">what this is</p>
+    <h1 style="margin-bottom:var(--s-5)">a stake in the ground</h1>
+    <p class="lead">these aren't screens to build. they're seven arguments about what the mobile app is for. each flow is a posture donna can take. read them, find the ones that feel wrong, push back on those. that's the whole point of this document.</p>
+    <p class="lead">every page below follows the locked design system from the dashboard project. paper canvas. one rust per screen. serif upright for the editorial voice, sans for utility. lowercase everywhere. hairlines, not boxes. if a page violates a rule, the rule wins.</p>
+  </section>
+
+  <section class="principles">
+    <div class="principle"><p class="eyebrow">paper first</p><p>warm off-white is the canvas. black is a value, never the default.</p></div>
+    <div class="principle"><p class="eyebrow">one rust per screen</p><p>the brand accent is for the one thing that matters most. never decoration.</p></div>
+    <div class="principle"><p class="eyebrow">italic is emphasis</p><p>upright serif carries the editorial tone. italic is a word, a phrase, the wordmark.</p></div>
+    <div class="principle"><p class="eyebrow">signals are states</p><p>moss, amber, oxblood appear only when something is true about the world.</p></div>
+    <div class="principle"><p class="eyebrow">hairlines not boxes</p><p>we contain with 1px rules and whitespace, not filled containers.</p></div>
+    <div class="principle"><p class="eyebrow">quiet and specific</p><p>"saved two minutes ago." not "autosaved successfully." no exclamations. ever.</p></div>
+  </section>
+
+  <nav class="toc">
+    <a href="#flow-1"><span class="num tabular">01</span><span>onboarding · 4 pages</span></a>
+    <a href="#flow-2"><span class="num tabular">02</span><span>morning brief · 3 pages</span></a>
+    <a href="#flow-3"><span class="num tabular">03</span><span>chat · 3 pages</span></a>
+    <a href="#flow-4"><span class="num tabular">04</span><span>memory · 3 pages</span></a>
+    <a href="#flow-5"><span class="num tabular">05</span><span>integrations · 3 pages</span></a>
+    <a href="#flow-6"><span class="num tabular">06</span><span>inbox copilot · 2 pages</span></a>
+    <a href="#flow-7"><span class="num tabular">07</span><span>settings · 2 pages</span></a>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 01 — ONBOARDING -->
+  <!-- ============================================================ -->
+  <section class="flow" id="flow-1">
+    <header class="flow-header">
+      <p class="eyebrow">flow 01 · onboarding</p>
+      <h2>first meeting</h2>
+      <p class="lead">donna shouldn't introduce herself with a form. the first impression is a letter from her — editorial, calm, in her own voice. then a short exchange where she learns the bare minimum, then a real burst from her so the relationship starts immediately.</p>
+    </header>
+
+    <div class="flow-row">
+
+      <!-- page 1: splash -->
+      <div class="col">
+        <div class="frame inverse">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage" style="justify-content:center; align-items:center; gap:var(--s-4)">
+            <div class="wordmark" style="font-size:64px; color:var(--paper-100)">donna</div>
+            <p class="caption" style="text-align:center; color:var(--rust-300); margin-top:var(--s-2)">she remembers everything you tell her.</p>
+            <div style="height:var(--s-9)"></div>
+            <button class="btn btn-primary" style="background:var(--rust-300); color:var(--ink-900)">begin</button>
+            <p class="small" style="color:var(--rust-300); margin-top:var(--s-3)">already a user · sign in</p>
+          </div>
+        </div>
+        <p class="caption"><strong>01 · splash.</strong> the only screen on the inverse canvas. one rust accent in the cta. lowercase wordmark, italic 500 per spec. no marketing copy.</p>
+      </div>
+
+      <!-- page 2: the letter -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage">
+            <p class="eyebrow">a letter from donna</p>
+            <div class="stack-4" style="margin-top:var(--s-3)">
+              <p style="font-family:var(--font-serif); font-size:19px; line-height:1.55; color:var(--fg-primary); margin:0">i'm donna.</p>
+              <p style="font-family:var(--font-serif); font-size:19px; line-height:1.55; color:var(--fg-secondary); margin:0">i'm here to hold the parts of your life you'd rather not carry. i'll remember what you said. i'll follow up. i'll tell you what's next, before you have to ask.</p>
+              <p style="font-family:var(--font-serif); font-size:19px; line-height:1.55; color:var(--fg-secondary); margin:0">we'll start small. tell me your name and what you do.</p>
+              <p style="font-family:var(--font-serif); font-size:19px; line-height:1.55; font-style:italic; color:var(--fg-accent); margin:0">— d.</p>
+            </div>
+            <div style="flex:1"></div>
+            <button class="btn btn-primary full">continue</button>
+          </div>
+        </div>
+        <p class="caption"><strong>02 · the letter.</strong> the only place serif body is allowed (per AUDIT 8.4 exception). 19px. italicized sign-off. this is the moment the voice gets locked in.</p>
+      </div>
+
+      <!-- page 3: introductions -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage">
+            <p class="eyebrow">introductions</p>
+            <h2 style="font-size:32px">a few things</h2>
+            <div class="stack-5" style="margin-top:var(--s-3)">
+              <div class="stack-2">
+                <p class="field-label">what should i call you</p>
+                <p class="field" style="border-bottom-color:var(--border-strong); padding-bottom:var(--s-3); color:var(--fg-primary)">bharat</p>
+              </div>
+              <div class="stack-2">
+                <p class="field-label">what you spend most of your time on</p>
+                <p class="field" style="border-bottom-color:var(--border-strong); padding-bottom:var(--s-3); color:var(--fg-placeholder)">building software, mostly</p>
+              </div>
+              <div class="stack-2">
+                <p class="field-label">where you live</p>
+                <p class="field" style="border-bottom-color:var(--border-strong); padding-bottom:var(--s-3); color:var(--fg-placeholder)">new delhi</p>
+              </div>
+            </div>
+            <p class="caption" style="margin-top:var(--s-3)">i'll learn the rest as we go.</p>
+            <div style="flex:1"></div>
+            <button class="btn btn-primary full">save</button>
+          </div>
+        </div>
+        <p class="caption"><strong>03 · introductions.</strong> three fields, no more. floating labels, hairline underline only. tertiary helper text below the cta, not above.</p>
+      </div>
+
+      <!-- page 4: first burst -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage with-composer">
+            <p class="eyebrow">first message</p>
+            <div class="stack-3" style="margin-top:var(--s-3)">
+              <div class="bubble-donna">good. bharat from delhi who builds software. i'll remember.</div>
+              <div class="bubble-donna">i don't know much yet. i'll ask sometimes. you can tell me anything you want me to hold.</div>
+              <div class="bubble-donna">try me. what's on your mind right now?</div>
+            </div>
+            <div class="composer">
+              <span class="ph">say something</span>
+              <span class="send">send</span>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><strong>04 · first exchange.</strong> three bursts. donna acknowledges, sets expectations, invites. no buttons to "skip" — the keyboard is the answer.</p>
+      </div>
+
+    </div>
+
+    <aside class="arg">
+      <p class="eyebrow">things to argue</p>
+      <ul>
+        <li><strong>the letter feels like marketing.</strong> alternative: skip the letter, drop the user straight into the chat. the relationship starts faster but the voice doesn't land. test both.</li>
+        <li><strong>three fields is still a form.</strong> we could ask all of this conversationally in flow 04 instead. costs one screen but feels less corporate.</li>
+        <li><strong>the splash is inverse.</strong> if dark mode is a user preference, the inverse splash will feel disconnected from the rest. consider a paper splash with a small inverse "d" monogram.</li>
+        <li><strong>"begin" vs "continue" vs nothing.</strong> donna doesn't really use cta verbs in her voice. could be a tap-anywhere splash. trade-off: less discoverable.</li>
+      </ul>
+    </aside>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 02 — MORNING BRIEF -->
+  <!-- ============================================================ -->
+  <section class="flow" id="flow-2">
+    <header class="flow-header">
+      <p class="eyebrow">flow 02 · morning brief</p>
+      <h2>what she surfaces, unprompted</h2>
+      <p class="lead">a chief of staff doesn't wait to be asked. the home screen is a daily thesis — three things donna thinks matter today, drawn from chats, integrations, and memory. drilling into one of them shows the why. a quiet inbox shows what she chose not to ping you about.</p>
+    </header>
+
+    <div class="flow-row">
+
+      <!-- page 5: today -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage">
+            <p class="eyebrow tabular">thursday · may 21</p>
+            <h1 style="font-size:44px; margin-top:var(--s-2)">three things</h1>
+            <p class="caption" style="margin-top:-var(--s-3)">since we last spoke.</p>
+            <div class="stack-3" style="margin-top:var(--s-4)">
+              <div class="card">
+                <div class="row-tight"><span class="dot rust"></span><p class="caption fg-muted">people</p></div>
+                <p class="heading">anika still owes you a reply</p>
+                <p class="body">you asked about coffee thursday. it's been six days.</p>
+              </div>
+              <div class="card">
+                <div class="row-tight"><span class="dot muted"></span><p class="caption fg-muted">body</p></div>
+                <p class="heading">you said you'd work out today</p>
+                <p class="body tabular">yesterday landed at 2,400 cal. budget is 2,200.</p>
+              </div>
+              <div class="card">
+                <div class="row-tight"><span class="dot muted"></span><p class="caption fg-muted">money</p></div>
+                <p class="heading">rent goes out tomorrow</p>
+                <p class="body tabular">you'll have a 38% buffer after.</p>
+              </div>
+            </div>
+            <div class="nav-bottom" style="margin-left:-var(--s-5); margin-right:-var(--s-5); margin-bottom:-var(--s-5); margin-top:var(--s-4)">
+              <span class="n active">today</span><span class="n">chat</span><span class="n">memory</span><span class="n">settings</span>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><strong>05 · today.</strong> the only screen with a rust dot — the highest-priority thing. tabular nums on the date and all figures. no swipe carousels, no "see more" — three is the answer, no fourth.</p>
+      </div>
+
+      <!-- page 6: drill in -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage">
+            <p class="caption">← today</p>
+            <p class="eyebrow" style="margin-top:var(--s-3)">people</p>
+            <h2>anika</h2>
+            <p class="lead">she replied to your coffee message on thursday afternoon. you said you'd circle back when delhi cooled down. it didn't.</p>
+            <div class="card" style="margin-top:var(--s-3)">
+              <p class="caption fg-muted tabular">may 15 · 4:32 pm · whatsapp</p>
+              <p class="body" style="font-style:italic; color:var(--fg-secondary)">"yeah anywhere indoors. lmk when."</p>
+            </div>
+            <div class="stack-3" style="margin-top:var(--s-2)">
+              <button class="btn btn-primary full">draft a reply</button>
+              <button class="btn btn-ghost full">snooze two days</button>
+              <button class="btn btn-ghost full" style="color:var(--fg-tertiary); border-color:var(--border-hairline)">mark handled</button>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><strong>06 · drill-in.</strong> serif h2 for the person's name — it's editorial weight, not a label. quoted source in serif italic because it's prose-as-evidence. the rust cta is "draft a reply" because that's what matters.</p>
+      </div>
+
+      <!-- page 7: pending pings -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage">
+            <p class="eyebrow">from donna</p>
+            <h2 style="font-size:30px">things i held back</h2>
+            <p class="caption" style="color:var(--fg-tertiary); margin-top:var(--s-2)">six items i didn't think were worth pinging you about. here if you want them.</p>
+            <div class="stack-3" style="margin-top:var(--s-4)">
+              <div class="list-row">
+                <div class="lt"><div class="t">amazon order arrived</div><div class="s">tuesday · low</div></div>
+                <span class="pill muted">fyi</span>
+              </div>
+              <div class="list-row">
+                <div class="lt"><div class="t">karan said happy birthday late</div><div class="s">tuesday · low</div></div>
+                <span class="pill muted">fyi</span>
+              </div>
+              <div class="list-row">
+                <div class="lt"><div class="t">your phone storage is at 92%</div><div class="s">monday · medium</div></div>
+                <span class="pill amber">later</span>
+              </div>
+              <div class="list-row">
+                <div class="lt"><div class="t">the indian flag day is friday</div><div class="s">monday · low</div></div>
+                <span class="pill muted">fyi</span>
+              </div>
+              <div class="list-row">
+                <div class="lt"><div class="t">netflix is charging you twice</div><div class="s">sunday · medium</div></div>
+                <span class="pill amber">later</span>
+              </div>
+              <div class="list-row">
+                <div class="lt"><div class="t">your gas bill is overdue by three days</div><div class="s">sunday · high</div></div>
+                <span class="pill oxblood">acted on</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><strong>07 · held back.</strong> donna's reasoning surfaced. pills are state, not category. she shows the one she <em>did</em> act on (gas bill) for legibility, in oxblood — earned, never decorative.</p>
+      </div>
+
+    </div>
+
+    <aside class="arg">
+      <p class="eyebrow">things to argue</p>
+      <ul>
+        <li><strong>"three things" is a strong claim.</strong> what if there's only one? two? does she pad? alternative: variable count, but the headline copy changes ("one thing", "five things"). more honest, less consistent.</li>
+        <li><strong>cards vs. inline narrative.</strong> a chief of staff would <em>talk</em>, not give you cards. version b is the home screen as a single morning paragraph from donna, in serif. cards are skimmable; paragraphs are intimate.</li>
+        <li><strong>does the bottom nav belong?</strong> tabs are explicitly retired in the dashboard system (SYSTEM.md §10). a drawer is the spec'd pattern. but mobile thumb reach makes tabs hard to beat. this is the biggest design rule i'm bending.</li>
+        <li><strong>"things i held back" is novel.</strong> nobody does this. it could feel surveilling. or it could be the most trust-building screen in the whole app. needs user testing.</li>
+      </ul>
+    </aside>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 03 — CHAT -->
+  <!-- ============================================================ -->
+  <section class="flow" id="flow-3">
+    <header class="flow-header">
+      <p class="eyebrow">flow 03 · chat</p>
+      <h2>the conversation surface</h2>
+      <p class="lead">the chat isn't a list of messages, it's a continuous thread. donna's bubbles are utility sans, paper-toned. yours are ink. attachments get a treatment that previews what donna sees in them. long-press surfaces the verbs that matter: remember, forget, follow up.</p>
+    </header>
+
+    <div class="flow-row">
+
+      <!-- page 8: chat -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage with-composer">
+            <div class="row" style="padding-bottom:var(--s-2)">
+              <p class="caption">← today</p>
+              <p class="caption tabular">9:41 am</p>
+            </div>
+            <div class="stack-3" style="flex:1; overflow:hidden">
+              <p class="caption tabular" style="text-align:center; color:var(--fg-muted)">yesterday</p>
+              <div class="bubble-user">remind me to call mom tomorrow</div>
+              <div class="bubble-donna">noted. i'll ping you at 7 pm — that's when you usually have time.</div>
+              <p class="caption tabular" style="text-align:center; color:var(--fg-muted); margin-top:var(--s-3)">today · 9:41 am</p>
+              <div class="bubble-donna">it's tomorrow. mom in twenty minutes still good?</div>
+              <div class="bubble-user">yeah</div>
+              <div class="bubble-donna">done. i'll quiet for an hour.</div>
+            </div>
+            <div class="composer">
+              <span class="ph">say something</span>
+              <span class="send">send</span>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><strong>08 · conversation.</strong> day dividers in tertiary caption, tabular. donna's bubbles paper-300, user bubbles ink-900. composer is a single pill, no attach button visible — pressing it expands a sheet.</p>
+      </div>
+
+      <!-- page 9: attachment -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage with-composer">
+            <div class="row" style="padding-bottom:var(--s-2)">
+              <p class="caption">← chat</p>
+              <p class="caption tabular">today</p>
+            </div>
+            <div class="stack-3" style="flex:1">
+              <div class="bubble-user" style="background:transparent; color:var(--fg-primary); border:1px solid var(--border-strong); padding:0; overflow:hidden; max-width:240px">
+                <div style="background:var(--paper-300); padding:var(--s-3) var(--s-4)">
+                  <p class="caption fg-muted">delta confirmation</p>
+                  <p style="font-family:var(--font-sans); font-weight:600; font-size:14px; margin-top:var(--s-1)">DL 0042 · jfk → del</p>
+                  <p class="caption tabular" style="margin-top:var(--s-1)">may 28 · 11:50 pm</p>
+                </div>
+              </div>
+              <div class="bubble-donna">i can see this is a delta confirmation. jfk to delhi, departing the 28th at 11:50 pm.</div>
+              <div class="bubble-donna">shall i pull the flight times to your calendar and set a four-hour pre-arrival check-in nudge?</div>
+              <div class="row-tight" style="margin-top:var(--s-2); align-self:flex-start; gap:var(--s-2)">
+                <span class="pill" style="background:var(--bg-accent); color:var(--fg-on-rust)">yes, both</span>
+                <span class="pill muted">just the flight</span>
+                <span class="pill muted">skip</span>
+              </div>
+            </div>
+            <div class="composer"><span class="ph">say something</span><span class="send">send</span></div>
+          </div>
+        </div>
+        <p class="caption"><strong>09 · attachment.</strong> donna reads the attachment, restates what she saw (proof), then proposes the action. inline pills as a quick-reply layer — one rust pill, two muted. a verbal cta is faster than a button row.</p>
+      </div>
+
+      <!-- page 10: long press -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage" style="position:relative; gap:0">
+            <div style="opacity:0.35; filter:blur(2px); display:flex; flex-direction:column; gap:var(--s-3); margin-top:var(--s-4)">
+              <div class="bubble-donna">i can see this is a delta confirmation. jfk to delhi.</div>
+              <div class="bubble-donna" style="outline:2px solid var(--fg-accent); outline-offset:3px">shall i pull the flight times to your calendar?</div>
+              <div class="bubble-user">no</div>
+            </div>
+            <div style="position:absolute; left:0; right:0; bottom:0; background:var(--bg-canvas); border-top-left-radius:var(--r-lg); border-top-right-radius:var(--r-lg); border:1px solid var(--border-hairline); padding:var(--s-4) var(--s-5)">
+              <div style="width:36px; height:4px; background:var(--border-strong); border-radius:var(--r-full); margin:0 auto var(--s-4)"></div>
+              <p class="eyebrow">on this message</p>
+              <div class="stack-3" style="margin-top:var(--s-3)">
+                <div class="list-row"><div class="lt"><div class="t">remember this</div><div class="s">save to memory</div></div></div>
+                <div class="list-row"><div class="lt"><div class="t">forget this</div><div class="s">remove from history and recall</div></div></div>
+                <div class="list-row"><div class="lt"><div class="t">follow up on this</div><div class="s">donna will ping you again</div></div></div>
+                <div class="list-row" style="border-bottom:0"><div class="lt"><div class="t">copy</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><strong>10 · long-press.</strong> verbs in donna's vocabulary: remember, forget, follow up. no icons. a tiny helper line under each — she's narrating what the action does. the bubble behind has a rust outline showing what's selected.</p>
+      </div>
+
+    </div>
+
+    <aside class="arg">
+      <p class="eyebrow">things to argue</p>
+      <ul>
+        <li><strong>day dividers in the middle of a thread.</strong> imessage does them, whatsapp doesn't. on a chief-of-staff app, the time matters more than usual. keep, but maybe softer.</li>
+        <li><strong>inline pill replies vs a "buttons" row.</strong> pills feel like donna's voice continuing. buttons feel like a form. but pills are a non-standard input pattern and may need a hint to be discoverable.</li>
+        <li><strong>three verbs on long-press.</strong> "follow up" overlaps with "remind me" which is a phrase the user might type. is the long-press verb redundant or essential?</li>
+        <li><strong>the user bubble is ink-900.</strong> on dark mode, both bubbles converge in color and tonality. needs an inverse-mode chat treatment that's not just role swaps.</li>
+      </ul>
+    </aside>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 04 — MEMORY -->
+  <!-- ============================================================ -->
+  <section class="flow" id="flow-4">
+    <header class="flow-header">
+      <p class="eyebrow">flow 04 · memory</p>
+      <h2>what she remembers</h2>
+      <p class="lead">memory is donna's most contentious surface. the user needs to feel in control without feeling like they have to manage it. the list is browseable, the single memory has provenance, and forgetting is a small ceremony — never silent, never reversible without warning.</p>
+    </header>
+
+    <div class="flow-row">
+
+      <!-- page 11: memory list -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage">
+            <p class="eyebrow">what i know about you</p>
+            <h2 style="font-size:30px">memory</h2>
+            <div class="card" style="margin-top:var(--s-3); background:var(--bg-inset); border:1px solid var(--border-hairline)">
+              <p class="caption fg-muted">search</p>
+              <p style="font-size:15px; color:var(--fg-placeholder)">find a thing</p>
+            </div>
+            <div class="stack-3" style="margin-top:var(--s-3); flex:1; overflow:hidden">
+              <p class="eyebrow" style="font-size:10px">people · 24</p>
+              <div class="list-row"><div class="lt"><div class="t">anika · friend, met 2019</div><div class="s">six entries</div></div></div>
+              <div class="list-row"><div class="lt"><div class="t">karan · brother</div><div class="s">eleven entries</div></div></div>
+              <p class="eyebrow" style="font-size:10px; margin-top:var(--s-4)">preferences · 18</p>
+              <div class="list-row"><div class="lt"><div class="t">you don't drink alcohol after wednesdays</div><div class="s">saved may 6</div></div></div>
+              <div class="list-row"><div class="lt"><div class="t">coffee, milk, no sugar</div><div class="s">saved march 12</div></div></div>
+              <p class="eyebrow" style="font-size:10px; margin-top:var(--s-4)">goals · 7</p>
+              <div class="list-row"><div class="lt"><div class="t">cut to 78kg by august</div><div class="s">saved may 4</div></div></div>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><strong>11 · memory list.</strong> grouped by category. eyebrow labels with tabular counts. no avatars, no thumbnails — text-only is donna's voice. search is the inset variant (paper-50) to look like an input without being a form.</p>
+      </div>
+
+      <!-- page 12: memory detail -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage">
+            <p class="caption">← memory</p>
+            <p class="eyebrow" style="margin-top:var(--s-3)">preference</p>
+            <h3 style="font-size:24px; margin-top:var(--s-2)">you don't drink alcohol after wednesdays</h3>
+            <p class="caption tabular" style="margin-top:var(--s-2)">saved tuesday, may 6 · from a chat</p>
+            <hr class="hairline" style="margin:var(--s-4) 0" />
+            <p class="eyebrow">context</p>
+            <p class="body" style="font-style:italic; color:var(--fg-secondary); margin-top:var(--s-2)">"i'm trying to stop drinking on weekends. so basically nothing past wed."</p>
+            <p class="caption tabular" style="margin-top:var(--s-2)">— from your message at 11:47 pm</p>
+            <hr class="hairline" style="margin:var(--s-4) 0" />
+            <p class="eyebrow">how i use this</p>
+            <p class="body" style="margin-top:var(--s-2)">i won't suggest drinks on thursdays through sundays. i'll quietly factor this into restaurant picks and event nudges.</p>
+            <div class="stack-3" style="margin-top:var(--s-5)">
+              <button class="btn btn-ghost full">edit</button>
+              <button class="btn btn-danger full">forget this</button>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><strong>12 · memory detail.</strong> the most editorial screen in the app. provenance is a quote in italic serif (it's a piece of you, frozen). "how i use this" — donna explains the consequence. oxblood for the destructive action, earned.</p>
+      </div>
+
+      <!-- page 13: forget confirmation -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage" style="position:relative">
+            <div style="opacity:0.3; filter:blur(2px)">
+              <p class="caption">← memory</p>
+              <p class="eyebrow" style="margin-top:var(--s-3)">preference</p>
+              <h3 style="font-size:24px">you don't drink alcohol after wednesdays</h3>
+              <p class="caption" style="margin-top:var(--s-2)">saved may 6</p>
+            </div>
+            <div style="position:absolute; left:0; right:0; bottom:0; background:var(--bg-canvas); border-top-left-radius:var(--r-lg); border-top-right-radius:var(--r-lg); padding:var(--s-5); border:1px solid var(--border-hairline)">
+              <div style="width:36px; height:4px; background:var(--border-strong); border-radius:var(--r-full); margin:0 auto var(--s-5)"></div>
+              <h3 style="font-size:22px">forget this?</h3>
+              <p class="body" style="margin-top:var(--s-3); color:var(--fg-secondary)">i'll lose it from everywhere — your morning briefs, the chats, the follow-ups. i won't ask you about it again.</p>
+              <p class="caption" style="margin-top:var(--s-3)">this can't be undone.</p>
+              <div class="row" style="margin-top:var(--s-5); gap:var(--s-3)">
+                <button class="btn btn-ghost" style="flex:1">keep it</button>
+                <button class="btn" style="flex:1; background:var(--oxblood-700); color:var(--paper-100)">forget</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><strong>13 · forget.</strong> the only oxblood button in the entire app. dialog uses serif h3 because forgetting deserves the editorial register. "can't be undone" is a caption, not a banner — quiet, specific.</p>
+      </div>
+
+    </div>
+
+    <aside class="arg">
+      <p class="eyebrow">things to argue</p>
+      <ul>
+        <li><strong>memory editing.</strong> if you can edit a memory, it stops being something donna saw and becomes something you wrote. consider read-only memories + "forget"-only — closer to the real model.</li>
+        <li><strong>"how i use this" is a strong assertion.</strong> donna probably doesn't know exactly how she uses a memory until the moment. honest version says "i factor this into recommendations." vaguer, less reassuring.</li>
+        <li><strong>quoting the original message verbatim.</strong> intimate, but also makes the memory feel like surveillance. alternative: paraphrase. less true, less creepy.</li>
+        <li><strong>forget is irreversible.</strong> from a product perspective, undoable forgets are a footgun (people forget by accident). from an emotional perspective, irreversibility is the point — it's a ceremony.</li>
+      </ul>
+    </aside>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 05 — INTEGRATIONS -->
+  <!-- ============================================================ -->
+  <section class="flow" id="flow-5">
+    <header class="flow-header">
+      <p class="eyebrow">flow 05 · integrations</p>
+      <h2>what donna can touch</h2>
+      <p class="lead">integrations are donna's hands. she should never act in places she hasn't been given. the list is honest about state — connected, paused, never tried. the connect flow is short, the configure flow is precise, the mode toggle is load-bearing.</p>
+    </header>
+
+    <div class="flow-row">
+
+      <!-- page 14: integrations list -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage">
+            <p class="eyebrow">what donna touches</p>
+            <h2 style="font-size:30px">integrations</h2>
+            <p class="caption" style="margin-top:var(--s-2)">three connected, one paused, two waiting.</p>
+            <div class="stack-3" style="margin-top:var(--s-4); flex:1; overflow:hidden">
+              <div class="list-row">
+                <div class="lt"><div class="t row-tight"><span class="dot moss"></span>&nbsp;&nbsp;gmail</div><div class="s">read and reply · 3,402 in the last 30 days</div></div>
+                <span class="pill moss">live</span>
+              </div>
+              <div class="list-row">
+                <div class="lt"><div class="t row-tight"><span class="dot moss"></span>&nbsp;&nbsp;google calendar</div><div class="s">read · 47 events visible</div></div>
+                <span class="pill moss">live</span>
+              </div>
+              <div class="list-row">
+                <div class="lt"><div class="t row-tight"><span class="dot moss"></span>&nbsp;&nbsp;whatsapp</div><div class="s">your number · since may 9</div></div>
+                <span class="pill moss">live</span>
+              </div>
+              <div class="list-row">
+                <div class="lt"><div class="t row-tight"><span class="dot amber"></span>&nbsp;&nbsp;imessage</div><div class="s">paused since tuesday · reconnect</div></div>
+                <span class="pill amber">paused</span>
+              </div>
+              <div class="list-row">
+                <div class="lt"><div class="t row-tight"><span class="dot muted"></span>&nbsp;&nbsp;notion</div><div class="s">never connected</div></div>
+                <span class="pill muted">add</span>
+              </div>
+              <div class="list-row">
+                <div class="lt"><div class="t row-tight"><span class="dot muted"></span>&nbsp;&nbsp;spotify</div><div class="s">never connected</div></div>
+                <span class="pill muted">add</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><strong>14 · integrations list.</strong> states with semantic colors: moss=live, amber=paused, muted=available. the headline "three connected, one paused, two waiting" is the kind of one-line summary donna would actually write.</p>
+      </div>
+
+      <!-- page 15: connect flow -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage">
+            <p class="caption">← integrations</p>
+            <p class="eyebrow" style="margin-top:var(--s-3)">gmail</p>
+            <h2 style="font-size:30px">your inbox</h2>
+            <p class="lead" style="margin-top:var(--s-2)">i'll read your gmail to flag what matters and draft replies. i won't send anything without showing you first.</p>
+            <hr class="hairline" style="margin:var(--s-4) 0" />
+            <p class="eyebrow">mode</p>
+            <div class="stack-3" style="margin-top:var(--s-3)">
+              <div class="row" style="padding:var(--s-3) 0; border-bottom:1px solid var(--border-hairline)">
+                <div class="lt"><div class="t" style="font-size:15px">read only</div><div class="s caption">i see, i never write.</div></div>
+                <div class="toggle"></div>
+              </div>
+              <div class="row" style="padding:var(--s-3) 0">
+                <div class="lt"><div class="t" style="font-size:15px">read and draft</div><div class="s caption">i write, you send.</div></div>
+                <div class="toggle on"></div>
+              </div>
+            </div>
+            <div style="flex:1"></div>
+            <button class="btn btn-primary full">open google</button>
+          </div>
+        </div>
+        <p class="caption"><strong>15 · connect.</strong> mode picker isn't a radio — it's two toggles, mutually exclusive, framed by what donna will and won't do. the cta opens the oauth web view; the mode is set in advance so the permission scope matches.</p>
+      </div>
+
+      <!-- page 16: configure -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage">
+            <p class="caption">← integrations</p>
+            <div class="row" style="margin-top:var(--s-3)">
+              <div>
+                <p class="eyebrow row-tight"><span class="dot moss"></span>&nbsp;&nbsp;gmail · live</p>
+                <h3 style="font-size:24px; margin-top:var(--s-1)">bharatankh@gmail.com</h3>
+              </div>
+            </div>
+            <hr class="hairline" style="margin:var(--s-4) 0" />
+            <p class="eyebrow">what to ignore</p>
+            <div class="stack-2" style="margin-top:var(--s-3)">
+              <p class="small">newsletters · marketing · no-reply senders</p>
+              <p class="small">github notifications</p>
+              <p class="small fg-muted" style="font-style:italic">add a rule</p>
+            </div>
+            <hr class="hairline" style="margin:var(--s-4) 0" />
+            <p class="eyebrow">follow-up posture</p>
+            <div class="row" style="padding:var(--s-3) 0">
+              <div class="lt"><div class="t" style="font-size:15px">quiet</div><div class="s caption">i'll wait three days before nudging.</div></div>
+              <div class="toggle on"></div>
+            </div>
+            <div class="row" style="padding:var(--s-3) 0; border-top:1px solid var(--border-hairline)">
+              <div class="lt"><div class="t" style="font-size:15px">loud</div><div class="s caption">i'll surface unreplied things next morning.</div></div>
+              <div class="toggle"></div>
+            </div>
+            <div style="flex:1"></div>
+            <button class="btn btn-ghost full" style="color:var(--fg-tertiary); border-color:var(--border-hairline)">disconnect</button>
+          </div>
+        </div>
+        <p class="caption"><strong>16 · configure.</strong> moss dot inline in the eyebrow signals state. "follow-up posture" is donna's word for it — quiet vs loud is more honest than "frequency". disconnect is a ghost button, low affordance — destructive without being dramatic.</p>
+      </div>
+
+    </div>
+
+    <aside class="arg">
+      <p class="eyebrow">things to argue</p>
+      <ul>
+        <li><strong>moss/amber/muted dots inline in row titles.</strong> reads at a glance but adds visual noise. alternative: dots only in the right-side pill. cleaner, harder to scan.</li>
+        <li><strong>"read only" vs "read and draft" as the two modes.</strong> what about "read and send"? probably a step too far for v1. but the absence is a position.</li>
+        <li><strong>exclusions are user-typed strings.</strong> a real product needs a picker. but the picker becomes a screen of its own, and donna isn't a control panel.</li>
+        <li><strong>disconnect is one tap with no confirm.</strong> intentional — it's reversible (reconnect any time). but if a connection took 20 minutes of oauth to set up, the user will feel the cost.</li>
+      </ul>
+    </aside>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 06 — INBOX COPILOT -->
+  <!-- ============================================================ -->
+  <section class="flow" id="flow-6">
+    <header class="flow-header">
+      <p class="eyebrow">flow 06 · inbox copilot</p>
+      <h2>email, but quieter</h2>
+      <p class="lead">this is the highest-value loop for an early user: donna pre-reads your inbox, sorts what matters from what doesn't, and offers drafts. the triage is a list with her one-line summary under each. the draft is a letter, not a form — serif body, single accept-or-edit decision.</p>
+    </header>
+
+    <div class="flow-row">
+
+      <!-- page 17: triage -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage">
+            <p class="eyebrow tabular">thursday · may 21</p>
+            <h2 style="font-size:30px">your inbox today</h2>
+            <p class="caption" style="margin-top:var(--s-2)">i read 42. three want you, the rest are noise.</p>
+            <div class="stack-3" style="margin-top:var(--s-4); flex:1; overflow:hidden">
+              <div class="card">
+                <div class="row" style="padding:0; align-items:flex-start"><span class="pill" style="background:var(--bg-accent); color:var(--fg-on-rust)">reply</span><p class="caption tabular">8:14 am</p></div>
+                <p class="heading">priya sharma · re: q3 budget</p>
+                <p class="body">she wants a number by friday and a meeting if it's over 200k.</p>
+              </div>
+              <div class="card">
+                <div class="row" style="padding:0; align-items:flex-start"><span class="pill amber">schedule</span><p class="caption tabular">7:01 am</p></div>
+                <p class="heading">karan · dinner sat</p>
+                <p class="body">he's free 7-9 saturday at any of the three places you liked last month.</p>
+              </div>
+              <div class="card">
+                <div class="row" style="padding:0; align-items:flex-start"><span class="pill muted">fyi</span><p class="caption tabular">6:42 am</p></div>
+                <p class="heading">aws · billing alert</p>
+                <p class="body">you crossed $40 this month. last month was $33.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><strong>17 · triage.</strong> three cards, each with a state pill and donna's one-line synopsis. her summary is the lede — sender and subject are caption-level. the work donna did (read 42) is acknowledged in one line.</p>
+      </div>
+
+      <!-- page 18: draft -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage">
+            <p class="caption">← inbox</p>
+            <p class="eyebrow" style="margin-top:var(--s-3)">draft from donna</p>
+            <h3 style="font-size:22px">re: q3 budget</h3>
+            <p class="caption tabular" style="margin-top:var(--s-2)">to priya sharma · drafted just now</p>
+            <hr class="hairline" style="margin:var(--s-4) 0" />
+            <div class="stack-3" style="flex:1">
+              <p style="font-family:var(--font-serif); font-size:17px; line-height:1.60; color:var(--fg-primary)">priya,</p>
+              <p style="font-family:var(--font-serif); font-size:17px; line-height:1.60; color:var(--fg-secondary)">our q3 ask is 245k, slightly over your threshold. happy to walk through it friday — 11:30 or 2 pm both work for me.</p>
+              <p style="font-family:var(--font-serif); font-size:17px; line-height:1.60; color:var(--fg-secondary)">bharat</p>
+            </div>
+            <div class="stack-3" style="margin-top:var(--s-3)">
+              <button class="btn btn-primary full">send</button>
+              <div class="row" style="gap:var(--s-3)">
+                <button class="btn btn-ghost" style="flex:1">edit</button>
+                <button class="btn btn-ghost" style="flex:1; color:var(--fg-tertiary); border-color:var(--border-hairline)">discard</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="caption"><strong>18 · draft.</strong> serif 17 for the email body because it <em>is</em> a letter. tertiary captions hold the metadata. send is the rust cta; edit and discard share weight. donna wrote it — sending should be one tap.</p>
+      </div>
+
+    </div>
+
+    <aside class="arg">
+      <p class="eyebrow">things to argue</p>
+      <ul>
+        <li><strong>"i read 42. three want you."</strong> a strong claim. if donna picks wrong even 10% of the time, this becomes the worst feature. needs a soft fallback.</li>
+        <li><strong>three pills: reply, schedule, fyi.</strong> are there other categories? "decline", "needs info from someone else", "wait". keeping it to three is a forcing function.</li>
+        <li><strong>send is one tap.</strong> contradicts "i won't send anything without showing you first" from flow 05. but showing <em>is</em> the draft screen. is one tap "without showing"?</li>
+        <li><strong>serif email body.</strong> deliberate departure from sans chat bubbles — emails are letters, chats are messages. but it means the same content type renders differently in different surfaces.</li>
+      </ul>
+    </aside>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- FLOW 07 — SETTINGS -->
+  <!-- ============================================================ -->
+  <section class="flow" id="flow-7">
+    <header class="flow-header">
+      <p class="eyebrow">flow 07 · settings</p>
+      <h2>tuning her</h2>
+      <p class="lead">settings are an admission of failure — if donna were perfect, you'd never open this. so this is short. voice, quiet hours, channels, account. nothing else. the quiet hours screen is the only one with real interaction; everything else is lists.</p>
+    </header>
+
+    <div class="flow-row">
+
+      <!-- page 19: settings root -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage">
+            <p class="eyebrow">you</p>
+            <h2 style="font-size:30px">donna's settings</h2>
+            <hr class="hairline" style="margin:var(--s-5) 0 var(--s-3)" />
+            <p class="eyebrow">voice</p>
+            <div class="list-row"><div class="lt"><div class="t">tone</div><div class="s">quiet · steady · attentive</div></div><p class="caption" style="color:var(--fg-tertiary)">›</p></div>
+            <div class="list-row"><div class="lt"><div class="t">how she signs off</div><div class="s">— d.</div></div><p class="caption" style="color:var(--fg-tertiary)">›</p></div>
+            <hr class="hairline" style="margin:var(--s-4) 0 var(--s-3)" />
+            <p class="eyebrow">quiet hours</p>
+            <div class="list-row"><div class="lt"><div class="t tabular">11 pm — 8 am</div><div class="s">all days · except urgent</div></div><p class="caption" style="color:var(--fg-tertiary)">›</p></div>
+            <hr class="hairline" style="margin:var(--s-4) 0 var(--s-3)" />
+            <p class="eyebrow">channels</p>
+            <div class="list-row"><div class="lt"><div class="t row-tight"><span class="dot moss"></span>&nbsp;&nbsp;whatsapp</div></div></div>
+            <div class="list-row"><div class="lt"><div class="t row-tight"><span class="dot amber"></span>&nbsp;&nbsp;imessage</div></div></div>
+            <div class="list-row"><div class="lt"><div class="t row-tight"><span class="dot moss"></span>&nbsp;&nbsp;this app</div></div></div>
+            <hr class="hairline" style="margin:var(--s-4) 0 var(--s-3)" />
+            <p class="eyebrow">account</p>
+            <div class="list-row"><div class="lt"><div class="t">sign out</div></div></div>
+            <div class="list-row" style="border-bottom:0"><div class="lt"><div class="t fg-danger">delete all my data</div></div></div>
+          </div>
+        </div>
+        <p class="caption"><strong>19 · settings root.</strong> sectioned by eyebrow labels, hairline dividers. "delete all my data" is the only oxblood text in this entire screen. the chevron arrows are just "›" character — no icon font, no svg.</p>
+      </div>
+
+      <!-- page 20: quiet hours -->
+      <div class="col">
+        <div class="frame">
+          <div class="status"><span>9:41</span><span>· · · ·</span></div>
+          <div class="stage">
+            <p class="caption">← settings</p>
+            <p class="eyebrow" style="margin-top:var(--s-3)">quiet hours</p>
+            <h2 style="font-size:30px">when not to ping</h2>
+            <p class="lead" style="margin-top:var(--s-2)">i'll hold everything until morning. if something is urgent — money, a person waiting — i'll ping anyway.</p>
+            <hr class="hairline" style="margin:var(--s-4) 0" />
+            <p class="eyebrow">from</p>
+            <p class="tabular" style="font-family:var(--font-serif); font-size:36px; margin-top:var(--s-1); color:var(--fg-primary)">11:00 pm</p>
+            <hr class="hairline" style="margin:var(--s-3) 0" />
+            <p class="eyebrow">until</p>
+            <p class="tabular" style="font-family:var(--font-serif); font-size:36px; margin-top:var(--s-1); color:var(--fg-primary)">8:00 am</p>
+            <hr class="hairline" style="margin:var(--s-3) 0" />
+            <p class="eyebrow">days</p>
+            <div class="row" style="margin-top:var(--s-3); justify-content:space-between; gap:var(--s-2)">
+              <span style="width:32px; height:32px; border-radius:var(--r-full); background:var(--bg-accent); color:var(--fg-on-rust); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px">m</span>
+              <span style="width:32px; height:32px; border-radius:var(--r-full); background:var(--bg-accent); color:var(--fg-on-rust); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px">t</span>
+              <span style="width:32px; height:32px; border-radius:var(--r-full); background:var(--bg-accent); color:var(--fg-on-rust); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px">w</span>
+              <span style="width:32px; height:32px; border-radius:var(--r-full); background:var(--bg-accent); color:var(--fg-on-rust); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px">t</span>
+              <span style="width:32px; height:32px; border-radius:var(--r-full); background:var(--bg-accent); color:var(--fg-on-rust); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px">f</span>
+              <span style="width:32px; height:32px; border-radius:var(--r-full); background:var(--bg-surface); color:var(--fg-tertiary); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:13px">s</span>
+              <span style="width:32px; height:32px; border-radius:var(--r-full); background:var(--bg-surface); color:var(--fg-tertiary); display:flex; align-items:center; justify-content:center; font-weight:500; font-size:13px">s</span>
+            </div>
+            <div style="flex:1"></div>
+            <button class="btn btn-primary full">save</button>
+          </div>
+        </div>
+        <p class="caption"><strong>20 · quiet hours.</strong> the times are <em>serif 36px</em> — a deliberate flex, because time is editorial here. day pills are circles with single letters, accent for selected, surface for unselected. weekend is off by default — donna assumes you sleep in.</p>
+      </div>
+
+    </div>
+
+    <aside class="arg">
+      <p class="eyebrow">things to argue</p>
+      <ul>
+        <li><strong>only four settings sections.</strong> push for a fifth: "what to remember by default". or push to remove "voice tone" — letting users tune donna's voice contradicts the locked product voice.</li>
+        <li><strong>"except urgent" is undefined.</strong> donna decides. that's load-bearing trust, and a single bad call breaks the feature.</li>
+        <li><strong>serif 36px time numerals.</strong> beautiful, possibly precious. sans 600 tabular nums at 32px would be more legible and more donna's actual product voice.</li>
+        <li><strong>"delete all my data" sits in settings.</strong> some products bury this two screens deep. donna's voice would put it right in the open. but the open placement makes accidental taps more likely.</li>
+      </ul>
+    </aside>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- FOOTER -->
+  <!-- ============================================================ -->
+  <footer class="footer">
+    <p class="eyebrow">the seven biggest decisions</p>
+    <h3 style="margin-top:var(--s-3); margin-bottom:var(--s-5)">if you only argue these</h3>
+    <ol style="padding-left:var(--s-5)">
+      <li class="body" style="color:var(--fg-secondary); margin-bottom:var(--s-3); max-width:62ch"><strong style="color:var(--fg-primary)">a letter, or skip the letter?</strong> flow 01 stakes the editorial voice on the second screen. removing it costs the voice but speeds the relationship.</li>
+      <li class="body" style="color:var(--fg-secondary); margin-bottom:var(--s-3); max-width:62ch"><strong style="color:var(--fg-primary)">three things, or however many things?</strong> flow 02 hard-codes a count. variable is more honest but harder to design around.</li>
+      <li class="body" style="color:var(--fg-secondary); margin-bottom:var(--s-3); max-width:62ch"><strong style="color:var(--fg-primary)">a bottom tab bar, or a single home with a drawer?</strong> tabs are easier on the thumb but explicitly retired in SYSTEM.md §10. drawer is spec-correct, slower to navigate.</li>
+        <li class="body" style="color:var(--fg-secondary); margin-bottom:var(--s-3); max-width:62ch"><strong style="color:var(--fg-primary)">memory editable, or only forgettable?</strong> editing turns donna's view of you into something you author. forgetting alone is closer to how memory works.</li>
+      <li class="body" style="color:var(--fg-secondary); margin-bottom:var(--s-3); max-width:62ch"><strong style="color:var(--fg-primary)">a separate inbox copilot, or chat with attachments?</strong> flow 06 is a dedicated surface. an alternative is everything goes through chat — emails arrive as bubbles donna comments on. one feature, one fewer page.</li>
+      <li class="body" style="color:var(--fg-secondary); margin-bottom:var(--s-3); max-width:62ch"><strong style="color:var(--fg-primary)">donna's voice configurable?</strong> the locked product voice in CLAUDE.md says no. but the settings screen exposes a "tone" item. one of them is wrong.</li>
+      <li class="body" style="color:var(--fg-secondary); margin-bottom:var(--s-3); max-width:62ch"><strong style="color:var(--fg-primary)">"i held this back from you" — does it ship?</strong> flow 02 page 07. either the most trust-building screen or the most surveilling. nothing in between.</li>
+    </ol>
+    <p class="caption" style="margin-top:var(--s-7)">donna · user flows v0.1 · twenty pages · seven flows · the locked design system, applied.</p>
+  </footer>
+
+</div>
+</body>
+</html>

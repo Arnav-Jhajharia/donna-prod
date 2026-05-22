@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>donna — user flow DAG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Red+Hat+Text:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper-100:#FBF7F5; --paper-200:#F5EFEA; --paper-300:#F0EAE4; --paper-400:#E7DFD7;
+    --ink-900:#1E1A18; --ink-800:#3A3331; --ink-600:#6B615C; --ink-500:#8F837C;
+    --ink-400:#B5A89F; --ink-300:#D9CEC5;
+    --rust-700:#7B5544; --rust-300:#C9A796; --rust-100:#EBDCD2;
+    --moss-700:#5C6B4A; --amber-700:#A8804A; --oxblood-700:#8B3A2E;
+    --a-ink-08:rgba(30,26,24,.08); --a-ink-14:rgba(30,26,24,.14);
+    --font-serif:'EB Garamond',Georgia,serif;
+    --font-sans:'Red Hat Text',-apple-system,sans-serif;
+    --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px; --s-7:48px; --s-8:64px; --s-9:96px;
+  }
+  *,*::before,*::after { box-sizing:border-box }
+  html,body { margin:0; padding:0; background:var(--paper-100); color:var(--ink-900);
+              font-family:var(--font-sans); font-size:16px; line-height:1.65;
+              -webkit-font-smoothing:antialiased; }
+  .doc { max-width:1320px; margin:0 auto; padding:var(--s-9) var(--s-5); }
+  .doc-header { display:flex; justify-content:space-between; align-items:baseline;
+                margin-bottom:var(--s-7); padding-bottom:var(--s-5);
+                border-bottom:1px solid var(--a-ink-14); }
+  .wordmark { font-family:var(--font-serif); font-style:italic; font-weight:500;
+              letter-spacing:-0.01em; font-size:28px; }
+  .meta { font-size:13px; color:var(--ink-600); font-variant-numeric:tabular-nums; }
+  h1,h2,h3 { font-family:var(--font-serif); font-weight:400; margin:0; text-wrap:balance; }
+  h1 { font-size:56px; line-height:1.10; letter-spacing:-0.02em; }
+  h2 { font-size:36px; line-height:1.10; letter-spacing:-0.015em; }
+  h3 { font-size:22px; line-height:1.24; letter-spacing:-0.01em; font-weight:500; }
+  .eyebrow { font-family:var(--font-sans); font-weight:500; font-size:11px; letter-spacing:0.14em;
+             text-transform:uppercase; color:var(--ink-500); margin:0; }
+  .lead { font-size:17px; line-height:1.60; color:var(--ink-800); margin:0; text-wrap:pretty; }
+  .body { font-size:16px; line-height:1.65; margin:0; }
+  .small { font-size:14px; line-height:1.50; }
+  .caption { font-size:13px; line-height:1.50; color:var(--ink-600); margin:0; }
+  .tabular { font-variant-numeric:tabular-nums; }
+  hr.hairline { height:1px; background:var(--a-ink-08); border:0; margin:var(--s-7) 0; }
+
+  section { margin-bottom:var(--s-8); }
+  section header { margin-bottom:var(--s-5); max-width:62ch; }
+  section header .eyebrow { margin-bottom:var(--s-2); }
+  section header h2 { margin-bottom:var(--s-3); }
+  section header p { color:var(--ink-800); margin:0; }
+
+  .legend { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+            gap:var(--s-4) var(--s-5); max-width:900px; padding:var(--s-5);
+            background:#FDFAF8; border:1px solid var(--a-ink-08); border-radius:10px; }
+  .legend-item { display:flex; align-items:center; gap:var(--s-3); }
+  .legend-key { width:48px; height:18px; flex-shrink:0; display:flex; align-items:center;
+                justify-content:center; font-size:11px; font-weight:600; }
+  .legend-key.node-page { background:var(--paper-300); border:1px solid var(--ink-300); color:var(--ink-900); border-radius:4px; }
+  .legend-key.node-entry { background:transparent; border:2px solid var(--rust-700); color:var(--rust-700); border-radius:999px; }
+  .legend-key.node-external { background:transparent; border:1px dashed var(--ink-500); color:var(--ink-600); border-radius:4px; }
+  .legend-key.edge-primary { background:linear-gradient(to right, transparent 0 6px, var(--ink-600) 6px 42px, transparent 42px 48px); height:2px; }
+  .legend-key.edge-cross { background:linear-gradient(to right, var(--rust-700) 0 6px, transparent 6px 10px, var(--rust-700) 10px 16px, transparent 16px 20px, var(--rust-700) 20px 26px, transparent 26px 30px, var(--rust-700) 30px 36px, transparent 36px 40px, var(--rust-700) 40px 48px); height:2px; }
+  .legend-key.edge-system { background:var(--ink-900); height:4px; }
+  .legend-key.edge-ambig { background:repeating-linear-gradient(to right, var(--amber-700) 0 3px, transparent 3px 7px); height:2px; }
+  .legend-text { font-size:13px; color:var(--ink-800); }
+  .legend-text strong { color:var(--ink-900); font-weight:600; }
+
+  .diagram { background:#FDFAF8; border:1px solid var(--a-ink-08); border-radius:10px;
+             padding:var(--s-6); overflow-x:auto; margin-bottom:var(--s-6); }
+  .mermaid { font-family:var(--font-sans) !important; }
+
+  table.transitions { border-collapse:collapse; width:100%; max-width:1100px; }
+  table.transitions th { text-align:left; font-family:var(--font-sans); font-weight:500;
+                         font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
+                         color:var(--ink-500); padding:var(--s-3) var(--s-3) var(--s-3) 0;
+                         border-bottom:1px solid var(--a-ink-14); }
+  table.transitions td { padding:var(--s-3) var(--s-3) var(--s-3) 0;
+                         border-bottom:1px solid var(--a-ink-08); vertical-align:top;
+                         font-size:14px; color:var(--ink-800); }
+  table.transitions td.from, table.transitions td.to { font-weight:500; color:var(--ink-900);
+                                                       white-space:nowrap; font-variant-numeric:tabular-nums; }
+  table.transitions td.label { font-style:italic; color:var(--ink-600); }
+  table.transitions td.type { font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-500); }
+  .type-tap { color:var(--ink-600) !important; }
+  .type-tab { color:var(--moss-700) !important; }
+  .type-system { color:var(--rust-700) !important; }
+  .type-cross { color:var(--rust-700) !important; }
+  .type-ambig { color:var(--amber-700) !important; }
+
+  .open-questions { background:#FDFAF8; border:1px solid var(--a-ink-08); border-radius:10px;
+                    padding:var(--s-5); max-width:900px; }
+  .open-questions .eyebrow { color:var(--rust-700); margin-bottom:var(--s-3); }
+  .open-questions ol { padding-left:var(--s-5); margin:0; }
+  .open-questions li { margin-bottom:var(--s-3); color:var(--ink-800); max-width:62ch; }
+  .open-questions li strong { color:var(--ink-900); font-weight:600; }
+
+  .footer { margin-top:var(--s-9); padding-top:var(--s-7); border-top:1px solid var(--a-ink-14);
+            color:var(--ink-600); font-size:13px; }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <header class="doc-header">
+    <div class="wordmark">donna</div>
+    <div class="meta">user flow DAG · v0.1</div>
+  </header>
+
+  <section>
+    <header>
+      <p class="eyebrow">what this is</p>
+      <h1 style="margin-bottom:var(--s-5)">the graph i should have drawn first</h1>
+      <p class="lead">flows.html shows twenty pages grouped by theme. it doesn't show how a user actually moves between them — and that's where the real design lives. this is the inter-page graph. nodes are pages. edges are transitions. ambient amber edges are the ones i hadn't decided on yet, and drawing this surfaced them.</p>
+    </header>
+  </section>
+
+  <section>
+    <header>
+      <p class="eyebrow">legend</p>
+      <h3>how to read it</h3>
+    </header>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-key node-page">P05</div><div class="legend-text"><strong>page</strong> — one of the 20</div></div>
+      <div class="legend-item"><div class="legend-key node-entry">PUSH</div><div class="legend-text"><strong>entry vector</strong> — cold start, push, deep link</div></div>
+      <div class="legend-item"><div class="legend-key node-external">ext</div><div class="legend-text"><strong>external</strong> — leaves the app</div></div>
+      <div class="legend-item"><div class="legend-key edge-primary"></div><div class="legend-text"><strong>primary</strong> — user taps something</div></div>
+      <div class="legend-item"><div class="legend-key edge-cross"></div><div class="legend-text"><strong>cross-flow</strong> — jumps between flows</div></div>
+      <div class="legend-item"><div class="legend-key edge-system"></div><div class="legend-text"><strong>system-driven</strong> — push, oauth, scheduler</div></div>
+      <div class="legend-item"><div class="legend-key edge-ambig"></div><div class="legend-text"><strong>ambiguous</strong> — unresolved decision</div></div>
+    </div>
+  </section>
+
+  <section>
+    <header>
+      <p class="eyebrow">the diagram</p>
+      <h2>twenty pages, in motion</h2>
+      <p>vertically clustered by flow. arrows pointing rightward and downward. cross-flow edges in rust draw the eye to where flows meet — those are the load-bearing decisions.</p>
+    </header>
+    <div class="diagram">
+      <div class="mermaid">
+flowchart LR
+  %% entry vectors
+  COLD1(("cold · first"))
+  COLD2(("cold · returning"))
+  PUSH1(("push · morning brief"))
+  PUSH2(("push · chat"))
+  PUSH3(("push · followup"))
+  PUSH4(("push · integration"))
+  DEEP(("deep link · email"))
+
+  %% onboarding cluster
+  subgraph ONB ["01 · onboarding"]
+    direction TB
+    P01["01 splash"]
+    P02["02 letter"]
+    P03["03 intros"]
+    P04["04 first burst"]
+  end
+
+  %% home cluster
+  subgraph HOME ["02 · morning brief"]
+    direction TB
+    P05["05 three things"]
+    P06["06 drill-in"]
+    P07["07 held back"]
+  end
+
+  %% chat cluster
+  subgraph CHAT ["03 · chat"]
+    direction TB
+    P08["08 conversation"]
+    P09["09 attachment"]
+    P10["10 long-press"]
+  end
+
+  %% memory cluster
+  subgraph MEM ["04 · memory"]
+    direction TB
+    P11["11 list"]
+    P12["12 detail"]
+    P13["13 forget"]
+  end
+
+  %% integrations cluster
+  subgraph INT ["05 · integrations"]
+    direction TB
+    P14["14 list"]
+    P15["15 connect"]
+    P16["16 configure"]
+  end
+
+  %% inbox cluster
+  subgraph INB ["06 · inbox copilot"]
+    direction TB
+    P17["17 triage"]
+    P18["18 draft"]
+  end
+
+  %% settings cluster
+  subgraph SET ["07 · settings"]
+    direction TB
+    P19["19 root"]
+    P20["20 quiet hours"]
+  end
+
+  %% external
+  OAUTH[/"google oauth"/]
+  SIGNOUT[/"signed out"/]
+
+  %% entries
+  COLD1 ==> P01
+  COLD2 ==> P05
+  PUSH1 ==> P05
+  PUSH2 ==> P08
+  PUSH3 ==> P06
+  PUSH4 ==> P16
+  DEEP ==> P18
+
+  %% onboarding sequence
+  P01 -->|begin| P02
+  P02 -->|continue| P03
+  P03 -->|save| P04
+  P04 -->|first burst sent| P05
+
+  %% home internal
+  P05 -->|tap card| P06
+  P05 -.->|"unwired: how do you reach 07?"| P07
+  P06 -->|back| P05
+  P07 -->|back| P05
+
+  %% home → other flows via tab bar
+  P05 <-->|tab| P08
+  P05 <-->|tab| P11
+  P05 <-->|tab| P19
+
+  %% chat internal
+  P08 -->|drop attachment| P09
+  P09 -->|continue| P08
+  P08 -->|long-press bubble| P10
+  P10 -->|dismiss| P08
+
+  %% cross: drill-in → chat draft / memory / inbox
+  P06 -. "if it was a person" .-> P12
+  P06 -. "if it was email" .-> P18
+  P06 -->|"draft a reply"| P08
+
+  %% cross: long-press → memory
+  P10 -. "remember this" .-> P12
+  P10 -. "forget this" .-> P13
+  P10 -. "follow up" .-> P05
+
+  %% memory internal
+  P11 -->|tap memory| P12
+  P12 -->|forget this| P13
+  P12 -->|back| P11
+  P13 -->|forget| P11
+  P13 -->|keep it| P12
+
+  %% integrations — ENTRY UNCLEAR
+  P19 -.->|"unwired: integrations not listed in settings"| P14
+  P14 -->|add| P15
+  P14 -->|tap connected| P16
+  P15 ==>|oauth| OAUTH
+  OAUTH ==>|callback| P16
+  P16 -->|disconnect| P14
+  P16 -->|back| P14
+
+  %% inbox copilot — ENTRY UNCLEAR
+  PUSH3 -. "or push lands here?" .-> P17
+  P17 -->|tap reply card| P18
+  P18 -->|send / discard| P17
+  P18 -->|back| P17
+
+  %% settings internal
+  P19 -->|quiet hours| P20
+  P20 -->|save / back| P19
+  P19 ==>|sign out| SIGNOUT
+  SIGNOUT ==> P01
+
+  %% styles
+  classDef page fill:#F0EAE4,stroke:#D9CEC5,stroke-width:1px,color:#1E1A18,font-family:Red Hat Text;
+  classDef entry fill:#FBF7F5,stroke:#7B5544,stroke-width:2px,color:#7B5544,font-family:Red Hat Text;
+  classDef external fill:#FDFAF8,stroke:#8F837C,stroke-width:1px,stroke-dasharray:4 4,color:#6B615C,font-family:Red Hat Text;
+  classDef subgraphStyle fill:#FDFAF8,stroke:#E7DFD7,stroke-width:1px,color:#8F837C,font-family:Red Hat Text;
+
+  class P01,P02,P03,P04,P05,P06,P07,P08,P09,P10,P11,P12,P13,P14,P15,P16,P17,P18,P19,P20 page;
+  class COLD1,COLD2,PUSH1,PUSH2,PUSH3,PUSH4,DEEP entry;
+  class OAUTH,SIGNOUT external;
+      </div>
+    </div>
+    <p class="caption">if the diagram doesn't render, your browser blocked the cdn — open the file from disk, not from a sandboxed viewer.</p>
+  </section>
+
+  <hr class="hairline" />
+
+  <section>
+    <header>
+      <p class="eyebrow">transitions · the full table</p>
+      <h2>every edge, named</h2>
+      <p>thirty-seven transitions across twenty pages. the ambiguous ones (amber) are flagged separately below.</p>
+    </header>
+    <table class="transitions">
+      <thead>
+        <tr><th>from</th><th>to</th><th>type</th><th>trigger</th><th>notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="from">cold · first</td><td class="to">01</td><td class="type type-system">system</td><td class="label">first launch</td><td>store a "seen" flag locally</td></tr>
+        <tr><td class="from">cold · return</td><td class="to">05</td><td class="type type-system">system</td><td class="label">returning user</td><td>session restored from local store</td></tr>
+        <tr><td class="from">push · brief</td><td class="to">05</td><td class="type type-system">system</td><td class="label">scheduled brief</td><td>morning push, opens to today</td></tr>
+        <tr><td class="from">push · chat</td><td class="to">08</td><td class="type type-system">system</td><td class="label">new message</td><td>donna sent a burst, opens chat at it</td></tr>
+        <tr><td class="from">push · followup</td><td class="to">06</td><td class="type type-system">system</td><td class="label">followup nudge</td><td>or to 17? unresolved</td></tr>
+        <tr><td class="from">push · integration</td><td class="to">16</td><td class="type type-system">system</td><td class="label">integration paused/alert</td><td>deep into the integration that broke</td></tr>
+        <tr><td class="from">deep link · email</td><td class="to">18</td><td class="type type-system">system</td><td class="label">tap email notification</td><td>opens directly to donna's draft</td></tr>
+        <tr><td class="from">01</td><td class="to">02</td><td class="type type-tap">tap</td><td class="label">begin</td><td></td></tr>
+        <tr><td class="from">02</td><td class="to">03</td><td class="type type-tap">tap</td><td class="label">continue</td><td></td></tr>
+        <tr><td class="from">03</td><td class="to">04</td><td class="type type-tap">tap</td><td class="label">save</td><td></td></tr>
+        <tr><td class="from">04</td><td class="to">05</td><td class="type type-system">system</td><td class="label">after first burst</td><td>auto-progress, no button</td></tr>
+        <tr><td class="from">05</td><td class="to">06</td><td class="type type-tap">tap</td><td class="label">a card</td><td></td></tr>
+        <tr><td class="from">05</td><td class="to">07</td><td class="type type-ambig">ambig</td><td class="label">unspecified</td><td><strong>no current entry path to "held back"</strong></td></tr>
+        <tr><td class="from">05</td><td class="to">08</td><td class="type type-tab">tab</td><td class="label">chat tab</td><td>retired in dashboard system; rule break</td></tr>
+        <tr><td class="from">05</td><td class="to">11</td><td class="type type-tab">tab</td><td class="label">memory tab</td><td></td></tr>
+        <tr><td class="from">05</td><td class="to">19</td><td class="type type-tab">tab</td><td class="label">settings tab</td><td></td></tr>
+        <tr><td class="from">06</td><td class="to">08</td><td class="type type-cross">cross</td><td class="label">draft a reply</td><td>enters chat with prefilled context</td></tr>
+        <tr><td class="from">06</td><td class="to">12</td><td class="type type-ambig">ambig</td><td class="label">if it was a person</td><td>same card, different destination</td></tr>
+        <tr><td class="from">06</td><td class="to">18</td><td class="type type-ambig">ambig</td><td class="label">if it was email</td><td>same card, third destination</td></tr>
+        <tr><td class="from">06</td><td class="to">05</td><td class="type type-tap">tap</td><td class="label">back</td><td></td></tr>
+        <tr><td class="from">07</td><td class="to">05</td><td class="type type-tap">tap</td><td class="label">back</td><td></td></tr>
+        <tr><td class="from">08</td><td class="to">09</td><td class="type type-tap">tap</td><td class="label">drop attachment</td><td></td></tr>
+        <tr><td class="from">08</td><td class="to">10</td><td class="type type-tap">tap</td><td class="label">long-press bubble</td><td></td></tr>
+        <tr><td class="from">09</td><td class="to">08</td><td class="type type-tap">tap</td><td class="label">continue</td><td></td></tr>
+        <tr><td class="from">10</td><td class="to">12</td><td class="type type-cross">cross</td><td class="label">remember this</td><td>creates memory, lands on detail</td></tr>
+        <tr><td class="from">10</td><td class="to">13</td><td class="type type-cross">cross</td><td class="label">forget this</td><td>through the confirm sheet</td></tr>
+        <tr><td class="from">10</td><td class="to">05</td><td class="type type-cross">cross</td><td class="label">follow up</td><td>donna queues a future ping, no immediate screen</td></tr>
+        <tr><td class="from">10</td><td class="to">08</td><td class="type type-tap">tap</td><td class="label">dismiss</td><td></td></tr>
+        <tr><td class="from">11</td><td class="to">12</td><td class="type type-tap">tap</td><td class="label">a memory</td><td></td></tr>
+        <tr><td class="from">12</td><td class="to">13</td><td class="type type-tap">tap</td><td class="label">forget this</td><td></td></tr>
+        <tr><td class="from">12</td><td class="to">11</td><td class="type type-tap">tap</td><td class="label">back</td><td></td></tr>
+        <tr><td class="from">13</td><td class="to">11</td><td class="type type-tap">tap</td><td class="label">forget</td><td>destructive, oxblood cta</td></tr>
+        <tr><td class="from">13</td><td class="to">12</td><td class="type type-tap">tap</td><td class="label">keep it</td><td></td></tr>
+        <tr><td class="from">14</td><td class="to">15</td><td class="type type-tap">tap</td><td class="label">add</td><td></td></tr>
+        <tr><td class="from">14</td><td class="to">16</td><td class="type type-tap">tap</td><td class="label">a connected integration</td><td></td></tr>
+        <tr><td class="from">15</td><td class="to">oauth</td><td class="type type-system">system</td><td class="label">open google</td><td>leaves app</td></tr>
+        <tr><td class="from">oauth</td><td class="to">16</td><td class="type type-system">system</td><td class="label">callback</td><td>returns from external, lands on configure</td></tr>
+        <tr><td class="from">16</td><td class="to">14</td><td class="type type-tap">tap</td><td class="label">disconnect / back</td><td></td></tr>
+        <tr><td class="from">17</td><td class="to">18</td><td class="type type-tap">tap</td><td class="label">a reply card</td><td></td></tr>
+        <tr><td class="from">18</td><td class="to">17</td><td class="type type-tap">tap</td><td class="label">send / discard / back</td><td>three taps, one destination</td></tr>
+        <tr><td class="from">19</td><td class="to">14</td><td class="type type-ambig">ambig</td><td class="label">unspecified</td><td><strong>no entry to integrations from settings root</strong></td></tr>
+        <tr><td class="from">19</td><td class="to">20</td><td class="type type-tap">tap</td><td class="label">quiet hours</td><td></td></tr>
+        <tr><td class="from">20</td><td class="to">19</td><td class="type type-tap">tap</td><td class="label">save / back</td><td></td></tr>
+        <tr><td class="from">19</td><td class="to">signed out</td><td class="type type-system">system</td><td class="label">sign out</td><td>destructive, returns to 01</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr class="hairline" />
+
+  <section>
+    <header>
+      <p class="eyebrow">unresolved · the amber edges</p>
+      <h2>five decisions i couldn't make alone</h2>
+      <p>drawing the DAG surfaced five places where the user flow has an ambiguity, a missing entry, or a rule that contradicts itself. these need a call before we ship pages.</p>
+    </header>
+
+    <div class="open-questions">
+      <p class="eyebrow">argue these</p>
+      <ol>
+        <li><strong>how do you reach "held back" (page 07)?</strong> right now there's no tap path. options: a small "i held three things back from you" footer link on page 05; a permanent fourth card on page 05 (breaks "three things" headline); or only via push when donna's holding-back queue gets large. <em>preferred:</em> the footer link, since it's a soft entry that doesn't break the headline.</li>
+        <li><strong>the drill-in card (06) lands in three different places.</strong> if the card was about a person → memory (12). if it was about an email → inbox draft (18). if it was about a reply you owe → chat with prefill (08). this means the *same screen* (06) has three possible next screens. either the drill-in page needs three different layouts (verbose), or the destination is always chat (loses precision), or we accept that the cta verb on page 06 changes per card type. <em>preferred:</em> the cta verb shifts ("draft a reply" / "open the memory" / "see the inbox").</li>
+        <li><strong>integrations (14-16) have no entry point.</strong> settings root (19) doesn't list integrations. options: add an "integrations" item to settings; promote integrations to a top-level tab (breaks 4-tab discipline); or make it accessible only via push when an integration breaks. <em>preferred:</em> add to settings root, demote from "main flow" status.</li>
+        <li><strong>inbox copilot (17-18) has no clear entry either.</strong> not in tabs, not in settings, not in today's three things by default. options: it's the *content* of "draft a reply" from 06; or it's its own tab (5-tab); or push notifications are its only entry. <em>preferred:</em> fold inbox copilot *into* chat as a special bubble type, deleting it as a separate surface entirely. drops the page count to 18.</li>
+        <li><strong>push notifications go where?</strong> i listed 5 push vectors → 5 destinations. but real push payloads carry varying intent. one rule needs to be picked: do pushes always open chat (donna's voice as the lobby), or do they deep-link to the relevant surface (today, configure, draft)? <em>preferred:</em> chat lobby for trust ("donna sent you something") + a one-tap jump from the bubble to the relevant deep screen. costs an extra tap, gains coherent voice.</li>
+      </ol>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
+  <section>
+    <header>
+      <p class="eyebrow">the shape of it</p>
+      <h2>what the DAG tells us</h2>
+    </header>
+    <ul style="padding-left:var(--s-5); max-width:62ch">
+      <li class="body" style="margin-bottom:var(--s-3); color:var(--ink-800)">there are <strong>seven independent entry vectors</strong> (cold start ×2, push ×4, deep link). only two land on a flow start; five land mid-flow. mid-flow entries need to render cleanly with no back-stack — verify each.</li>
+      <li class="body" style="margin-bottom:var(--s-3); color:var(--ink-800)">page 05 (today) is the <strong>most-connected node</strong> — five outbound edges. that's correct, but it means 05 carries disproportionate complexity and is the highest-stakes page.</li>
+      <li class="body" style="margin-bottom:var(--s-3); color:var(--ink-800)">page 06 (drill-in) has <strong>three diverging cross-flow paths</strong>. ambiguity sits there. fix it by typing the card.</li>
+      <li class="body" style="margin-bottom:var(--s-3); color:var(--ink-800)">the chat long-press sheet (10) is a <strong>cross-flow router</strong> — three of its four actions exit the flow. it might deserve to be its own first-class surface, not a sheet.</li>
+      <li class="body" style="margin-bottom:var(--s-3); color:var(--ink-800)">integrations (14-16) and inbox copilot (17-18) are <strong>both orphaned</strong>. five pages out of twenty have no clear inbound path. that's a 25% orphan rate.</li>
+      <li class="body" style="margin-bottom:var(--s-3); color:var(--ink-800)">forgetting (13) is the <strong>only oxblood edge in the entire DAG</strong>. that's a feature — destructive should be rare.</li>
+    </ul>
+  </section>
+
+  <p class="footer">donna · user flow DAG v0.1 · twenty pages · thirty-seven transitions · five unresolved decisions.</p>
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#FDFAF8',
+      primaryColor: '#F0EAE4',
+      primaryTextColor: '#1E1A18',
+      primaryBorderColor: '#D9CEC5',
+      lineColor: '#6B615C',
+      secondaryColor: '#FBF7F5',
+      tertiaryColor: '#FBF7F5',
+      fontFamily: '"Red Hat Text", -apple-system, sans-serif',
+      fontSize: '13px',
+    },
+    flowchart: {
+      curve: 'basis',
+      padding: 16,
+      nodeSpacing: 40,
+      rankSpacing: 60,
+    },
+  });
+</script>
+</body>
+</html>
