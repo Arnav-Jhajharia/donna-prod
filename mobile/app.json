@@ -14,7 +14,6 @@
       "expo-secure-store",
       "expo-apple-authentication",
       "@config-plugins/react-native-callkeep",
-      "@config-plugins/react-native-voip-push-notification",
       "@livekit/react-native-expo-plugin"
     ],
     "ios": {

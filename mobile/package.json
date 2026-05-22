@@ -11,7 +11,6 @@
   "dependencies": {
     "@clerk/clerk-expo": "^2.6.0",
     "@config-plugins/react-native-callkeep": "^11.0.0",
-    "@config-plugins/react-native-voip-push-notification": "^11.0.0",
     "@expo-google-fonts/eb-garamond": "^0.4.0",
     "@expo-google-fonts/red-hat-text": "^0.4.0",
     "@livekit/react-native": "^2.7.0",
