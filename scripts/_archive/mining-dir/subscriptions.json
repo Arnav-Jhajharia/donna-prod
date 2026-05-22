@@ -1,0 +1,635 @@
+[
+  {
+    "name": "Anthropic / Claude",
+    "category": "AI/SaaS",
+    "domain": "email.claude.com",
+    "signals": [
+      {
+        "type": "welcome",
+        "date": "2026-04-23T20:28:55Z",
+        "subject": "Welcome to the Claude Platform"
+      },
+      {
+        "type": "welcome",
+        "date": "2026-05-04T06:35:57Z",
+        "subject": "Welcome to Claude Code"
+      },
+      {
+        "type": "paused",
+        "date": "2026-05-11T03:58:14Z",
+        "subject": "Your subscription access has been paused"
+      }
+    ],
+    "amounts": [],
+    "renewal_dates": [],
+    "first_seen": "2026-04-23T20:28:55Z",
+    "last_seen": "2026-05-11T03:58:14Z",
+    "message_count": 3,
+    "example_subjects": [
+      "Welcome to the Claude Platform",
+      "Welcome to Claude Code",
+      "Your subscription access has been paused"
+    ],
+    "status": "paused",
+    "reason": "Your subscription access has been paused"
+  },
+  {
+    "name": "Circles.Life (SG telecom)",
+    "category": "Telecom",
+    "domain": "circles.life",
+    "signals": [
+      {
+        "type": "failed",
+        "date": "2026-05-03T13:15:23Z",
+        "subject": "[DO NOT REPLY] Your payment didn't go through for your Circles.Life April bill"
+      },
+      {
+        "type": "failed",
+        "date": "2026-05-03T13:15:56Z",
+        "subject": "[DO NOT REPLY] Your payment didn't go through for your Circles.Life April bill"
+      },
+      {
+        "type": "failed",
+        "date": "2026-05-07T08:39:43Z",
+        "subject": "The payment for your Circles.Life April bill failed twice!"
+      },
+      {
+        "type": "failed",
+        "date": "2026-05-07T08:40:11Z",
+        "subject": "The payment for your Circles.Life April bill failed twice!"
+      }
+    ],
+    "amounts": [],
+    "renewal_dates": [],
+    "first_seen": "2026-05-03T13:15:23Z",
+    "last_seen": "2026-05-07T08:40:11Z",
+    "message_count": 4,
+    "example_subjects": [
+      "[DO NOT REPLY] Your payment didn't go through for your Circles.Life April bill",
+      "[DO NOT REPLY] Your payment didn't go through for your Circles.Life April bill",
+      "The payment for your Circles.Life April bill failed twice!",
+      "The payment for your Circles.Life April bill failed twice!"
+    ],
+    "status": "failed",
+    "reason": "The payment for your Circles.Life April bill failed twice!"
+  },
+  {
+    "name": "Google Workspace",
+    "category": "SaaS",
+    "domain": "google.com",
+    "signals": [
+      {
+        "type": "failed",
+        "date": "2026-05-05T17:34:49Z",
+        "subject": "ACTION REQUIRED: Update billing to reactivate Google Workspace Business Starter for detodo.co.cr"
+      }
+    ],
+    "amounts": [],
+    "renewal_dates": [],
+    "first_seen": "2026-05-05T17:34:49Z",
+    "last_seen": "2026-05-05T17:34:49Z",
+    "message_count": 1,
+    "example_subjects": [
+      "ACTION REQUIRED: Update billing to reactivate Google Workspace Business Starter for detodo.co.cr"
+    ],
+    "status": "failed",
+    "reason": "ACTION REQUIRED: Update billing to reactivate Google Workspace Business Starter for detodo.co.cr"
+  },
+  {
+    "name": "PayPal SG",
+    "category": "Banking",
+    "domain": "paypal.com.sg",
+    "signals": [
+      {
+        "type": "failed",
+        "date": "2026-04-24T10:17:58Z",
+        "subject": "Your automatic payment couldn't be completed"
+      },
+      {
+        "type": "receipt",
+        "date": "2026-04-30T00:09:05Z",
+        "subject": "Receipt for your payment to MCLINK ASIA PTE LTD"
+      },
+      {
+        "type": "failed",
+        "date": "2026-05-01T12:20:48Z",
+        "subject": "Your automatic payment couldn't be completed"
+      },
+      {
+        "type": "failed",
+        "date": "2026-05-08T11:49:45Z",
+        "subject": "Your automatic payment couldn't be completed"
+      },
+      {
+        "type": "cancelled",
+        "date": "2026-05-11T07:53:48Z",
+        "subject": "Your recurring payment has been cancelled"
+      }
+    ],
+    "amounts": [
+      {
+        "amount": "5.45",
+        "currency": "USD",
+        "date": "2026-04-30T00:09:05Z",
+        "from": "Receipt for your payment to MCLINK ASIA PTE LTD"
+      }
+    ],
+    "renewal_dates": [],
+    "first_seen": "2026-04-24T10:17:58Z",
+    "last_seen": "2026-05-11T07:53:48Z",
+    "message_count": 5,
+    "example_subjects": [
+      "Your automatic payment couldn't be completed",
+      "Receipt for your payment to MCLINK ASIA PTE LTD",
+      "Your automatic payment couldn't be completed",
+      "Your automatic payment couldn't be completed"
+    ],
+    "status": "cancelled",
+    "reason": "Your recurring payment has been cancelled"
+  },
+  {
+    "name": "Coursera",
+    "category": "Education",
+    "domain": "coursera.org",
+    "signals": [
+      {
+        "type": "failed",
+        "date": "2026-04-29T11:18:51Z",
+        "subject": "2nd notice: Another unsuccessful payment for your Coursera account"
+      },
+      {
+        "type": "failed",
+        "date": "2026-05-02T11:20:14Z",
+        "subject": "Final notice: Need updated Coursera billing information"
+      },
+      {
+        "type": "failed",
+        "date": "2026-05-04T02:02:37Z",
+        "subject": "[Urgent] Payment issue: Your plan will be canceled tomorrow"
+      },
+      {
+        "type": "cancelled",
+        "date": "2026-05-04T02:02:37Z",
+        "subject": "[Urgent] Payment issue: Your plan will be canceled tomorrow"
+      }
+    ],
+    "amounts": [
+      {
+        "amount": "49",
+        "currency": "USD",
+        "date": "2026-04-29T11:18:51Z",
+        "from": "2nd notice: Another unsuccessful payment for your "
+      },
+      {
+        "amount": "49",
+        "currency": "USD",
+        "date": "2026-05-02T11:20:14Z",
+        "from": "Final notice: Need updated Coursera billing inform"
+      }
+    ],
+    "renewal_dates": [],
+    "first_seen": "2026-04-29T11:18:51Z",
+    "last_seen": "2026-05-04T02:02:37Z",
+    "message_count": 3,
+    "example_subjects": [
+      "2nd notice: Another unsuccessful payment for your Coursera account",
+      "Final notice: Need updated Coursera billing information",
+      "[Urgent] Payment issue: Your plan will be canceled tomorrow"
+    ],
+    "status": "cancelled",
+    "reason": "[Urgent] Payment issue: Your plan will be canceled tomorrow"
+  },
+  {
+    "name": "Lazada",
+    "category": "Other",
+    "domain": "support.lazada.sg",
+    "signals": [
+      {
+        "type": "cancelled",
+        "date": "2026-05-01T06:53:22Z",
+        "subject": "Order Cancellation Notification"
+      }
+    ],
+    "amounts": [],
+    "renewal_dates": [],
+    "first_seen": "2026-05-01T06:53:22Z",
+    "last_seen": "2026-05-01T06:53:22Z",
+    "message_count": 1,
+    "example_subjects": [
+      "Order Cancellation Notification"
+    ],
+    "status": "cancelled",
+    "reason": "Order Cancellation Notification"
+  },
+  {
+    "name": "Figma",
+    "category": "SaaS",
+    "domain": "figma.com",
+    "signals": [
+      {
+        "type": "renewal",
+        "date": "2026-05-11T00:32:20Z",
+        "subject": "Subscription renewal reminder May 17, 2026"
+      }
+    ],
+    "amounts": [],
+    "renewal_dates": [],
+    "first_seen": "2026-05-11T00:32:20Z",
+    "last_seen": "2026-05-11T00:32:20Z",
+    "message_count": 1,
+    "example_subjects": [
+      "Subscription renewal reminder May 17, 2026"
+    ],
+    "status": "active",
+    "reason": "Subscription renewal reminder May 17, 2026"
+  },
+  {
+    "name": "InsightfulTraits",
+    "category": "SaaS",
+    "domain": "notification.insightfultraits.com",
+    "signals": [
+      {
+        "type": "receipt",
+        "date": "2026-05-08T09:12:21Z",
+        "subject": "Receipt for Your Payment to Insightfultraits"
+      }
+    ],
+    "amounts": [
+      {
+        "amount": "1.95",
+        "currency": "USD",
+        "date": "2026-05-08T09:12:21Z",
+        "from": "Receipt for Your Payment to Insightfultraits"
+      }
+    ],
+    "renewal_dates": [],
+    "first_seen": "2026-05-08T09:12:21Z",
+    "last_seen": "2026-05-08T09:12:21Z",
+    "message_count": 1,
+    "example_subjects": [
+      "Receipt for Your Payment to Insightfultraits"
+    ],
+    "status": "active",
+    "reason": "Receipt for Your Payment to Insightfultraits"
+  },
+  {
+    "name": "Foodpanda",
+    "category": "Food",
+    "domain": "foodpanda.sg",
+    "signals": [
+      {
+        "type": "receipt",
+        "date": "2026-05-02T06:27:07Z",
+        "subject": "Thank you for your order!"
+      },
+      {
+        "type": "receipt",
+        "date": "2026-05-04T11:03:16Z",
+        "subject": "Thank you for your order!"
+      },
+      {
+        "type": "receipt",
+        "date": "2026-05-07T08:15:45Z",
+        "subject": "Thank you for your order!"
+      }
+    ],
+    "amounts": [],
+    "renewal_dates": [],
+    "first_seen": "2026-05-02T06:27:07Z",
+    "last_seen": "2026-05-07T08:15:45Z",
+    "message_count": 3,
+    "example_subjects": [
+      "Thank you for your order!",
+      "Thank you for your order!",
+      "Thank you for your order!"
+    ],
+    "status": "active",
+    "reason": "Thank you for your order!"
+  },
+  {
+    "name": "Grab",
+    "category": "Transport",
+    "domain": "grab.com",
+    "signals": [
+      {
+        "type": "receipt",
+        "date": "2026-04-22T21:10:46Z",
+        "subject": "Your Grab E-Receipt"
+      },
+      {
+        "type": "receipt",
+        "date": "2026-04-24T11:24:28Z",
+        "subject": "Your Grab E-Receipt"
+      },
+      {
+        "type": "failed",
+        "date": "2026-04-28T20:04:05Z",
+        "subject": "Pending payment for your plan renewal"
+      },
+      {
+        "type": "receipt",
+        "date": "2026-05-05T14:15:22Z",
+        "subject": "Your Grab E-Receipt"
+      }
+    ],
+    "amounts": [
+      {
+        "amount": "13.72",
+        "currency": "SGD",
+        "date": "2026-04-24T11:24:28Z",
+        "from": "Your Grab E-Receipt"
+      },
+      {
+        "amount": "21.60",
+        "currency": "SGD",
+        "date": "2026-05-05T14:15:22Z",
+        "from": "Your Grab E-Receipt"
+      }
+    ],
+    "renewal_dates": [],
+    "first_seen": "2026-04-22T21:10:46Z",
+    "last_seen": "2026-05-05T14:15:22Z",
+    "message_count": 4,
+    "example_subjects": [
+      "Your Grab E-Receipt",
+      "Your Grab E-Receipt",
+      "Pending payment for your plan renewal",
+      "Your Grab E-Receipt"
+    ],
+    "status": "active",
+    "reason": "Your Grab E-Receipt"
+  },
+  {
+    "name": "Wispr Flow",
+    "category": "AI/SaaS",
+    "domain": "wispr.ai",
+    "signals": [
+      {
+        "type": "renewal",
+        "date": "2026-05-04T15:50:28Z",
+        "subject": "Your Wispr Flow subscription will renew soon"
+      }
+    ],
+    "amounts": [],
+    "renewal_dates": [],
+    "first_seen": "2026-05-04T15:50:28Z",
+    "last_seen": "2026-05-04T15:50:28Z",
+    "message_count": 1,
+    "example_subjects": [
+      "Your Wispr Flow subscription will renew soon"
+    ],
+    "status": "active",
+    "reason": "Your Wispr Flow subscription will renew soon"
+  },
+  {
+    "name": "Stripe",
+    "category": "Other",
+    "domain": "stripe.com",
+    "signals": [
+      {
+        "type": "receipt",
+        "date": "2026-05-01T03:53:13Z",
+        "subject": "Your receipt from Railway Corporation #2988-3899"
+      },
+      {
+        "type": "receipt",
+        "date": "2026-05-01T08:36:26Z",
+        "subject": "Your Exa Labs, Inc. receipt [#1884-4660]"
+      },
+      {
+        "type": "receipt",
+        "date": "2026-05-01T18:17:51Z",
+        "subject": "Your Exa Labs, Inc. receipt [#1584-3014]"
+      }
+    ],
+    "amounts": [
+      {
+        "amount": "1.97",
+        "currency": "USD",
+        "date": "2026-05-01T08:36:26Z",
+        "from": "Your Exa Labs, Inc. receipt [#1884-4660]"
+      },
+      {
+        "amount": "49.00",
+        "currency": "USD",
+        "date": "2026-05-01T18:17:51Z",
+        "from": "Your Exa Labs, Inc. receipt [#1584-3014]"
+      }
+    ],
+    "renewal_dates": [],
+    "first_seen": "2026-05-01T03:53:13Z",
+    "last_seen": "2026-05-01T18:17:51Z",
+    "message_count": 3,
+    "example_subjects": [
+      "Your receipt from Railway Corporation #2988-3899",
+      "Your Exa Labs, Inc. receipt [#1884-4660]",
+      "Your Exa Labs, Inc. receipt [#1584-3014]"
+    ],
+    "status": "active",
+    "reason": "Your Exa Labs, Inc. receipt [#1584-3014]"
+  },
+  {
+    "name": "Exa",
+    "category": "Other",
+    "domain": "exa.ai",
+    "signals": [
+      {
+        "type": "failed",
+        "date": "2026-04-30T07:23:19Z",
+        "subject": "Action Required: Payment Failed for Exa"
+      },
+      {
+        "type": "receipt",
+        "date": "2026-05-01T08:35:19Z",
+        "subject": "Payment Received - Thank You!"
+      }
+    ],
+    "amounts": [],
+    "renewal_dates": [],
+    "first_seen": "2026-04-30T07:23:19Z",
+    "last_seen": "2026-05-01T08:35:19Z",
+    "message_count": 2,
+    "example_subjects": [
+      "Action Required: Payment Failed for Exa",
+      "Payment Received - Thank You!"
+    ],
+    "status": "active",
+    "reason": "Payment Received - Thank You!"
+  },
+  {
+    "name": "Sginnovate",
+    "category": "Other",
+    "domain": "sginnovate.com",
+    "signals": [
+      {
+        "type": "welcome",
+        "date": "2026-05-10T15:29:55Z",
+        "subject": "Welcome to Deep Tech Central! 🚀"
+      }
+    ],
+    "amounts": [],
+    "renewal_dates": [],
+    "first_seen": "2026-05-10T15:29:55Z",
+    "last_seen": "2026-05-10T15:29:55Z",
+    "message_count": 1,
+    "example_subjects": [
+      "Welcome to Deep Tech Central! 🚀"
+    ],
+    "status": "trial",
+    "reason": "Welcome to Deep Tech Central! 🚀"
+  },
+  {
+    "name": "Substack (newsletters)",
+    "category": "Newsletter",
+    "domain": "substack.com",
+    "signals": [
+      {
+        "type": "welcome",
+        "date": "2026-05-10T13:45:17Z",
+        "subject": "Welcome to Devansh's Newsletter"
+      }
+    ],
+    "amounts": [],
+    "renewal_dates": [],
+    "first_seen": "2026-05-10T13:45:17Z",
+    "last_seen": "2026-05-10T13:45:17Z",
+    "message_count": 1,
+    "example_subjects": [
+      "Welcome to Devansh's Newsletter"
+    ],
+    "status": "trial",
+    "reason": "Welcome to Devansh's Newsletter"
+  },
+  {
+    "name": "Y Combinator (WAAS)",
+    "category": "Job platform",
+    "domain": "ycombinator.com",
+    "signals": [
+      {
+        "type": "welcome",
+        "date": "2026-05-08T07:57:25Z",
+        "subject": "Welcome to YC's Work at a Startup!"
+      }
+    ],
+    "amounts": [],
+    "renewal_dates": [],
+    "first_seen": "2026-05-08T07:57:25Z",
+    "last_seen": "2026-05-08T07:57:25Z",
+    "message_count": 1,
+    "example_subjects": [
+      "Welcome to YC's Work at a Startup!"
+    ],
+    "status": "trial",
+    "reason": "Welcome to YC's Work at a Startup!"
+  },
+  {
+    "name": "Linq",
+    "category": "Infra",
+    "domain": "linqapp.com",
+    "signals": [
+      {
+        "type": "welcome",
+        "date": "2026-05-07T18:23:44Z",
+        "subject": "Welcome to sandbox"
+      }
+    ],
+    "amounts": [],
+    "renewal_dates": [],
+    "first_seen": "2026-05-07T18:23:44Z",
+    "last_seen": "2026-05-07T18:23:44Z",
+    "message_count": 1,
+    "example_subjects": [
+      "Welcome to sandbox"
+    ],
+    "status": "trial",
+    "reason": "Welcome to sandbox"
+  },
+  {
+    "name": "CodeCrafters",
+    "category": "Education",
+    "domain": "mail.codecrafters.io",
+    "signals": [
+      {
+        "type": "welcome",
+        "date": "2026-05-06T08:20:46Z",
+        "subject": "Welcome to CodeCrafters."
+      }
+    ],
+    "amounts": [],
+    "renewal_dates": [],
+    "first_seen": "2026-05-06T08:20:46Z",
+    "last_seen": "2026-05-06T08:20:46Z",
+    "message_count": 1,
+    "example_subjects": [
+      "Welcome to CodeCrafters."
+    ],
+    "status": "trial",
+    "reason": "Welcome to CodeCrafters."
+  },
+  {
+    "name": "PropertyGuru (SG)",
+    "category": "Real estate",
+    "domain": "e.propertyguru.com.sg",
+    "signals": [
+      {
+        "type": "welcome",
+        "date": "2026-05-02T12:02:24Z",
+        "subject": "Arnav, welcome to PropertyGuru"
+      }
+    ],
+    "amounts": [],
+    "renewal_dates": [],
+    "first_seen": "2026-05-02T12:02:24Z",
+    "last_seen": "2026-05-02T12:02:24Z",
+    "message_count": 1,
+    "example_subjects": [
+      "Arnav, welcome to PropertyGuru"
+    ],
+    "status": "trial",
+    "reason": "Arnav, welcome to PropertyGuru"
+  },
+  {
+    "name": "Kuisine Koncepts (SG)",
+    "category": "Food",
+    "domain": "mail.eber.io",
+    "signals": [
+      {
+        "type": "welcome",
+        "date": "2026-05-01T13:54:18Z",
+        "subject": "Welcome to Kuisine Koncepts Membership"
+      }
+    ],
+    "amounts": [],
+    "renewal_dates": [],
+    "first_seen": "2026-05-01T13:54:18Z",
+    "last_seen": "2026-05-01T13:54:18Z",
+    "message_count": 1,
+    "example_subjects": [
+      "Welcome to Kuisine Koncepts Membership"
+    ],
+    "status": "trial",
+    "reason": "Welcome to Kuisine Koncepts Membership"
+  },
+  {
+    "name": "Cloudinary",
+    "category": "Infra",
+    "domain": "cloudinary.com",
+    "signals": [
+      {
+        "type": "welcome",
+        "date": "2026-05-01T01:59:14Z",
+        "subject": "Welcome to Cloudinary! - Get started in minutes"
+      }
+    ],
+    "amounts": [],
+    "renewal_dates": [],
+    "first_seen": "2026-05-01T01:59:14Z",
+    "last_seen": "2026-05-01T01:59:14Z",
+    "message_count": 1,
+    "example_subjects": [
+      "Welcome to Cloudinary! - Get started in minutes"
+    ],
+    "status": "trial",
+    "reason": "Welcome to Cloudinary! - Get started in minutes"
+  }
+]

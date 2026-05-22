@@ -13,5 +13,11 @@
     "declaration": false,
     "sourceMap": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": [
+    "src/_archive/**",
+    "src/donna/_archive/**",
+    "scripts/_archive/**",
+    "supabase/_archive/**"
+  ]
 }

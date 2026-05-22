@@ -1,5 +1,7 @@
 import "dotenv/config";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { readFile } from "node:fs/promises";
+import { resolve as resolvePath } from "node:path";
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
 import { MODEL, runTurn } from "./donna/brain.js";
 import { loadRecentMessages, saveMessages } from "./donna/memory/chat.js";
@@ -518,6 +520,140 @@ async function handleImessageWebhook(
   await dispatchImessagePayload(parsed.payload);
 }
 
+// ── simulator (local-only web client) ──────────────────────────────────────
+//
+// serves a single-page whatsapp-lookalike chat UI and a POST endpoint that
+// runs the brain against the configured DONNA_USER_ID. intended for local
+// development against a real (or test) user row — same code path as cli and
+// whatsapp dispatch, just a different ingress channel.
+
+const SIMULATOR_HTML_PATH = resolvePath(process.cwd(), "simulator.html");
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+let _simulatorUserId: string | null = null;
+async function resolveSimulatorUserId(): Promise<string> {
+  // 1) explicit override wins, but only if it's a real uuid
+  const envId = process.env.DONNA_USER_ID;
+  if (envId && UUID_RE.test(envId)) return envId;
+
+  // 2) otherwise bootstrap a stable "simulator-local" user row
+  if (_simulatorUserId) return _simulatorUserId;
+  const user = await getOrCreateUser("simulator-local", "simulator");
+  _simulatorUserId = user.id;
+  console.info(`[simulator] using bootstrapped user ${user.id.slice(0, 8)}`);
+  return user.id;
+}
+
+async function handleSimulatorHtml(
+  _req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  try {
+    const html = await readFile(SIMULATOR_HTML_PATH, "utf8");
+    send(res, 200, html, "text/html; charset=utf-8");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    send(res, 500, `couldn't load simulator.html: ${msg}`);
+  }
+}
+
+async function handleSimulatorMessage(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  let body: { text?: string; userId?: string };
+  try {
+    body = (await readJson(req)) as { text?: string; userId?: string };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    sendJson(res, 400, { status: "bad_request", error: msg });
+    return;
+  }
+
+  const text = body.text?.trim();
+  if (!text) {
+    sendJson(res, 400, { status: "bad_request", error: "text required" });
+    return;
+  }
+
+  let userId: string;
+  try {
+    userId =
+      body.userId && UUID_RE.test(body.userId)
+        ? body.userId
+        : await resolveSimulatorUserId();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    sendJson(res, 500, { status: "user_resolve_failed", error: msg });
+    return;
+  }
+
+  const runId = await createExecutionRun({
+    userId,
+    channel: "simulator",
+    mode: "reactive",
+    model: MODEL,
+    metadata: { input_preview: text.slice(0, 200) },
+  });
+  await recordExecutionEvent(runId, "inbound_received", "simulator", {
+    length: text.length,
+  });
+
+  let messages: MessageParam[];
+  try {
+    messages = await loadRecentMessages(userId, 50);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    await finishExecutionRun(runId, { status: "failed", error: msg });
+    sendJson(res, 500, { status: "memory_error", error: msg, runId });
+    return;
+  }
+
+  let result;
+  try {
+    result = await runTurn({
+      mode: "reactive",
+      messages,
+      userInput: text,
+      userId,
+      source: "cli",
+      runId,
+      langsmithExtra: {
+        tags: ["simulator", "reactive"],
+        metadata: { user_id: userId, source: "simulator" },
+      },
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    await finishExecutionRun(runId, { status: "failed", error: msg });
+    sendJson(res, 500, { status: "brain_error", error: msg, runId });
+    return;
+  }
+
+  try {
+    await saveMessages(userId, result.newMessages, "reactive");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[simulator] couldn't persist messages: ${msg}`);
+  }
+
+  await finishExecutionRun(runId, {
+    status: "completed",
+    terminator: result.terminator,
+    finalSends: result.sends,
+    voiceViolations: result.voiceViolations,
+  });
+
+  sendJson(res, 200, {
+    status: "ok",
+    runId,
+    terminator: result.terminator,
+    sends: result.sends,
+    iterations: result.iterations,
+  });
+}
+
 async function handleVerify(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const cfg = getConfig().whatsapp;
   const url = new URL(req.url ?? "/", "http://localhost");
@@ -607,6 +743,14 @@ async function main(): Promise<void> {
     const url = req.url ?? "/";
     if (req.method === "GET" && url === "/health") {
       sendJson(res, 200, { status: "ok" });
+      return;
+    }
+    if (req.method === "GET" && (url === "/simulator" || url === "/simulator/")) {
+      void handleSimulatorHtml(req, res);
+      return;
+    }
+    if (req.method === "POST" && url === "/simulator/message") {
+      void handleSimulatorMessage(req, res);
       return;
     }
     if (req.method === "GET" && url.startsWith("/debug/")) {

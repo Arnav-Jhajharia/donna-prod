@@ -1,0 +1,614 @@
+[
+  {
+    "id": "archive_sender:newsletter@economictimesnews.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "newsletter@economictimesnews.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 61,
+      "out_count": 0,
+      "last_seen": "2026-05-11T08:30:33Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:info@the-ken.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "info@the-ken.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 35,
+      "out_count": 0,
+      "last_seen": "2026-05-11T02:42:44Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:nytdirect@nytimes.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "nytdirect@nytimes.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 35,
+      "out_count": 0,
+      "last_seen": "2026-05-11T10:35:30Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:english-quora-digest@quora.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "english-quora-digest@quora.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 34,
+      "out_count": 0,
+      "last_seen": "2026-05-11T13:53:40Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:breakingnews@nytimes.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "breakingnews@nytimes.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 33,
+      "out_count": 0,
+      "last_seen": "2026-05-07T22:20:17Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:hello@notify.railway.app",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "hello@notify.railway.app"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 31,
+      "out_count": 0,
+      "last_seen": "2026-05-09T06:06:37Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:internships@apexearlycareers.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "internships@apexearlycareers.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 30,
+      "out_count": 0,
+      "last_seen": "2026-05-11T13:26:16Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:theaireport@mail.beehiiv.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "theaireport@mail.beehiiv.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 27,
+      "out_count": 0,
+      "last_seen": "2026-05-11T11:05:37Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:kat@bandana.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "kat@bandana.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 21,
+      "out_count": 0,
+      "last_seen": "2026-05-08T17:31:25Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:crew@morningbrew.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "crew@morningbrew.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 21,
+      "out_count": 0,
+      "last_seen": "2026-05-11T09:17:48Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:noreply@redditmail.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "noreply@redditmail.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 21,
+      "out_count": 0,
+      "last_seen": "2026-05-11T12:06:44Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:messages-noreply@linkedin.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "messages-noreply@linkedin.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 20,
+      "out_count": 0,
+      "last_seen": "2026-05-10T09:31:26Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:noreply@medium.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "noreply@medium.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 20,
+      "out_count": 0,
+      "last_seen": "2026-05-11T02:10:00Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:usr-ctgf6afbelavzsb@user.luma-mail.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "usr-ctgf6afbelavzsb@user.luma-mail.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 20,
+      "out_count": 0,
+      "last_seen": "2026-05-11T10:18:34Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:newsletter@thedeepview.co",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "newsletter@thedeepview.co"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 20,
+      "out_count": 0,
+      "last_seen": "2026-05-11T12:34:38Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:newsletter@economictimesnews.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "newsletter@economictimesnews.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 19,
+      "out_count": 0,
+      "last_seen": "2026-05-11T12:43:15Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:jobalerts-noreply@linkedin.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "jobalerts-noreply@linkedin.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 19,
+      "out_count": 0,
+      "last_seen": "2026-05-11T04:10:32Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:noreply@digest.groww.in",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "noreply@digest.groww.in"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 17,
+      "out_count": 0,
+      "last_seen": "2026-05-11T14:57:20Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:dan@tldrnewsletter.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "dan@tldrnewsletter.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 15,
+      "out_count": 0,
+      "last_seen": "2026-05-11T10:29:40Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:dan@tldrnewsletter.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "dan@tldrnewsletter.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 15,
+      "out_count": 0,
+      "last_seen": "2026-05-11T13:29:43Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:dan@tldrnewsletter.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "dan@tldrnewsletter.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 15,
+      "out_count": 0,
+      "last_seen": "2026-05-11T12:26:46Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:dan@tldrnewsletter.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "dan@tldrnewsletter.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 15,
+      "out_count": 0,
+      "last_seen": "2026-05-11T11:15:01Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:dan@tldrnewsletter.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "dan@tldrnewsletter.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 15,
+      "out_count": 0,
+      "last_seen": "2026-05-11T12:15:40Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:dan@tldrnewsletter.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "dan@tldrnewsletter.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 15,
+      "out_count": 0,
+      "last_seen": "2026-05-11T13:10:31Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:dan@tldrnewsletter.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "dan@tldrnewsletter.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 15,
+      "out_count": 0,
+      "last_seen": "2026-05-11T11:11:17Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:contact@info.foodpanda.sg",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "contact@info.foodpanda.sg"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 15,
+      "out_count": 0,
+      "last_seen": "2026-05-11T09:31:41Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:notifications-noreply@linkedin.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "notifications-noreply@linkedin.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 14,
+      "out_count": 0,
+      "last_seen": "2026-05-11T11:51:26Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:education@ted.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "education@ted.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 13,
+      "out_count": 0,
+      "last_seen": "2026-05-08T15:14:34Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:nytimes@e.newyorktimes.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "nytimes@e.newyorktimes.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 13,
+      "out_count": 0,
+      "last_seen": "2026-05-11T10:07:30Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:a16z@substack.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "a16z@substack.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 13,
+      "out_count": 0,
+      "last_seen": "2026-05-11T14:02:23Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:scsmember@scsbroadcast.sg",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "scsmember@scsbroadcast.sg"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 12,
+      "out_count": 0,
+      "last_seen": "2026-05-07T08:15:27Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:careerbrew@substack.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "careerbrew@substack.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 11,
+      "out_count": 0,
+      "last_seen": "2026-05-10T15:24:54Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:info@connect.netmeds.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "info@connect.netmeds.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 11,
+      "out_count": 0,
+      "last_seen": "2026-05-08T05:29:33Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  },
+  {
+    "id": "archive_sender:notifications@vercel.com",
+    "predicate": {
+      "kind": "sender_addr",
+      "addr": "notifications@vercel.com"
+    },
+    "action": {
+      "kind": "archive_and_label",
+      "label": "donna/skim"
+    },
+    "evidence": {
+      "n_observed": 11,
+      "out_count": 0,
+      "last_seen": "2026-05-08T09:49:56Z"
+    },
+    "status": "active",
+    "created_at": "2026-05-11T15:13:33.933Z"
+  }
+]

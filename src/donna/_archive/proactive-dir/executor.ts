@@ -106,8 +106,8 @@ export async function runScheduleTickOnce(opts: RunScheduleTickOnceOptions = {})
         return;
       }
 
-      const messages = await loadRecentMessages(row.user_id, limit);
       const cause = rowToCause(row);
+      const messages = await loadRecentMessages(row.user_id, limit);
 
       const result = await runTurnFn({
         mode: "proactive",
