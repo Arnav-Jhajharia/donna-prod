@@ -10,20 +10,39 @@
     "plugins": [
       "expo-router",
       "expo-asset",
-      "expo-dev-client"
+      "expo-dev-client",
+      "expo-secure-store",
+      "expo-apple-authentication",
+      "@config-plugins/react-native-callkeep",
+      "@config-plugins/react-native-voip-push-notification",
+      "@livekit/react-native-expo-plugin"
     ],
     "ios": {
       "bundleIdentifier": "com.donna.app",
       "supportsTablet": false,
+      "usesAppleSignIn": true,
       "infoPlist": {
         "UIBackgroundModes": [
           "voip",
-          "audio"
-        ]
+          "audio",
+          "remote-notification"
+        ],
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSMicrophoneUsageDescription": "donna needs the microphone for voice calls with you.",
+        "NSCameraUsageDescription": "donna does not use the camera. this entry is required by some dependencies.",
+        "NSContactsUsageDescription": "donna may ask for contacts when you tell her about people in your life.",
+        "NSCalendarsUsageDescription": "donna reads your calendar to surface what's coming."
       }
     },
     "android": {
       "package": "com.donna.app"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6ec48ec4-efce-4445-b3b2-c1940a65ef47"
+      }
+    },
+    "owner": "arnav-jhajharia"
   }
 }

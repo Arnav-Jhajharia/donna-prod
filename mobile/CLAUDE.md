@@ -21,30 +21,50 @@ inherited conventions (do not restate, do not violate):
 ## layout
 
 ```
-app/                 — expo-router pages, file-based routing
-  _layout.tsx        — root: loads fonts, mounts theme
+app/                       — expo-router pages, file-based routing
+  _layout.tsx              — root: clerkprovider + theme + auth gate
+  (auth)/
+    _layout.tsx            — signed-out stack
+    sign-in.tsx            — splash + apple sign in (clerk useSSO)
+  onboarding/               — only reachable when signed in but not onboarded
+    _layout.tsx            — linear stack, gestures off
+    fork.tsx               — page 2: ring me / let's type
+    call.tsx               — page 3: placeholder for the call surface (callkit takes over)
+    letter.tsx             — page 3a: declined-path letter
+    identification.tsx     — page 4: name + city (declined path only)
+    days.tsx               — page 5: what fills your days
+    people.tsx             — page 6: who matters
+    vacuum.tsx             — page 7: oauth cards (gmail / calendar / claude)
+    ingestion.tsx          — page 8: rolling captions while donna reads
+    reveal.tsx             — page 9: the wow paragraph
+    demo.tsx               — page 10: first action card
+    phone.tsx              — page 11: optional whatsapp linking
+    handoff.tsx            — page 12: marks onboarded=true, drops into (tabs)
   (tabs)/
-    _layout.tsx     — tabs: dashboard · live · history (custom tab bar)
-    dashboard.tsx   — integrations, voice, quiet hours, account
-    index.tsx       — live (chat, default tab)
-    history.tsx     — timeline of memories, briefs, chats, held-back
+    _layout.tsx            — tabs: dashboard · live · history (custom tab bar)
+    dashboard.tsx          — integrations, voice, quiet hours, account
+    index.tsx              — live (chat, default tab)
+    history.tsx            — timeline of memories, briefs, chats, held-back
 src/
-  design/            — the design system (mirrors ../../donna/dashboard/project/ds)
-    reference/       — read-only copy of the dashboard's tokens.css + SYSTEM.md
-    primitives.ts    — the "what it is" layer: palette, alpha, space, radius
-    roles.ts         — the "what it does" layer: bg.*, fg.*, border.* (light + dark)
-    type.ts          — typography roles as TextStyle objects
-    fonts.ts         — useDonnaFonts() — loads EB Garamond + Red Hat Text
-    theme.tsx        — ThemeProvider + useTheme(), picks light/dark from os
-    index.ts         — barrel
+  design/                  — the design system (mirrors ../../donna/dashboard/project/ds)
+    reference/             — read-only copy of the dashboard's tokens.css + SYSTEM.md
+    primitives.ts          — palette, alpha, space, radius
+    roles.ts               — bg.*, fg.*, border.* (light + dark)
+    type.ts                — typography roles as TextStyle objects
+    fonts.ts               — useDonnaFonts() — loads EB Garamond + Red Hat Text
+    theme.tsx              — ThemeProvider + useTheme()
+    index.ts               — barrel
   components/
-    ChatBubble.tsx   — donna / user bubble
-    ChatComposer.tsx — pill input + send
-    TabBar.tsx       — custom bottom tabs (lowercase eyebrow labels, no icons)
-  config.ts          — env var surface (EXPO_PUBLIC_*)
+    ChatBubble.tsx         — donna / user bubble
+    ChatComposer.tsx       — pill input + send
+    TabBar.tsx             — custom bottom tabs
+    OnboardingShell.tsx    — placeholder shell for onboarding pages
+  lib/
+    token-cache.ts         — clerk's token cache, backed by expo-secure-store
+  config.ts                — env var surface (EXPO_PUBLIC_*)
 ```
 
-components consume **roles**, never primitives. `theme.fg.primary`, never `palette.ink[900]`. that indirection is what makes dark mode and future re-skins free. see `src/design/reference/SYSTEM.md` for the full rule set.
+components consume **roles**, never primitives. `theme.fg.primary`, never `palette.ink[900]`.
 
 ## scripts
 
@@ -78,12 +98,45 @@ ios device builds need an apple developer account ($99/yr). eas handles provisio
 
 ## ios native config
 
-`app.json` declares `UIBackgroundModes: ["voip", "audio"]` to support callkit + livekit voice. these unlock:
-- voip pushes that wake the app from killed state (apns + pushkit)
-- background audio during a livekit call
-- the callkit native incoming-call ui
+`app.json` declares:
+- `usesAppleSignIn: true` — required for apple sign in to work (adds the entitlement)
+- `UIBackgroundModes: ["voip", "audio", "remote-notification"]` — voip push wake, background audio during calls, regular push delivery
+- `ITSAppUsesNonExemptEncryption: false` — exempts donna from extra encryption export compliance review at app store submission
 
-if either mode is removed, voip calls stop working entirely. don't remove without aligning on it.
+config plugins (in order):
+- `expo-router` · file-based routing
+- `expo-asset` · static asset handling
+- `expo-dev-client` · custom dev client (required since we don't use expo go)
+- `expo-secure-store` · ios keychain access for clerk token cache
+- `expo-apple-authentication` · native apple sign in flow
+- `@config-plugins/react-native-callkeep` · callkit bridge for the incoming-call ui
+- `@config-plugins/react-native-voip-push-notification` · pushkit bridge for voip pushes
+- `@livekit/react-native-expo-plugin` · adds webrtc native deps for voice calls
+
+if any of these are removed, the call feature stops working. don't remove without aligning on it.
+
+## auth
+
+clerk handles identity. apple sign in is the only method right now (mobile). under the hood:
+- `useSSO({ strategy: 'oauth_apple' })` in (auth)/sign-in.tsx triggers the native apple sheet
+- clerk creates a user, returns a session jwt
+- jwt persists in ios keychain via `src/lib/token-cache.ts` (backed by expo-secure-store)
+- root `_layout.tsx` gates routes: signed out → /(auth)/sign-in, signed in but not onboarded → /onboarding/fork, signed in + onboarded → /(tabs)
+
+"onboarded" is currently tracked on the clerk user via `unsafeMetadata.onboarded` (client-writable for v1). once the brain backend can set `publicMetadata` via webhook, the flag moves there (server-only writable, tamper-resistant).
+
+env required:
+- `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` · from clerk dashboard, safe to expose in the bundle
+
+## voice call wiring (in progress)
+
+native deps are installed and config plugins are loaded — but the actual call orchestration isn't wired yet. when we ship that work:
+- backend triggers a voip push via apns
+- `react-native-voip-push-notification` receives it in `AppDelegate`
+- within 5s we must call `reportNewIncomingCall` via `react-native-callkeep`
+- on accept, `@livekit/react-native` joins a room with the agent
+
+see `../docs/voice-call.html` for the full architecture.
 
 ## env
 
