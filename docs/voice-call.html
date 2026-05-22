@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>donna · voice call architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Red+Hat+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper-50:#FDFAF8; --paper-100:#FBF7F5; --paper-200:#F5EFEA; --paper-300:#F0EAE4;
+    --paper-400:#E7DFD7;
+    --ink-900:#1E1A18; --ink-800:#3A3331; --ink-600:#6B615C; --ink-500:#8F837C;
+    --ink-400:#B5A89F; --ink-300:#D9CEC5;
+    --rust-900:#4A2F23; --rust-700:#7B5544; --rust-300:#C9A796; --rust-100:#EBDCD2; --rust-50:#F5EFEA;
+    --moss-700:#5C6B4A; --moss-100:#EEF1E7;
+    --amber-700:#A8804A; --amber-100:#F5EBD9;
+    --oxblood-700:#8B3A2E; --oxblood-100:#F3E0DC;
+    --a-ink-04:rgba(30,26,24,.04); --a-ink-05:rgba(30,26,24,.05); --a-ink-08:rgba(30,26,24,.08);
+    --a-ink-14:rgba(30,26,24,.14);
+    --font-serif:'EB Garamond',Georgia,serif;
+    --font-sans:'Red Hat Text',-apple-system,sans-serif;
+    --font-mono:'JetBrains Mono',ui-monospace,monospace;
+    --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px; --s-7:48px; --s-8:64px; --s-9:96px;
+  }
+  *,*::before,*::after { box-sizing:border-box }
+  html,body { margin:0; padding:0; background:var(--paper-100); color:var(--ink-900);
+              font-family:var(--font-sans); font-size:16px; line-height:1.65;
+              -webkit-font-smoothing:antialiased; }
+  .doc { max-width:1100px; margin:0 auto; padding:var(--s-9) var(--s-5); }
+  .doc-header { display:flex; justify-content:space-between; align-items:baseline;
+                margin-bottom:var(--s-7); padding-bottom:var(--s-5);
+                border-bottom:1px solid var(--a-ink-14); }
+  .wordmark { font-family:var(--font-serif); font-style:italic; font-weight:500;
+              letter-spacing:-0.01em; font-size:28px; }
+  .meta { font-size:13px; color:var(--ink-600); font-variant-numeric:tabular-nums; }
+  h1,h2,h3 { font-family:var(--font-serif); font-weight:400; margin:0; text-wrap:balance; color:var(--ink-900); }
+  h1 { font-size:56px; line-height:1.10; letter-spacing:-0.02em; margin-bottom:var(--s-5); }
+  h2 { font-size:36px; line-height:1.10; letter-spacing:-0.015em; margin-bottom:var(--s-4); }
+  h3 { font-size:22px; line-height:1.24; letter-spacing:-0.01em; font-weight:500; margin-bottom:var(--s-3); }
+  .h4 { font-family:var(--font-sans); font-weight:600; font-size:15px; line-height:1.24; margin:0; color:var(--ink-900); }
+  .eyebrow { font-family:var(--font-sans); font-weight:500; font-size:11px; letter-spacing:0.14em;
+             text-transform:uppercase; color:var(--ink-500); margin:0; }
+  .lead { font-size:17px; line-height:1.60; color:var(--ink-800); margin:0; text-wrap:pretty; }
+  p { font-size:16px; line-height:1.65; margin:0 0 var(--s-4); color:var(--ink-800); max-width:62ch; }
+  p.caption { font-size:13px; line-height:1.50; color:var(--ink-600); margin:0; }
+  .tabular { font-variant-numeric:tabular-nums; }
+  hr.hairline { height:1px; background:var(--a-ink-08); border:0; margin:var(--s-7) 0; }
+
+  section { margin-bottom:var(--s-8); }
+  section header { margin-bottom:var(--s-5); max-width:62ch; }
+  section header .eyebrow { margin-bottom:var(--s-2); }
+
+  /* tables */
+  table { border-collapse:collapse; width:100%; max-width:900px; margin-bottom:var(--s-5); }
+  th { text-align:left; font-family:var(--font-sans); font-weight:500;
+       font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
+       color:var(--ink-500); padding:var(--s-3) var(--s-3) var(--s-3) 0;
+       border-bottom:1px solid var(--a-ink-14); }
+  td { padding:var(--s-3) var(--s-3) var(--s-3) 0;
+       border-bottom:1px solid var(--a-ink-08); vertical-align:top;
+       font-size:14px; color:var(--ink-800); }
+  td.label { font-weight:500; color:var(--ink-900); white-space:nowrap; }
+  td.num { font-variant-numeric:tabular-nums; }
+
+  /* code blocks */
+  pre { background:var(--paper-50); border:1px solid var(--a-ink-08); border-left:3px solid var(--rust-700);
+        border-radius:6px; padding:var(--s-4) var(--s-5); overflow-x:auto;
+        font-family:var(--font-mono); font-size:13px; line-height:1.55; color:var(--ink-900);
+        margin:0 0 var(--s-5); max-width:900px; }
+  code { font-family:var(--font-mono); font-size:0.92em; background:var(--paper-300);
+         padding:1px 5px; border-radius:3px; color:var(--ink-900); }
+  pre code { background:transparent; padding:0; border-radius:0; font-size:inherit; }
+  .filename { font-family:var(--font-mono); font-size:11px; color:var(--rust-700);
+              text-transform:lowercase; margin-bottom:var(--s-2); display:inline-block;
+              background:var(--rust-50); padding:2px var(--s-2); border-radius:3px; }
+
+  /* mermaid container */
+  .diagram { background:var(--paper-50); border:1px solid var(--a-ink-08); border-radius:10px;
+             padding:var(--s-5); overflow-x:auto; margin-bottom:var(--s-5); max-width:1000px; }
+  .mermaid { font-family:var(--font-sans) !important; }
+
+  /* callouts */
+  .callout { border-left:3px solid var(--amber-700); background:var(--amber-100);
+             padding:var(--s-4) var(--s-5); border-radius:0 6px 6px 0; margin-bottom:var(--s-5);
+             max-width:900px; }
+  .callout .eyebrow { color:var(--amber-700); margin-bottom:var(--s-2); }
+  .callout p { color:var(--ink-900); font-size:15px; margin-bottom:0; }
+  .callout.moss { border-left-color:var(--moss-700); background:var(--moss-100); }
+  .callout.moss .eyebrow { color:var(--moss-700); }
+  .callout.oxblood { border-left-color:var(--oxblood-700); background:var(--oxblood-100); }
+  .callout.oxblood .eyebrow { color:var(--oxblood-700); }
+
+  /* lists */
+  ol, ul { padding-left:var(--s-5); color:var(--ink-800); }
+  li { margin-bottom:var(--s-2); font-size:16px; line-height:1.65; max-width:62ch; }
+  li strong { color:var(--ink-900); font-weight:600; }
+
+  /* component cards */
+  .stack-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+                gap:var(--s-3); margin-bottom:var(--s-5); max-width:1000px; }
+  .stack-card { background:var(--paper-300); border-radius:10px; padding:var(--s-4); }
+  .stack-card .role { font-family:var(--font-sans); font-size:11px; letter-spacing:0.14em;
+                       text-transform:uppercase; color:var(--rust-700); margin-bottom:var(--s-2); }
+  .stack-card .name { font-family:var(--font-sans); font-weight:600; font-size:15px;
+                       color:var(--ink-900); margin-bottom:var(--s-2); }
+  .stack-card .desc { font-size:13px; color:var(--ink-800); line-height:1.5; }
+
+  /* footer */
+  .footer { padding-top:var(--s-7); border-top:1px solid var(--a-ink-14); margin-top:var(--s-9);
+            color:var(--ink-600); font-size:13px; }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <header class="doc-header">
+    <div class="wordmark">donna</div>
+    <div class="meta">voice call architecture · livekit + elevenlabs + callkit · v0.1</div>
+  </header>
+
+  <!-- intro -->
+  <section>
+    <header>
+      <p class="eyebrow">what this is</p>
+      <h1>donna calls you</h1>
+      <p class="lead">this document describes the stack that turns "user taps ring me" into an actual phone-ring on their device, with donna's voice on the other end. it covers iOS frameworks (pushkit, callkit), the livekit infrastructure (rooms, agents), elevenlabs (donna's voice), the claude reasoning loop, and how everything she hears gets persisted as memory. read top-to-bottom or jump to a section.</p>
+    </header>
+  </section>
+
+  <!-- the stack at a glance -->
+  <section>
+    <header>
+      <p class="eyebrow">the stack at a glance</p>
+      <h2>five things doing five jobs</h2>
+      <p>none of these are new tech. all of them are stable in 2026. the work is wiring them together, not inventing them.</p>
+    </header>
+
+    <div class="stack-grid">
+      <div class="stack-card">
+        <p class="role">trigger</p>
+        <p class="name">pushkit + apns</p>
+        <p class="desc">apple's voip push delivery. wakes a closed app within ~5s. requires the voip push entitlement.</p>
+      </div>
+      <div class="stack-card">
+        <p class="role">ui</p>
+        <p class="name">callkit</p>
+        <p class="desc">renders the native incoming-call screen. ringtone, lock screen, phone-app integration. apple owns the design.</p>
+      </div>
+      <div class="stack-card">
+        <p class="role">transport</p>
+        <p class="name">livekit (webrtc)</p>
+        <p class="desc">real-time bidirectional audio between phone and our backend. opus codec. ~$0.0003/participant-minute on cloud.</p>
+      </div>
+      <div class="stack-card">
+        <p class="role">voice</p>
+        <p class="name">elevenlabs streaming tts</p>
+        <p class="desc">donna's voice. low-latency streaming, custom voice clone available. integrated as a livekit agent plugin.</p>
+      </div>
+      <div class="stack-card">
+        <p class="role">brain</p>
+        <p class="name">claude (anthropic)</p>
+        <p class="desc">drives the conversation. listens via stt (whisper or livekit-bundled), thinks, writes responses for tts.</p>
+      </div>
+      <div class="stack-card">
+        <p class="role">persistence</p>
+        <p class="name">donna memory</p>
+        <p class="desc">post-call: transcript + claude's synthesis become first memory entries. via graphiti or zep, tbd.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- end-to-end flow -->
+  <section>
+    <header>
+      <p class="eyebrow">the sequence</p>
+      <h2>end-to-end, from tap to memory</h2>
+      <p>nine steps. the slow ones are network latency (apns push delivery, oauth tts streaming start). the rest is microseconds.</p>
+    </header>
+
+    <div class="diagram">
+      <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor User
+  participant App as donna app
+  participant Backend as donna backend
+  participant APNs
+  participant PushKit
+  participant CallKit
+  participant Room as livekit room
+  participant Agent as livekit agent
+  participant Memory as memory store
+
+  User->>App: tap ring me
+  App->>Backend: POST /call/start
+  Backend->>APNs: voip push
+  APNs->>PushKit: deliver push
+  PushKit->>App: wake app
+  App->>CallKit: reportNewIncomingCall (within 5s)
+  CallKit-->>User: native call ui rings
+  User->>CallKit: swipe to answer
+  CallKit->>App: didActivate audio session
+  App->>Room: join with token
+  Backend->>Agent: dispatch agent to room
+  Agent->>Room: join, begin script
+  Agent->>Room: stream donna voice via elevenlabs
+  Room->>App: audio frames
+  App-->>User: hears donna
+  User-->>App: voice response
+  App->>Room: audio frames
+  Room->>Agent: forward audio
+  Note over Agent,Room: stt then claude then tts, loop until script complete
+  Agent->>Memory: persist transcript and synthesis
+  Agent->>Room: hang up
+  CallKit->>App: call ended
+  App-->>User: returns to onboarding page 3
+      </div>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- ios side -->
+  <section>
+    <header>
+      <p class="eyebrow">part one — the receiving end</p>
+      <h2>what happens on the iphone</h2>
+      <p>three apple frameworks, one third-party rn library each. all of this requires a dev build (not expo go) because pushkit + callkit need real entitlements that only exist in a binary apple signs.</p>
+    </header>
+
+    <h3>pushkit — the special push</h3>
+    <p>regular APNs pushes can't wake a killed app reliably. <strong>voip pushes can.</strong> apple grants this only to apps that have a real calling feature. the device receives a voip push, the os wakes our app to process it. we have ~5 seconds before ios assumes we've failed and terminates us.</p>
+
+    <span class="filename">AppDelegate.swift — voip push registration</span>
+    <pre><code>import PushKit
+
+class AppDelegate: UIResponder, UIApplicationDelegate, PKPushRegistryDelegate {
+  var voipRegistry: PKPushRegistry?
+
+  func application(_ application: UIApplication,
+                   didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    voipRegistry = PKPushRegistry(queue: .main)
+    voipRegistry?.delegate = self
+    voipRegistry?.desiredPushTypes = [.voIP]
+    return true
+  }
+
+  func pushRegistry(_ registry: PKPushRegistry,
+                    didUpdate pushCredentials: PKPushCredentials,
+                    for type: PKPushType) {
+    // upload pushCredentials.token to backend — this is the voip token
+    let token = pushCredentials.token.map { String(format: "%02x", $0) }.joined()
+    BackendClient.shared.registerVoipToken(token)
+  }
+
+  func pushRegistry(_ registry: PKPushRegistry,
+                    didReceiveIncomingPushWith payload: PKPushPayload,
+                    for type: PKPushType,
+                    completion: @escaping () -> Void) {
+    // MUST report to callkit within ~5 seconds or ios terminates us
+    let dict = payload.dictionaryPayload
+    let roomToken = dict["roomToken"] as? String ?? ""
+    CallManager.shared.reportIncomingCall(from: "donna", roomToken: roomToken)
+    completion()
+  }
+}</code></pre>
+
+    <h3>callkit — the native call ui</h3>
+    <p>callkit is what makes the phone actually ring with the system call ui. it integrates with lock screen, do-not-disturb, ringtones, the phone app's call history. <strong>we don't design it — apple does.</strong> our job is just to report calls correctly.</p>
+
+    <span class="filename">CallManager.swift — callkit provider</span>
+    <pre><code>import CallKit
+
+class CallManager: NSObject, CXProviderDelegate {
+  static let shared = CallManager()
+  private let provider: CXProvider
+
+  override init() {
+    let config = CXProviderConfiguration(localizedName: "donna")
+    config.supportsVideo = false
+    config.supportedHandleTypes = [.generic]
+    config.maximumCallsPerCallGroup = 1
+    config.includesCallsInRecents = false  // donna doesn't show in recents
+    provider = CXProvider(configuration: config)
+    super.init()
+    provider.setDelegate(self, queue: .main)
+  }
+
+  func reportIncomingCall(from caller: String, roomToken: String) {
+    let uuid = UUID()
+    let update = CXCallUpdate()
+    update.remoteHandle = CXHandle(type: .generic, value: caller)
+    update.hasVideo = false
+    update.localizedCallerName = "donna"
+
+    provider.reportNewIncomingCall(with: uuid, update: update) { [weak self] error in
+      if error == nil {
+        // user will see the native incoming call ui
+        ActiveCallStore.shared.pending = (uuid, roomToken)
+      }
+    }
+  }
+
+  func provider(_ provider: CXProvider, perform action: CXAnswerCallAction) {
+    // user tapped "answer"
+    guard let pending = ActiveCallStore.shared.pending else { return }
+    LiveKitManager.shared.joinRoom(token: pending.roomToken)
+    action.fulfill()
+  }
+
+  func provider(_ provider: CXProvider, perform action: CXEndCallAction) {
+    LiveKitManager.shared.leaveRoom()
+    action.fulfill()
+  }
+
+  func providerDidReset(_ provider: CXProvider) {
+    LiveKitManager.shared.leaveRoom()
+  }
+}</code></pre>
+
+    <h3>livekit ios sdk — the actual audio</h3>
+    <p>once callkit hands us the "user answered" event, we join a livekit room. the room is a webrtc session. donna (running server-side) is the other participant. audio flows both ways. when the user hangs up, we leave the room.</p>
+
+    <span class="filename">LiveKitManager.swift — minimal room handling</span>
+    <pre><code>import LiveKit
+
+class LiveKitManager {
+  static let shared = LiveKitManager()
+  var room: Room?
+
+  func joinRoom(token: String) async throws {
+    let url = "wss://donna.livekit.cloud"
+    let room = Room()
+    self.room = room
+    try await room.connect(url: url, token: token)
+    // microphone publishes automatically when audio session activates
+  }
+
+  func leaveRoom() {
+    Task { await room?.disconnect(); self.room = nil }
+  }
+}</code></pre>
+
+    <div class="callout oxblood">
+      <p class="eyebrow">the 5-second rule</p>
+      <p>between receiving the voip push and calling <code>reportNewIncomingCall</code>, you have ~5 seconds. miss it and ios terminates the app. miss it repeatedly and apple stops delivering voip pushes to your app at all. this is the most fragile contract in the whole stack. <strong>register pushkit in AppDelegate (native), not from javascript</strong> — js bridge startup can blow the deadline.</p>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- backend side -->
+  <section>
+    <header>
+      <p class="eyebrow">part two — the calling end</p>
+      <h2>what happens on the backend</h2>
+      <p>two pieces. a stateless trigger endpoint that sends the voip push, and a livekit agent that runs the conversation. the agent is where most of the interesting code lives.</p>
+    </header>
+
+    <h3>the trigger — sending a voip push</h3>
+    <p>when the user taps "ring me," the app POSTs <code>/call/start</code> to our backend. the backend sends a voip push via apns to the user's device. the push payload contains the livekit room name and a join token. the device receives the push within ~200ms typically.</p>
+
+    <span class="filename">backend/call_trigger.py</span>
+    <pre><code>import apns2
+from livekit import api
+
+async def start_call(user_id: str) -> dict:
+    user = await db.get_user(user_id)
+    voip_token = user.voip_token  # registered at app install
+    if not voip_token:
+        raise ValueError("user has no voip token — push not granted yet")
+
+    # generate livekit room + tokens (one for app, one for agent)
+    room_name = f"onboarding-{user_id}-{int(time.time())}"
+    app_token = api.AccessToken(
+        os.environ["LIVEKIT_API_KEY"],
+        os.environ["LIVEKIT_API_SECRET"]
+    ).with_identity(user_id).with_grants(
+        api.VideoGrants(room_join=True, room=room_name)
+    ).to_jwt()
+
+    # send voip push
+    payload = {
+        "aps": {"alert": "donna is calling"},
+        "roomToken": app_token,
+        "roomName": room_name,
+        "callerName": "donna"
+    }
+    await apns2.send_voip(
+        token=voip_token,
+        topic=f"{BUNDLE_ID}.voip",
+        payload=payload
+    )
+
+    # dispatch agent to the room
+    await dispatch_agent(room_name, user_id)
+    return {"room": room_name, "status": "ringing"}</code></pre>
+
+    <h3>the agent — livekit's voice ai framework</h3>
+    <p>livekit ships an "agents" framework that handles the voice loop for you. one python file. it joins a room, runs an stt → llm → tts pipeline, manages turn-taking, handles interruptions. <strong>we plug in claude as the brain and elevenlabs as the voice.</strong></p>
+
+    <span class="filename">agent/onboarding_agent.py</span>
+    <pre><code>from livekit.agents import (
+    AutoSubscribe, JobContext, WorkerOptions, cli, llm
+)
+from livekit.plugins import openai, elevenlabs, silero, anthropic
+from livekit.agents.voice import Agent, AgentSession
+
+ONBOARDING_INSTRUCTIONS = """
+you are donna. you are calling the user for the first time.
+your voice is quiet, editorial, intimate. no exclamation marks, no emojis,
+no "great!" or "perfect!" lowercase mental register.
+
+the call is 30-45 seconds. cover three things in order:
+
+1. greet them by name (from context). ask "is this a good time?"
+2. ask one personal question: "tell me one person i should never
+   forget about you." listen carefully. ask one follow-up if their
+   answer is vague.
+3. end the call: "good. i'll read your inbox and calendar now.
+   see you in the app in a moment."
+
+then call the hangup tool.
+
+if they sound rushed: cut to the personal question immediately.
+if they sound confused: explain briefly, then continue.
+if they hang up early: that's fine. save what you got.
+"""
+
+async def entrypoint(ctx: JobContext):
+    # get user name from job metadata
+    user_id = ctx.job.metadata
+    user = await fetch_user(user_id)
+
+    session = AgentSession(
+        vad=silero.VAD.load(),
+        stt=openai.STT(model="whisper-1"),
+        llm=anthropic.LLM(model="claude-sonnet-4-6"),
+        tts=elevenlabs.TTS(
+            voice_id=DONNA_VOICE_ID,
+            model="eleven_turbo_v2_5",
+            stability=0.5,
+            similarity_boost=0.75,
+        ),
+    )
+
+    instructions = ONBOARDING_INSTRUCTIONS + f"\n\nuser's name: {user.first_name}."
+
+    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+    await session.start(
+        agent=Agent(instructions=instructions),
+        room=ctx.room,
+    )
+
+    # after session ends, persist transcript as memory seed
+    transcript = session.history.to_dict()
+    await save_memory(user_id, kind="onboarding_call", payload=transcript)
+
+if __name__ == "__main__":
+    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))</code></pre>
+
+    <p>that's the entire agent. ~50 lines. livekit handles the audio routing, vad (voice activity detection), stt streaming, llm calls, tts streaming, turn-taking, interruption handling. our job is the prompt and the cleanup.</p>
+
+    <h3>memory persistence</h3>
+    <p>at the end of the call, claude has access to the full transcript. we ask it to write a short structured memory summary that becomes donna's first knowledge of the user. that summary plus the raw transcript both go into the memory store.</p>
+
+    <span class="filename">agent/save_memory.py</span>
+    <pre><code>async def save_memory(user_id: str, kind: str, payload: dict):
+    # raw transcript
+    await memory_store.write(
+        user_id=user_id,
+        kind="raw_call_transcript",
+        body=payload,
+    )
+
+    # synthesis — what should donna remember about this call?
+    synthesis = await claude.complete(
+        model="claude-sonnet-4-6",
+        system=(
+            "summarize the call transcript into things to remember "
+            "about this person. focus on the one name they shared, "
+            "any context around that person, tone, and pacing. "
+            "write 3-5 short memory entries in plain text. "
+            "do not invent details not in the transcript."
+        ),
+        messages=[{"role": "user", "content": str(payload)}]
+    )
+
+    for entry in synthesis.split("\n\n"):
+        if entry.strip():
+            await memory_store.write(
+                user_id=user_id,
+                kind="memory_entry",
+                body={"text": entry.strip(), "source": "onboarding_call"},
+            )</code></pre>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- voice script -->
+  <section>
+    <header>
+      <p class="eyebrow">the voice script</p>
+      <h2>what donna says, exactly</h2>
+      <p>this is the script the agent runs. branches handle the obvious responses. anything off-script falls through to claude's discretion within the prompt's bounds.</p>
+    </header>
+
+    <pre><code>donna: "hi, bharat. is this a good time?"
+
+user (yes): proceed
+user (no): "ok. i'll be quick. ten seconds." → proceed faster
+user (silence 4s): "i can hear you. is this a good time?"
+
+donna: "good. before i let you go, tell me one person i should
+        never forget about you. someone i need to know about."
+
+user (gives name + context): "noted. anything else about them
+                              before i hang up?"
+user (gives just name, no context): "okay, [name]. tell me one
+                                      thing about them."
+user (silence): "no rush. take your time."
+user (refuses): "fair. we'll get there another way."
+
+donna: "good. i'll read your inbox and calendar now. see you
+        in the app in a moment."
+
+[hangup tool]</code></pre>
+
+    <p>the script is intentionally short — 30-45 seconds end to end. <strong>the goal is not to extract information, it's to establish the voice and capture one human memory seed.</strong> everything else donna learns from data.</p>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- cost -->
+  <section>
+    <header>
+      <p class="eyebrow">cost</p>
+      <h2>cheap, surprisingly</h2>
+      <p>per-call estimate assuming a 60-second call with claude sonnet, elevenlabs turbo, and livekit cloud. real numbers will drift but the order of magnitude is right.</p>
+    </header>
+
+    <table>
+      <thead>
+        <tr><th>component</th><th>per minute</th><th>per onboarding call (~60s)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="label">livekit cloud</td><td class="num">$0.0003 × 2 participants</td><td class="num">$0.0006</td></tr>
+        <tr><td class="label">elevenlabs streaming tts (turbo v2.5)</td><td class="num">~$0.06</td><td class="num">~$0.03 (donna speaks ~30s)</td></tr>
+        <tr><td class="label">openai whisper stt</td><td class="num">$0.006</td><td class="num">$0.006</td></tr>
+        <tr><td class="label">claude sonnet (the agent's brain)</td><td class="num">varies, ~$0.10-0.20</td><td class="num">~$0.10-0.15</td></tr>
+        <tr><td class="label">apns voip push</td><td class="num">free</td><td class="num">free</td></tr>
+        <tr><td class="label"><strong>total</strong></td><td class="num">—</td><td class="num"><strong>$0.14-0.20</strong></td></tr>
+      </tbody>
+    </table>
+
+    <p>scale projection assuming each user gets one onboarding call and ten subsequent calls per month:</p>
+
+    <table>
+      <thead>
+        <tr><th>monthly active users</th><th>onboarding cost</th><th>recurring call cost</th><th>monthly total</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="num">5 (family test)</td><td class="num">~$1</td><td class="num">~$10</td><td class="num">~$11</td></tr>
+        <tr><td class="num">100</td><td class="num">~$20</td><td class="num">~$200</td><td class="num">~$220</td></tr>
+        <tr><td class="num">1,000</td><td class="num">~$200</td><td class="num">~$2,000</td><td class="num">~$2,200</td></tr>
+        <tr><td class="num">10,000</td><td class="num">~$2,000</td><td class="num">~$20,000</td><td class="num">~$22,000</td></tr>
+      </tbody>
+    </table>
+
+    <p>at 10k users, claude is the dominant cost (about 70%). that's where it becomes worth considering haiku for the agent loop and reserving sonnet for memory synthesis and the reveal.</p>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- setup -->
+  <section>
+    <header>
+      <p class="eyebrow">setup</p>
+      <h2>what to configure, in order</h2>
+      <p>two-three hours of focused setup work, mostly portal configuration. one cloud build, one test call.</p>
+    </header>
+
+    <ol>
+      <li><strong>apple developer portal</strong> → identifiers → bundle id <code>com.donna.app</code> → enable <strong>push notifications capability</strong> (covers regular + voip).</li>
+      <li><strong>apple developer portal</strong> → keys → create an <strong>apns auth key</strong> (<code>.p8</code> file). download once. this is the backend's credential for sending pushes.</li>
+      <li><strong>livekit cloud</strong> → sign up, create a project named <code>donna</code>. note the <code>API_KEY</code>, <code>API_SECRET</code>, and <code>wss://&lt;project&gt;.livekit.cloud</code> url.</li>
+      <li><strong>elevenlabs</strong> → either pick a stock voice for donna or clone a custom one (provide 1-2 min of reference audio). save the <code>voice_id</code>.</li>
+      <li><strong>mobile/app.json</strong> → add to <code>ios.infoPlist</code>:
+        <pre><code>{
+  "UIBackgroundModes": ["voip", "audio"]
+}</code></pre>
+      </li>
+      <li><strong>mobile</strong>: install <code>react-native-callkeep</code>, <code>react-native-voip-push-notification</code>, <code>@livekit/react-native</code>.</li>
+      <li><strong>mobile/AppDelegate</strong>: register pushkit in <code>didFinishLaunchingWithOptions</code>, not from js. upload voip token to backend on receipt.</li>
+      <li><strong>backend</strong> (donna-prod): add <code>/call/start</code> endpoint, apns2 client, livekit token generation.</li>
+      <li><strong>agent</strong>: deploy the python agent as a livekit worker. <code>livekit-cli agent deploy</code> or self-host.</li>
+      <li><strong>eas</strong>: <code>eas build --profile development --platform ios</code>. ~15-20min cloud build. install on phone via testflight (internal testers).</li>
+      <li><strong>test</strong>: tap "ring me" → phone should ring → answer → hear donna → hang up → memory should be written.</li>
+    </ol>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- failure modes -->
+  <section>
+    <header>
+      <p class="eyebrow">failure modes</p>
+      <h2>what bites you</h2>
+      <p>each of these we've seen documented in real production stacks. plan for them.</p>
+    </header>
+
+    <div class="callout">
+      <p class="eyebrow">1 · the 5-second rule</p>
+      <p>register pushkit in <code>AppDelegate</code> natively. <strong>do not</strong> wait for js to mount. ios will silently start dropping your voip pushes if you miss the deadline a few times. recovery requires app reinstall.</p>
+    </div>
+
+    <div class="callout">
+      <p class="eyebrow">2 · voice latency</p>
+      <p>end-to-end (user speaks → stt → claude → tts → user hears) must be under ~800ms or the conversation feels broken. livekit + elevenlabs turbo + claude streaming gets us there, but every link in the chain needs streaming enabled. test on cellular, not just wifi.</p>
+    </div>
+
+    <div class="callout">
+      <p class="eyebrow">3 · voip entitlement abuse</p>
+      <p>voip pushes are <strong>only</strong> for actual calls. using them as a sneaky way to wake the app for background sync = entitlement revoked, app store rejection. report a real call to callkit every time.</p>
+    </div>
+
+    <div class="callout">
+      <p class="eyebrow">4 · the call drops mid-conversation</p>
+      <p>cellular blip, app backgrounding wrong, livekit room timeout. agent must handle disconnection: save whatever transcript exists as memory, mark the call as incomplete, allow user to reconnect via the next page in the onboarding without re-starting.</p>
+    </div>
+
+    <div class="callout">
+      <p class="eyebrow">5 · user denies push permission at install</p>
+      <p>no voip token = no calls. always fall through to the text onboarding path. never block onboarding on push consent.</p>
+    </div>
+
+    <div class="callout">
+      <p class="eyebrow">6 · cost runaway from claude on long calls</p>
+      <p>cap call duration at 90s server-side. if claude is rambling, the agent's response token limit forces brevity. log every call's cost; alert if any single call exceeds $1.</p>
+    </div>
+
+    <div class="callout">
+      <p class="eyebrow">7 · do-not-disturb / focus modes</p>
+      <p>by default, voip calls bypass dnd. users can disable this per-app in settings. respect that — if a call fails to deliver, fall back to a quiet push notification instead of retrying.</p>
+    </div>
+
+    <div class="callout oxblood">
+      <p class="eyebrow">8 · spam = brand death</p>
+      <p>this isn't a technical failure mode, it's a product one. one bad-timed call breaks trust permanently. <strong>never call without a real reason</strong>. obey quiet hours. apply the "would a real chief of staff call right now?" test before any non-onboarding call. detail in the call cadence document (tbd).</p>
+    </div>
+  </section>
+
+  <hr class="hairline" />
+
+  <!-- open questions -->
+  <section>
+    <header>
+      <p class="eyebrow">open questions</p>
+      <h2>still to decide</h2>
+    </header>
+
+    <ol>
+      <li><strong>self-host livekit, or cloud?</strong> cloud at v1 (cheap, zero ops). consider self-host past ~10k MAU when egress dominates costs.</li>
+      <li><strong>donna's voice — stock or cloned?</strong> stock saves $5/mo and is instant. clone takes a recording session and ~$22/mo on elevenlabs creator tier, but the brand impression is real. recommend clone for v2, stock for v1 family test.</li>
+      <li><strong>haiku for the agent, or sonnet?</strong> haiku is 10x cheaper, ~2x faster latency. for a structured script this is probably sufficient. test both, measure interruption naturalness.</li>
+      <li><strong>does the call ever happen in whatsapp instead?</strong> whatsapp business has voice api as of 2024. could send donna's voice via whatsapp voice notes. lower fidelity than callkit but no app install required.</li>
+      <li><strong>what about android?</strong> android has connectionservice (callkit-equivalent) and high-priority data messages (voip-push-equivalent). react-native-callkeep covers both. ~80% of the ios code translates. defer until ios is shipping.</li>
+      <li><strong>recording consent?</strong> the call is recorded as transcript. some jurisdictions require explicit consent. add to the call script: "i'll keep a transcript of this." add to terms.</li>
+    </ol>
+  </section>
+
+  <p class="footer">donna · voice call architecture v0.1 · stack documented · ready for parallel build alongside claude design</p>
+
+</div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#FDFAF8',
+      primaryColor: '#F0EAE4',
+      primaryTextColor: '#1E1A18',
+      primaryBorderColor: '#D9CEC5',
+      lineColor: '#6B615C',
+      secondaryColor: '#FBF7F5',
+      tertiaryColor: '#FBF7F5',
+      actorBkg: '#F0EAE4',
+      actorBorder: '#D9CEC5',
+      actorTextColor: '#1E1A18',
+      noteBkgColor: '#FDFAF8',
+      noteBorderColor: '#7B5544',
+      noteTextColor: '#1E1A18',
+      signalColor: '#6B615C',
+      signalTextColor: '#1E1A18',
+      labelBoxBkgColor: '#FBF7F5',
+      labelBoxBorderColor: '#D9CEC5',
+      labelTextColor: '#1E1A18',
+      fontFamily: '"Red Hat Text", -apple-system, sans-serif',
+      fontSize: '13px',
+    },
+    sequence: {
+      actorMargin: 50,
+      messageMargin: 35,
+      mirrorActors: false,
+      bottomMarginAdj: 10,
+      noteFontFamily: '"EB Garamond", Georgia, serif',
+      noteFontSize: 13,
+    },
+  });
+</script>
+</body>
+</html>

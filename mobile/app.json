@@ -9,11 +9,18 @@
     "newArchEnabled": true,
     "plugins": [
       "expo-router",
-      "expo-asset"
+      "expo-asset",
+      "expo-dev-client"
     ],
     "ios": {
       "bundleIdentifier": "com.donna.app",
-      "supportsTablet": false
+      "supportsTablet": false,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "voip",
+          "audio"
+        ]
+      }
     },
     "android": {
       "package": "com.donna.app"

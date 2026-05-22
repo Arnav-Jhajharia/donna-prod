@@ -53,28 +53,37 @@ npm start              # metro bundler (serves js to expo go / dev client)
 npm run typecheck
 ```
 
-## running on device (no simulator)
+## running on device — dev build only
 
-we don't use the ios simulator. two paths, picked by where the project is:
+we don't use the ios simulator. we also don't use expo go anymore — we're committed to the dev build path from day one because the native modules we need (callkit + livekit voip) require it. expo go gets dropped from the workflow.
 
-**expo go (current, while we have zero native modules)**
-1. install "expo go" from the app store on the iphone
-2. `npm start` on the laptop
-3. scan the qr in the terminal. if the phone isn't on the same wifi, use `npx expo start --tunnel`
+**first time setup (one-time per developer)**
+1. `npm install` in `mobile/` — installs `expo-dev-client` + all expo deps
+2. `eas login` — authenticate against expo cloud
+3. `eas init` — creates the project on expo's servers, writes the `projectId` to app.json
+4. `eas build --profile development --platform ios` — kicks off a cloud build, ~15-20 min
+5. install the resulting build on the phone via the eas link or testflight invite
 
-**eas development build (the moment we add any native module)**
-1. `npm i -D eas-cli expo-dev-client` and `npx expo install expo-dev-client`
-2. `eas login` and `eas init` (creates the project on expo's servers)
-3. `eas build --profile development --platform ios` — cloud build, ~15-20 min
-4. install the resulting build on the phone via the eas link
-5. `npx expo start --dev-client` — the custom dev client picks up the bundle
+**daily dev loop**
+1. `npx expo start --dev-client` on the laptop
+2. open the donna dev build on the phone
+3. it auto-connects to metro and hot-reloads on every save
 
 `eas.json` profiles:
 - `development` — dev client, internal distribution, real device (no simulator)
-- `preview` — finished build, internal distribution. used for sharing builds without testflight
+- `preview` — finished build (no dev client), internal distribution. used for sharing builds without testflight review
 - `production` — store-ready
 
 ios device builds need an apple developer account ($99/yr). eas handles provisioning automatically the first time.
+
+## ios native config
+
+`app.json` declares `UIBackgroundModes: ["voip", "audio"]` to support callkit + livekit voice. these unlock:
+- voip pushes that wake the app from killed state (apns + pushkit)
+- background audio during a livekit call
+- the callkit native incoming-call ui
+
+if either mode is removed, voip calls stop working entirely. don't remove without aligning on it.
 
 ## env
 
