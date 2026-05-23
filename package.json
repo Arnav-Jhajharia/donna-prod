@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "server": "tsx src/server.ts",
+    "voice": "tsx voice/agent.ts dev",
     "inspect": "tsx src/inspect.ts",
     "db:ping": "tsx scripts/db-ping.ts",
     "db:pull": "drizzle-kit pull && mv src/donna/db/migrations-staging/schema.ts src/donna/db/schema.ts && mv src/donna/db/migrations-staging/relations.ts src/donna/db/relations.ts && rm -rf src/donna/db/migrations-staging",
@@ -18,15 +19,27 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.93.0",
+    "@clerk/backend": "^3.4.13",
+    "@hono/clerk-auth": "^3.1.1",
     "@hono/node-server": "^2.0.3",
+    "@livekit/agents": "^1.4.4",
+    "@livekit/agents-plugin-deepgram": "^1.4.4",
+    "@livekit/agents-plugin-elevenlabs": "^1.4.4",
+    "@livekit/agents-plugin-livekit": "^1.4.4",
+    "@livekit/agents-plugin-silero": "^1.4.4",
+    "@parse/node-apn": "^8.1.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.12.22",
     "langsmith": "^0.7.1",
-    "postgres": "^3.4.9"
+    "livekit-server-sdk": "^2.15.3",
+    "postgres": "^3.4.9",
+    "supabase": "^2.101.0",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
+    "@types/ws": "^8.18.1",
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
