@@ -1,6 +1,9 @@
 import type { Tool, MessageCreateParams } from "@anthropic-ai/sdk/resources/messages";
 import { getCurrentTimeTool, getCurrentTimeHandler } from "./time.js";
 import { sendBurstTool, sendBurstHandler } from "./send_burst.js";
+import { createTriggerTool, createTriggerHandler } from "./create_trigger.js";
+import { listTriggersTool, listTriggersHandler } from "./list_triggers.js";
+import { cancelTriggerTool, cancelTriggerHandler } from "./cancel_trigger.js";
 
 // the single registry of tools the model can call. add a new tool by:
 // 1. defining its `Tool` + handler in its own file under tools/
@@ -8,6 +11,9 @@ import { sendBurstTool, sendBurstHandler } from "./send_burst.js";
 // 3. if it's a terminator (ends the turn), adding it to TERMINATORS
 export const tool_definitions: Tool[] = [
   getCurrentTimeTool,
+  createTriggerTool,
+  listTriggersTool,
+  cancelTriggerTool,
   sendBurstTool,
 ];
 
@@ -22,6 +28,9 @@ export const tool_handlers: Record<
   (input: unknown) => Promise<unknown>
 > = {
   get_current_time: getCurrentTimeHandler,
+  create_trigger: createTriggerHandler,
+  list_triggers: listTriggersHandler,
+  cancel_trigger: cancelTriggerHandler,
   send_burst: sendBurstHandler,
 };
 

@@ -10,6 +10,8 @@ import { createInterface } from "node:readline";
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
 import { runTurn } from "./donna/brain.js";
 import type { OutboundMessage } from "./donna/messages.js";
+import { setFireHandler } from "./donna/triggers/runtime.js";
+import { markFired } from "./donna/triggers/store.js";
 
 const rl = createInterface({ input: process.stdin, output: process.stdout });
 const history: MessageParam[] = [];
@@ -100,6 +102,23 @@ function ask(): void {
     ask();
   });
 }
+
+// when a trigger fires, run a turn with its action as a synthetic user input
+// and render donna's response. no mutex — concurrent fires interleave on the
+// shared `history`, which is acceptable for a single-user cli; persistence
+// and serialization land when a real surface (whatsapp/imessage) is wired up.
+setFireHandler(async (t) => {
+  const updated = markFired(t.id);
+  if (!updated) return; // already cancelled or fired
+  console.log(`\n(trigger fired: ${t.id})`);
+  history.push({ role: "user", content: t.action });
+  const result = await runTurn(history);
+  history.push(...result.newMessages);
+  for (const msg of result.sends) {
+    await render(msg);
+  }
+  console.log(`(run: ${result.runId})\nyou: `);
+});
 
 rl.on("close", () => process.exit(0));
 ask();
