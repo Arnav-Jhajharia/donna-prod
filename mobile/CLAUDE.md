@@ -1,155 +1,128 @@
 # donna · mobile
 
-native client for donna. lives inside donna-prod as `mobile/` — same product as the brain in `../src/donna/`, different surface. whatsapp and imessage are the other surfaces; this is the third.
+native client for donna. lives inside donna-prod as `mobile/`. same product as the brain in `../src/donna/`, different surface. whatsapp and imessage are the other surfaces; this is the third.
 
 ## relationship to the parent
 
 the canonical product context lives in `../CLAUDE.md`. read it first. this file only documents what's mobile-specific.
 
 inherited conventions (do not restate, do not violate):
-- voice: lowercase, no em dashes, no semicolons, no emojis, no markdown in user-visible strings
-- code style: small focused files (200-400 lines, hard ceiling 800), immutable updates, organize by feature
-- how we work: line-by-line, deliberate. no "while we're here" additions. one small thing, commit, next.
+- voice rules (lowercase, no em dashes, no semicolons, no emojis, no markdown, no exclamations in user-visible strings)
+- line-by-line working style
+- verification protocol (no asserting versions/urls/api without checking)
 
 ## stack
 
-- expo sdk 52 + react native 0.76 (new architecture enabled)
-- typescript strict + `noUncheckedIndexedAccess`
-- expo-router for navigation (file-based, in `app/`)
-- no state library yet — add only when cross-screen state shows up
+- expo (current SDK — see `package.json` for the pin) + react native + typescript strict
+- expo-router for navigation (file-based, under `app/`)
+- clerk for auth (apple sign in via `useSSO`)
+- livekit + callkeep + voip-push for the voice call feature
+- design system mirrored from `../../donna/dashboard/project/ds`
+
+no global state lib yet. add one only when state needs to cross-tab persistently.
 
 ## layout
 
-```
-app/                       — expo-router pages, file-based routing
-  _layout.tsx              — root: clerkprovider + theme + auth gate
-  (auth)/
-    _layout.tsx            — signed-out stack
-    sign-in.tsx            — splash + apple sign in (clerk useSSO)
-  onboarding/               — only reachable when signed in but not onboarded
-    _layout.tsx            — linear stack, gestures off
-    fork.tsx               — page 2: ring me / let's type
-    call.tsx               — page 3: placeholder for the call surface (callkit takes over)
-    letter.tsx             — page 3a: declined-path letter
-    identification.tsx     — page 4: name + city (declined path only)
-    days.tsx               — page 5: what fills your days
-    people.tsx             — page 6: who matters
-    vacuum.tsx             — page 7: oauth cards (gmail / calendar / claude)
-    ingestion.tsx          — page 8: rolling captions while donna reads
-    reveal.tsx             — page 9: the wow paragraph
-    demo.tsx               — page 10: first action card
-    phone.tsx              — page 11: optional whatsapp linking
-    handoff.tsx            — page 12: marks onboarded=true, drops into (tabs)
-  (tabs)/
-    _layout.tsx            — tabs: dashboard · live · history (custom tab bar)
-    dashboard.tsx          — integrations, voice, quiet hours, account
-    index.tsx              — live (chat, default tab)
-    history.tsx            — timeline of memories, briefs, chats, held-back
-src/
-  design/                  — the design system (mirrors ../../donna/dashboard/project/ds)
-    reference/             — read-only copy of the dashboard's tokens.css + SYSTEM.md
-    primitives.ts          — palette, alpha, space, radius
-    roles.ts               — bg.*, fg.*, border.* (light + dark)
-    type.ts                — typography roles as TextStyle objects
-    fonts.ts               — useDonnaFonts() — loads EB Garamond + Red Hat Text
-    theme.tsx              — ThemeProvider + useTheme()
-    index.ts               — barrel
-  components/
-    ChatBubble.tsx         — donna / user bubble
-    ChatComposer.tsx       — pill input + send
-    TabBar.tsx             — custom bottom tabs
-    OnboardingShell.tsx    — placeholder shell for onboarding pages
-  lib/
-    token-cache.ts         — clerk's token cache, backed by expo-secure-store
-  config.ts                — env var surface (EXPO_PUBLIC_*)
-```
+`app/` holds expo-router pages organized by access control:
 
-components consume **roles**, never primitives. `theme.fg.primary`, never `palette.ink[900]`.
+- `(auth)/` — pages shown only when signed out
+- `onboarding/` — pages shown only after sign-in, before completing onboarding
+- `(tabs)/` — main app, shown only after onboarding completes
+
+the root `app/_layout.tsx` wraps everything in `<ClerkProvider>` and gates which group the user lands in based on auth + onboarded state. the gate reads `user.unsafeMetadata.onboarded` (v1, client-writable) or `user.publicMetadata.onboarded` (when backend-writable wiring lands).
+
+`src/` holds shared code:
+
+- `design/` — design system (tokens, roles, type, fonts, theme). components consume **roles**, never primitives. `theme.fg.primary`, never `palette.ink[900]`. that indirection is what makes dark mode and re-skinning free.
+- `components/` — shared ui pieces
+- `lib/` — non-ui utilities (auth token cache, etc.)
+
+the design system has a read-only spec at `src/design/reference/` (copies of `tokens.css` + `SYSTEM.md` from the dashboard project). consult before deviating.
 
 ## scripts
 
 ```bash
-npm start              # metro bundler (serves js to expo go / dev client)
+npm start              # metro bundler (dev client)
+npm run tunnel         # metro through expo's tunnel (use when phone + laptop on different wifi)
 npm run typecheck
 ```
 
-## running on device — dev build only
+## the dev workflow
 
-we don't use the ios simulator. we also don't use expo go anymore — we're committed to the dev build path from day one because the native modules we need (callkit + livekit voip) require it. expo go gets dropped from the workflow.
+we don't use the ios simulator. we don't use expo go. **dev build path only**, because callkit + livekit voip require native modules.
 
-**first time setup (one-time per developer)**
-1. `npm install` in `mobile/` — installs `expo-dev-client` + all expo deps
-2. `eas login` — authenticate against expo cloud
-3. `eas init` — creates the project on expo's servers, writes the `projectId` to app.json
-4. `eas build --profile development --platform ios` — kicks off a cloud build, ~15-20 min
-5. install the resulting build on the phone via the eas link or testflight invite
+an iOS app is two things glued together: **the native binary** (slow to build, rarely changes) and **the JS bundle** (instant, changes constantly). the dev build is a streaming container — it loads JS from metro on your laptop. you rebuild the binary *only* when native code or app config changes.
 
-**daily dev loop**
-1. `npx expo start --dev-client` on the laptop
-2. open the donna dev build on the phone
-3. it auto-connects to metro and hot-reloads on every save
+| change | rebuild needed? |
+|---|---|
+| any `.ts` / `.tsx` edit | no (metro hot-reloads) |
+| add a pure-js npm package | no |
+| add a native module (callkeep, livekit, etc.) | yes |
+| change `app.json` plugins, infoPlist, entitlements | yes |
+| bump expo sdk major version | yes |
 
-`eas.json` profiles:
-- `development` — dev client, internal distribution, real device (no simulator)
-- `preview` — finished build (no dev client), internal distribution. used for sharing builds without testflight review
-- `production` — store-ready
+for daily js work, metro is the loop. rebuilds are rare and scoped to native-module changes.
 
-ios device builds need an apple developer account ($99/yr). eas handles provisioning automatically the first time.
+## first-time setup
 
-## ios native config
+```bash
+npm install            # mobile deps. .npmrc has legacy-peer-deps=true
+eas login              # auth to expo cloud
+eas init               # writes projectId to app.json (only first time)
+eas build --profile development --platform ios   # ~15-20 min cloud build
+```
 
-`app.json` declares:
-- `usesAppleSignIn: true` — required for apple sign in to work (adds the entitlement)
-- `UIBackgroundModes: ["voip", "audio", "remote-notification"]` — voip push wake, background audio during calls, regular push delivery
-- `ITSAppUsesNonExemptEncryption: false` — exempts donna from extra encryption export compliance review at app store submission
+then install the resulting build on the phone via testflight invite or eas link.
 
-config plugins (in order):
-- `expo-router` · file-based routing
-- `expo-asset` · static asset handling
-- `expo-dev-client` · custom dev client (required since we don't use expo go)
-- `expo-secure-store` · ios keychain access for clerk token cache
-- `expo-apple-authentication` · native apple sign in flow
-- `@config-plugins/react-native-callkeep` · callkit bridge for the incoming-call ui
-- `@config-plugins/react-native-voip-push-notification` · pushkit bridge for voip pushes
-- `@livekit/react-native-expo-plugin` · adds webrtc native deps for voice calls
+## eas profiles
 
-if any of these are removed, the call feature stops working. don't remove without aligning on it.
+- `development` — dev client, internal distribution, real device only. for daily js iteration.
+- `preview` — finished build (no dev client), js baked in. for sharing without testflight review.
+- `production` — store-ready, autoIncrement on.
 
-## auth
-
-clerk handles identity. apple sign in is the only method right now (mobile). under the hood:
-- `useSSO({ strategy: 'oauth_apple' })` in (auth)/sign-in.tsx triggers the native apple sheet
-- clerk creates a user, returns a session jwt
-- jwt persists in ios keychain via `src/lib/token-cache.ts` (backed by expo-secure-store)
-- root `_layout.tsx` gates routes: signed out → /(auth)/sign-in, signed in but not onboarded → /onboarding/fork, signed in + onboarded → /(tabs)
-
-"onboarded" is currently tracked on the clerk user via `unsafeMetadata.onboarded` (client-writable for v1). once the brain backend can set `publicMetadata` via webhook, the flag moves there (server-only writable, tamper-resistant).
-
-env required:
-- `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` · from clerk dashboard, safe to expose in the bundle
-
-## voice call wiring (in progress)
-
-native deps are installed and config plugins are loaded — but the actual call orchestration isn't wired yet. when we ship that work:
-- backend triggers a voip push via apns
-- `react-native-voip-push-notification` receives it in `AppDelegate`
-- within 5s we must call `reportNewIncomingCall` via `react-native-callkeep`
-- on accept, `@livekit/react-native` joins a room with the agent
-
-see `../docs/voice-call.html` for the full architecture.
+ios device builds need an apple developer account ($99/yr). eas handles provisioning automatically the first time you build. apple developer team association lives in xcode → settings → accounts on whichever mac you use to interact with eas (or set via `eas credentials`).
 
 ## env
 
-`EXPO_PUBLIC_*` vars are inlined into the bundle at build time. anything secret must NOT use that prefix and must NOT live in this app — secrets stay on the backend.
+`EXPO_PUBLIC_*` vars get inlined into the bundle at build time. **anything secret must NOT use that prefix** and must NOT live in this app — secrets stay on the backend.
 
-required: `EXPO_PUBLIC_DONNA_API_URL` (where the donna-prod server is reachable).
+env vars donna-mobile reads are documented in `.env.example`. keep that file current as new vars come in.
 
-## ingress
+## auth
 
-the backend currently has two ingress paths (`../src/server.ts` — `/webhook` for whatsapp, `/imessage/webhook` for linq). a third path for mobile clients needs designing — likely an authenticated `/mobile/message` endpoint that mirrors the dispatcher pattern. do not invent the protocol here without aligning on the backend first; both sides of the contract live in this same repo now, so cross-cutting changes can land in one commit.
+clerk handles identity. mobile path is apple sign in only right now (no email/password, no phone otp yet). flow:
+
+1. user taps "continue with apple" on `(auth)/sign-in.tsx`
+2. `useSSO({ strategy: 'oauth_apple' })` triggers apple's native sheet
+3. clerk creates the user, returns a session jwt
+4. jwt is persisted via `src/lib/token-cache.ts` (backed by `expo-secure-store` → iOS keychain)
+5. the root layout's auth gate notices the new session and redirects
+
+onboarded state lives on `clerk user metadata`. when the backend wires up clerk webhooks, the gate moves from `unsafeMetadata` (client-writable, v1) to `publicMetadata` (server-only, tamper-resistant).
+
+## ios native config
+
+`app.json` declares what the native build needs. the load-bearing entries:
+
+- `usesAppleSignIn: true` — apple sign in entitlement
+- `ios.infoPlist.UIBackgroundModes` includes `voip` + `audio` + `remote-notification` for the call feature
+- `ios.infoPlist.ITSAppUsesNonExemptEncryption: false` — skips encryption export compliance step on app store submit
+- usage description strings (microphone, calendar, etc.) — apple requires them before runtime permission requests
+
+config plugins live in `app.json` `plugins` array. they run during `eas build` to inject native iOS/Android setup. adding a new native module that needs config means: install the npm package, add its plugin to the `plugins` array, rebuild.
+
+## voice call wiring
+
+partially set up. native deps + config plugins are installed (callkeep, livekit, webrtc). the actual orchestration (voip push → callkit invocation → livekit room join → agent → memory persistence) is documented in `../docs/voice-call.html` and not yet implemented.
+
+## ingress to brain
+
+mobile talks to donna-prod brain over authenticated http. the mobile ingress endpoint on the brain side validates the clerk jwt, identifies the user, dispatches to donna's tool loop. not yet wired. when it is, both sides of the contract land in one commit because both repos live in the same tree.
 
 ## sharp edges
 
-- expo public env vars are public. treat them as such.
-- the new architecture flag in `app.json` is on by default in sdk 52. some third-party libs lag — verify before adding any native module.
-- ios bundle id `com.donna.app` is placeholder. claim a real one before any testflight build.
+- `EXPO_PUBLIC_*` env vars are public. treat them as such.
+- the dev build binary on your phone is a streaming container. without metro running, the app is blank.
+- ios bundle id `com.donna.app` is placeholder. claim a real one before any app store / testflight release.
+- `@config-plugins/*` packages often lag behind expo sdk versions. `.npmrc` sets `legacy-peer-deps=true` so npm doesn't choke on outdated peer dep declarations. the actual plugins work fine across the version boundary.
+- versions in `package.json`: never bump or pin without verifying on npm. config plugins and native modules drift independently of expo sdk and each other.
