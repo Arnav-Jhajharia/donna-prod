@@ -9,11 +9,10 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "outDir": "dist",
-    "rootDir": "src",
     "declaration": false,
     "sourceMap": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "voice/**/*"],
   "exclude": [
     "src/_archive/**",
     "src/donna/_archive/**",
