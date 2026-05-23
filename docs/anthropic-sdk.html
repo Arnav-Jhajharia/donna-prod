@@ -1,0 +1,1330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>donna — the anthropic sdk</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '13px',
+      primaryColor: '#F0EAE4',
+      primaryTextColor: '#1E1A18',
+      primaryBorderColor: '#4A2F23',
+      lineColor: '#4A2F23',
+      secondaryColor: '#FBF7F5',
+      tertiaryColor: '#F0EAE4',
+      noteBkgColor: '#F0EAE4',
+      noteTextColor: '#1E1A18',
+      mainBkg: '#F0EAE4',
+    },
+    flowchart: { curve: 'basis', padding: 16, htmlLabels: true },
+    sequence: { mirrorActors: false, bottomMarginAdj: 8 },
+  });
+</script>
+<style>
+:root {
+  --ivory:    #FBF7F5;
+  --tan:      #F0EAE4;
+  --ink:      #1E1A18;
+  --soft:     #6B6360;
+  --rust:     #7B5544;
+  --umber:    #4A2F23;
+  --rule:     #DCD2C9;
+  --moss:     #4F5E45;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--ivory); color: var(--ink); margin: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+  line-height: 1.62;
+  letter-spacing: 0.005em;
+  padding: 80px 32px 160px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+header { padding-bottom: 56px; border-bottom: 1px solid var(--rule); margin-bottom: 64px; }
+h1, h2, h3, h4 {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+h1 { font-size: 60px; line-height: 1.02; margin: 0 0 22px; }
+h1 em { color: var(--rust); font-style: italic; }
+h2 { font-size: 36px; line-height: 1.15; margin: 96px 0 18px; padding-top: 28px; border-top: 1px solid var(--rule); }
+h3 { font-size: 24px; line-height: 1.2; margin: 56px 0 12px; }
+h4 { font-size: 17px; line-height: 1.3; margin: 32px 0 8px; font-weight: 500; }
+p, li { font-size: 15.5px; color: var(--ink); }
+.lede { font-size: 20px; color: var(--soft); max-width: 760px; margin-top: 4px; line-height: 1.5; }
+.lede em { color: var(--rust); font-style: italic; font-family: 'EB Garamond', Georgia, serif; }
+small.kicker {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--rust);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 14px;
+}
+code, kbd, pre {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  font-size: 13px;
+  background: var(--tan);
+  border-radius: 3px;
+  padding: 2px 5px;
+  color: var(--umber);
+}
+pre {
+  display: block;
+  padding: 18px 22px;
+  margin: 18px 0 24px;
+  overflow-x: auto;
+  background: var(--tan);
+  border-left: 3px solid var(--rust);
+  line-height: 1.55;
+  white-space: pre;
+}
+pre .c { color: var(--soft); font-style: italic; }
+pre .k { color: var(--rust); font-weight: 500; }
+pre .s { color: var(--moss); }
+pre .n { color: var(--umber); font-weight: 500; }
+pre .d { color: var(--ink); opacity: 0.55; }
+.diagram {
+  background: var(--tan);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 28px;
+  margin: 24px 0 36px;
+  overflow-x: auto;
+}
+.diagram svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+.caption {
+  color: var(--soft);
+  font-size: 13px;
+  font-style: italic;
+  margin: -18px 0 36px;
+  padding-left: 4px;
+}
+section.dark {
+  background: var(--ink);
+  color: var(--ivory);
+  margin: 96px -32px;
+  padding: 72px 32px;
+  border-radius: 0;
+}
+section.dark h2 { color: var(--ivory); border-top-color: rgba(251,247,245,0.18); }
+section.dark h3, section.dark h4 { color: var(--ivory); }
+section.dark p, section.dark li { color: rgba(251,247,245,0.84); }
+section.dark code, section.dark pre { background: rgba(251,247,245,0.06); color: var(--ivory); border-left-color: var(--rust); }
+section.dark .diagram { background: rgba(251,247,245,0.04); border-color: rgba(251,247,245,0.16); }
+section.dark .caption { color: rgba(251,247,245,0.6); }
+section.dark .aside { background: rgba(251,247,245,0.05); color: rgba(251,247,245,0.85); }
+section.dark h1 em, section.dark .lede em, section.dark .thesis em { color: #E8C9B7; }
+section.dark .layer-card, section.dark .shape-card, section.dark .step-card { background: rgba(251,247,245,0.06); border-color: rgba(251,247,245,0.18); color: var(--ivory); }
+section.dark .layer-card .desc, section.dark .shape-card .desc, section.dark .step-card .desc { color: rgba(251,247,245,0.78); }
+section.dark .layer-card .name, section.dark .shape-card .name, section.dark .step-card .name { color: #E8C9B7; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0 36px;
+  font-size: 14px;
+}
+th, td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+th {
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rust);
+  border-bottom: 1px solid var(--umber);
+}
+tr:hover td { background: rgba(123,85,68,0.04); }
+.pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 99px;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.pill.live    { background: rgba(79,94,69,0.18);   color: var(--moss); }
+.pill.next    { background: rgba(123,85,68,0.18);  color: var(--umber); }
+.pill.later   { background: rgba(123,85,68,0.10);  color: var(--rust); border: 1px dashed var(--rust); }
+.pill.note    { background: var(--ink);            color: var(--ivory); }
+ul.tight li { margin-bottom: 4px; }
+hr { border: none; border-top: 1px solid var(--rule); margin: 56px 0; }
+nav.toc {
+  position: sticky;
+  top: 16px;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  margin: 0 0 32px;
+  padding: 18px 22px;
+  background: var(--tan);
+  border-radius: 4px;
+  z-index: 10;
+}
+nav.toc ol { list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 32px; }
+nav.toc li { padding: 3px 0; }
+nav.toc a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; }
+nav.toc a:hover { border-bottom-color: var(--rust); color: var(--rust); }
+.aside {
+  border-left: 3px solid var(--rust);
+  padding: 14px 20px;
+  margin: 24px 0;
+  background: rgba(123,85,68,0.05);
+  font-size: 14.5px;
+  color: var(--soft);
+}
+.aside strong { color: var(--ink); font-weight: 500; }
+
+.kvgrid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 8px 24px;
+  margin: 16px 0 32px;
+  font-size: 14px;
+}
+.kvgrid > dt { color: var(--rust); font-weight: 500; padding-top: 4px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; }
+.kvgrid > dd { margin: 0; padding-top: 4px; }
+
+/* model cards */
+.models {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin: 30px 0 36px;
+}
+.model-card {
+  background: var(--tan);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 22px;
+  position: relative;
+}
+.model-card .id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--rust);
+  display: block;
+  margin-bottom: 4px;
+  letter-spacing: 0.02em;
+}
+.model-card h3 { margin: 0 0 10px; font-size: 24px; }
+.model-card .desc { font-size: 13.5px; color: var(--ink); line-height: 1.5; }
+.model-card .for {
+  margin-top: 14px; padding-top: 12px;
+  border-top: 1px dashed var(--rule);
+  font-size: 12.5px; color: var(--soft);
+}
+.model-card .for strong { color: var(--umber); font-weight: 500; }
+
+/* feature ladder */
+.ladder {
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 24px 0 40px;
+}
+.rung {
+  display: grid;
+  grid-template-columns: 200px 1fr 110px;
+  gap: 20px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--rule);
+  align-items: start;
+}
+.rung:last-child { border-bottom: none; }
+.rung:nth-child(even) { background: rgba(240,234,228,0.4); }
+.rung .name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  color: var(--umber);
+  font-weight: 500;
+}
+.rung .what { font-size: 14px; color: var(--ink); line-height: 1.5; }
+.rung .status { text-align: right; }
+
+/* steps */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin: 24px 0 36px;
+}
+.step-card {
+  background: var(--tan);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 16px 14px;
+  font-size: 13px;
+  color: var(--ink);
+}
+.step-card .num {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 22px;
+  color: var(--rust);
+  font-style: italic;
+  display: block;
+  margin-bottom: 4px;
+}
+.step-card .name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--umber);
+  font-weight: 500;
+  display: block;
+  margin-bottom: 6px;
+}
+.step-card .desc { color: var(--soft); font-size: 12.5px; line-height: 1.4; }
+
+.thesis {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 28px;
+  line-height: 1.35;
+  color: var(--ink);
+  max-width: 800px;
+  margin: 40px 0 28px;
+}
+.thesis em { color: var(--rust); font-style: italic; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin: 24px 0 36px; }
+.two-col > div h4:first-child { margin-top: 0; }
+
+footer { margin-top: 120px; padding-top: 28px; border-top: 1px solid var(--rule); color: var(--soft); font-size: 13px; }
+footer code { background: transparent; padding: 0; color: var(--rust); }
+</style>
+</head>
+
+<body>
+
+<header>
+  <small class="kicker">the sdk · current as of 2026-05-22</small>
+  <h1>the <em>sdk</em>.</h1>
+  <p class="lede">
+    everything <code>@anthropic-ai/sdk</code> gives us, ordered by what donna actually needs to be donna. <em>one call, one loop, and the levers around it</em> — caching to stay cheap, streaming to feel alive, thinking when the answer is hard, memory and batches when she lives between turns.
+  </p>
+</header>
+
+<nav class="toc">
+  <ol>
+    <li>1 · <a href="#one-call">the one call</a></li>
+    <li>2 · <a href="#request">the request, byte by byte</a></li>
+    <li>3 · <a href="#response">the response, block by block</a></li>
+    <li>4 · <a href="#models">picking the model</a></li>
+    <li>5 · <a href="#system">the system prompt</a></li>
+    <li>6 · <a href="#messages">messages &amp; history</a></li>
+    <li>7 · <a href="#tools">tool use</a></li>
+    <li>8 · <a href="#cache">prompt caching</a></li>
+    <li>9 · <a href="#stream">streaming</a></li>
+    <li>10 · <a href="#thinking">extended thinking</a></li>
+    <li>11 · <a href="#vision">vision</a></li>
+    <li>12 · <a href="#documents">documents &amp; files</a></li>
+    <li>13 · <a href="#citations">citations</a></li>
+    <li>14 · <a href="#server-tools">server tools</a></li>
+    <li>15 · <a href="#memory">the memory tool</a></li>
+    <li>16 · <a href="#context-mgmt">context management</a></li>
+    <li>17 · <a href="#batches">batches</a></li>
+    <li>18 · <a href="#counting">token counting</a></li>
+    <li>19 · <a href="#errors">errors &amp; retries</a></li>
+    <li>20 · <a href="#observability">observability</a></li>
+    <li>21 · <a href="#donna-today">what donna runs today</a></li>
+  </ol>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="one-call">1 · the one call</h2>
+
+<p class="thesis">
+the entire sdk is a thin wrapper around one http endpoint: <em>POST /v1/messages</em>. everything you'll read below — caching, streaming, thinking, vision, tools, batches — is a different way of shaping that single call.
+</p>
+
+<p>install, instantiate, send:</p>
+
+<pre><span class="c">// npm i @anthropic-ai/sdk</span>
+<span class="k">import</span> Anthropic <span class="k">from</span> <span class="s">"@anthropic-ai/sdk"</span>;
+
+<span class="k">const</span> client = <span class="k">new</span> Anthropic();  <span class="c">// reads ANTHROPIC_API_KEY from env</span>
+
+<span class="k">const</span> response = <span class="k">await</span> client.messages.create({
+  model:      <span class="s">"claude-sonnet-4-6"</span>,
+  max_tokens: <span class="n">1024</span>,
+  system:     <span class="s">"you are donna."</span>,
+  messages:   [{ role: <span class="s">"user"</span>, content: <span class="s">"hey"</span> }],
+});
+
+console.log(response.content);</pre>
+
+<p>that's the whole api surface in five lines. everything else is parameters on that one call, plus three siblings: <code>messages.stream</code> (sse), <code>messages.countTokens</code> (estimate), and <code>messages.batches.create</code> (async).</p>
+
+<div class="aside">
+  <strong>auth.</strong> <code>new Anthropic()</code> with no args reads <code>ANTHROPIC_API_KEY</code> from the environment. donna sets it in <code>.env</code>. nothing else is required to talk to the api.
+</div>
+
+<div class="aside">
+  <strong>concurrency.</strong> every entry point is async. <code>await client.messages.create()</code> pauses <em>your</em> function, not the node event loop — two users hitting the webhook at the same time both have their requests flying to anthropic in parallel. node is single-threaded but i/o is non-blocking, so hundreds of in-flight calls cost ~zero cpu while they wait. what you actually have to guard against is per-workspace rate limits (the sdk retries 429s for you) and per-user turn serialisation (one user's turn n+1 should start after turn n's history persists — that's a queue per user, not a property of <code>messages.create</code>).
+</div>
+
+<h3>the four entry points</h3>
+
+<div class="kvgrid">
+  <dt>messages.create</dt>
+  <dd>one-shot. returns a promise that resolves when the full response is back. async — the node event loop keeps running, so other turns can fly in parallel. what donna calls today in <code>brain.ts</code>.</dd>
+  <dt>messages.stream</dt>
+  <dd>same payload, server-sent events. emits deltas as the model writes. needed the moment we wire voice or want typing-indicator pacing.</dd>
+  <dt>messages.countTokens</dt>
+  <dd>cheap pre-flight: how many input tokens does this payload weigh. no completion, no cost on output. useful for context budgeting.</dd>
+  <dt>messages.batches.create</dt>
+  <dd>fire-and-forget. up to 100k requests, 24h sla, ~50% off list. the right shape for the proactive worker and overnight reflection.</dd>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="request">2 · the request, byte by byte</h2>
+
+<p>a <code>MessageCreateParams</code> is a small, fixed shape. every field below is either present on every request donna makes, or earns its place in a specific section later.</p>
+
+<pre>{
+  model:        string,                <span class="c">// "claude-sonnet-4-6", "claude-opus-4-7", "claude-haiku-4-5-20251001"</span>
+  max_tokens:   number,                <span class="c">// hard cap on the completion. required.</span>
+  system:       string | Block[],      <span class="c">// the standing instructions</span>
+  messages:     MessageParam[],        <span class="c">// the conversation, oldest first</span>
+
+  tools?:       Tool[],                <span class="c">// what the model is allowed to call</span>
+  tool_choice?: { type, ... },         <span class="c">// force / forbid / suggest a tool</span>
+
+  temperature?: number,                <span class="c">// 0..1. lower = more deterministic. default 1. forced to 1 with thinking.</span>
+  stop_sequences?: string[],
+
+  thinking?:    { type, budget_tokens }, <span class="c">// extended thinking</span>
+  stream?:      boolean,                 <span class="c">// implied by messages.stream()</span>
+
+  metadata?:    { user_id },           <span class="c">// abuse signal, not analytics</span>
+
+  context_management?: { ... },        <span class="c">// auto-compaction directives</span>
+  betas?:       string[],              <span class="c">// opt-in to new features pre-ga</span>
+}</pre>
+
+<p>three things to know now and forget the rest until you need them:</p>
+
+<ul class="tight">
+  <li><code>max_tokens</code> is required and is the <em>output</em> ceiling. the model will be cut off mid-token if it reaches the cap. set it generously.</li>
+  <li><code>system</code> sits outside <code>messages</code>. you don't repeat it. you don't put it in role "system" — there's no such role.</li>
+  <li><code>messages</code> must alternate <code>user</code> → <code>assistant</code> → <code>user</code> → … starting with <code>user</code>. tool results live inside a user message as <code>tool_result</code> blocks.</li>
+  <li><strong>no <code>top_p</code> / <code>top_k</code>.</strong> the messages api dropped them. <code>temperature</code> is the only sampling knob, and it's clamped to 1 when extended thinking is on.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="response">3 · the response, block by block</h2>
+
+<p>a <code>Message</code> comes back like this:</p>
+
+<pre>{
+  id:           <span class="s">"msg_01..."</span>,
+  type:         <span class="s">"message"</span>,
+  role:         <span class="s">"assistant"</span>,
+  model:        <span class="s">"claude-sonnet-4-6"</span>,
+  stop_reason:  <span class="s">"end_turn"</span> | <span class="s">"max_tokens"</span> | <span class="s">"stop_sequence"</span> | <span class="s">"tool_use"</span> | <span class="s">"pause_turn"</span> | <span class="s">"refusal"</span>,
+  stop_sequence: string | null,
+  content: [
+    { type: <span class="s">"thinking"</span>,           thinking: <span class="s">"..."</span>,  signature: <span class="s">"..."</span> },
+    { type: <span class="s">"text"</span>,               text: <span class="s">"hey, what's up"</span>, citations?: [...] },
+    { type: <span class="s">"tool_use"</span>,           id: <span class="s">"toolu_01..."</span>, name: <span class="s">"get_current_time"</span>, input: {...} },
+    { type: <span class="s">"server_tool_use"</span>,    ... },           <span class="c">// code_execution, web_search</span>
+    { type: <span class="s">"web_search_tool_result"</span>, ... },
+  ],
+  usage: {
+    input_tokens:                number,
+    output_tokens:               number,
+    cache_creation_input_tokens: number,   <span class="c">// what we paid the +25% premium on</span>
+    cache_read_input_tokens:     number,   <span class="c">// what we read at 10%</span>
+  }
+}</pre>
+
+<h3>content is an array, always</h3>
+
+<p>the model can emit any number of blocks in any order. a single response may contain a <code>thinking</code> block, then a <code>text</code> block of private reasoning, then three <code>tool_use</code> blocks. you handle each by its <code>type</code>.</p>
+
+<div class="aside">
+  <strong>filter assistant text alongside tool_use.</strong> when the model emits text in the same turn as a tool call, that text is private scratch — not for the user. donna's <code>filterAssistantContent</code> in <code>brain.ts</code> drops it before persisting so it can't poison future turns. keep <code>thinking</code> and <code>redacted_thinking</code> blocks though — the api requires them to round-trip.
+</div>
+
+<h3>stop_reason — what just happened</h3>
+
+<table>
+  <tr><th>stop_reason</th><th>meaning</th><th>donna does</th></tr>
+  <tr><td><code>end_turn</code></td><td>model decided it was done.</td><td>shouldn't happen mid-loop — every turn must end with <code>send_burst</code>. log + bail.</td></tr>
+  <tr><td><code>tool_use</code></td><td>last block is a tool call. needs to be run and its result fed back.</td><td>the happy path. dispatch, append result, iterate.</td></tr>
+  <tr><td><code>max_tokens</code></td><td>output ceiling tripped. truncated mid-block.</td><td>bump <code>max_tokens</code> or split the work. tool_use cut off mid-json is unrecoverable.</td></tr>
+  <tr><td><code>pause_turn</code></td><td>long-running server tool (web_search, code_execution) needs another lap.</td><td>send the message right back, unchanged, to continue.</td></tr>
+  <tr><td><code>stop_sequence</code></td><td>hit one of your <code>stop_sequences</code>.</td><td>rare. n/a for donna today.</td></tr>
+  <tr><td><code>refusal</code></td><td>model declined. assistant content explains.</td><td>surface in a burst, never silently swallow.</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="models">4 · picking the model</h2>
+
+<p>three families, three speeds. the model id is a string. swap it and the request shape doesn't change.</p>
+
+<div class="models">
+  <div class="model-card">
+    <span class="id">claude-opus-4-7</span>
+    <h3>opus</h3>
+    <p class="desc">the smart one. best for planning, multi-step reasoning, tricky tool orchestration, code. supports a 1M-token context window. slower and ~5× the price of sonnet.</p>
+    <p class="for"><strong>for donna:</strong> the overnight reflection pass. the executor planning a multi-day project. anything where being right matters more than being fast.</p>
+  </div>
+  <div class="model-card">
+    <span class="id">claude-sonnet-4-6</span>
+    <h3>sonnet</h3>
+    <p class="desc">the workhorse. very close to opus on most tasks, ~3× faster, much cheaper. the default for chat-shaped workloads.</p>
+    <p class="for"><strong>for donna:</strong> the voice loop. every text turn she takes is this model. <code>DEFAULT_MODEL</code> in <code>brain.ts</code>.</p>
+  </div>
+  <div class="model-card">
+    <span class="id">claude-haiku-4-5-20251001</span>
+    <h3>haiku</h3>
+    <p class="desc">the fast one. low latency, low cost, smart enough for routing and classification. dated id (pinned snapshot).</p>
+    <p class="for"><strong>for donna:</strong> trigger fire-decisions ("is this signal worth waking the brain"), classifier sub-agents, summarising long threads before they enter the brain.</p>
+  </div>
+</div>
+
+<h3>the 1M context window</h3>
+
+<p>opus 4.7 with the <code>context-1m-2025-08-07</code> beta accepts up to a million input tokens. the wrong way to think about this is "now we never compact." the right way is: when you genuinely need a lot in front of the model in one shot — a full inbox, a full journal — pay for it. for normal turns, even a busy week of donna chat is only thousands of tokens. don't pre-optimise for a window we won't fill.</p>
+
+<pre><span class="k">const</span> client = <span class="k">new</span> Anthropic({
+  defaultHeaders: { <span class="s">"anthropic-beta"</span>: <span class="s">"context-1m-2025-08-07"</span> }
+});</pre>
+
+<h3>model aliases</h3>
+
+<p>the api also accepts unsuffixed names like <code>claude-sonnet-4-6</code> (alias to the current snapshot) and <code>claude-opus-4-7</code>. donna uses these. when reproducibility matters (eval runs, batched overnight jobs we want to replay) pin a dated snapshot id instead.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="system">5 · the system prompt</h2>
+
+<p>the <code>system</code> field is everything that's true on every turn. donna's lives in <code>src/donna/prompt.ts</code> and is the source of her voice.</p>
+
+<p>two shapes are accepted: a plain string, or an array of <code>text</code> blocks. the array form is what unlocks caching:</p>
+
+<pre>system: [
+  { type: <span class="s">"text"</span>, text: STATIC_VOICE_RULES, cache_control: { type: <span class="s">"ephemeral"</span> } },
+  { type: <span class="s">"text"</span>, text: dynamicLivingProfile }            <span class="c">// changes turn to turn</span>
+]</pre>
+
+<p>donna today sends a single string. when the living profile lands, splitting it into a static-then-dynamic pair with a cache breakpoint between is how we pay the prompt once per session, not once per turn.</p>
+
+<div class="aside">
+  <strong>per-turn overlay.</strong> <code>TurnConfig.systemOverlay</code> in <code>brain.ts</code> appends a string to the agent's standing prompt for one turn only — for mode switches (reactive vs proactive) without rewriting the whole prompt. the overlay is concatenated after the agent prompt, not cached.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="messages">6 · messages &amp; history</h2>
+
+<p>the conversation is an array of <code>MessageParam</code>: <code>{ role, content }</code>. role is <code>user</code> or <code>assistant</code> — there is no <code>system</code> role and no <code>tool</code> role. tool results live inside a user message as <code>tool_result</code> content blocks.</p>
+
+<h3>the alternation rule</h3>
+
+<p>messages must alternate strictly: <code>user → assistant → user → assistant → …</code>. starting with anything other than <code>user</code> is an error. two consecutive messages of the same role is an error. if you're appending tool results, they go in a single <code>user</code> message after the assistant's <code>tool_use</code> response, even if there are five of them.</p>
+
+<h3>content shapes</h3>
+
+<p>each message's <code>content</code> can be a string (sugar for one text block) or an array of blocks. the block types donna sees:</p>
+
+<table>
+  <tr><th>block</th><th>role</th><th>what it is</th></tr>
+  <tr><td><code>text</code></td><td>user / assistant</td><td>the plain words.</td></tr>
+  <tr><td><code>image</code></td><td>user</td><td>a picture the user shared.</td></tr>
+  <tr><td><code>document</code></td><td>user</td><td>a pdf, plain text, or custom content. supports citations.</td></tr>
+  <tr><td><code>tool_use</code></td><td>assistant</td><td>"i'd like to call this tool with this input."</td></tr>
+  <tr><td><code>tool_result</code></td><td>user</td><td>"here's what that tool returned." matched by <code>tool_use_id</code>.</td></tr>
+  <tr><td><code>thinking</code> / <code>redacted_thinking</code></td><td>assistant</td><td>private reasoning. must be round-tripped if present.</td></tr>
+  <tr><td><code>server_tool_use</code> &amp; result</td><td>assistant / user</td><td>code_execution, web_search — server runs them, blocks appear in transcript.</td></tr>
+</table>
+
+<h3>history discipline</h3>
+
+<p>donna persists messages in <code>chat_messages</code>. four rules, learned the hard way:</p>
+
+<ul class="tight">
+  <li><strong>persist after filter, not before.</strong> the <code>filterAssistantContent</code> pass strips leaked text. if you save raw, those leaks come back as conversation next turn and the model imitates its own scratch.</li>
+  <li><strong>tool_use blocks must have matching tool_result blocks in the very next user message.</strong> if you bail mid-iteration without writing the result, the conversation is malformed and the next turn will 400.</li>
+  <li><strong>thinking blocks must round-trip.</strong> if the model produced a thinking block this turn and we feed history back next turn, that block has to be there with its signature intact, or the api rejects.</li>
+  <li><strong>order matters.</strong> messages are oldest-first. the most recent user message is the last item, not the first.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="tools">7 · tool use</h2>
+
+<p class="thesis">
+tools are how the model <em>acts</em>. she can only describe what she'd like — declare the menu, watch her pick, run it, hand her the result.
+</p>
+
+<h3>declaring a tool</h3>
+
+<pre>{
+  name:        <span class="s">"get_current_time"</span>,
+  description: <span class="s">"wall-clock time. use when reasoning depends on now."</span>,
+  input_schema: {
+    type: <span class="s">"object"</span>,
+    properties: {
+      timezone: { type: <span class="s">"string"</span>, description: <span class="s">"iana zone, e.g. America/Los_Angeles"</span> }
+    },
+    required: []
+  }
+}</pre>
+
+<p>the schema is plain json-schema. the model uses <em>description</em> heavily — write it for the model, not for you. say when to call it, not just what it does.</p>
+
+<h3>the loop</h3>
+
+<p>donna's loop, in five steps, all in <code>brain.ts</code>:</p>
+
+<div class="steps">
+  <div class="step-card"><span class="num">i</span><span class="name">buildPayload</span><span class="desc">system + tools + history + cache markers</span></div>
+  <div class="step-card"><span class="num">ii</span><span class="name">messages.create</span><span class="desc">the one network call</span></div>
+  <div class="step-card"><span class="num">iii</span><span class="name">filterAssistant</span><span class="desc">drop leaked text alongside tool_use</span></div>
+  <div class="step-card"><span class="num">iv</span><span class="name">dispatch</span><span class="desc">run handlers, build tool_result blocks</span></div>
+  <div class="step-card"><span class="num">v</span><span class="name">terminator?</span><span class="desc">yes → return. no → loop.</span></div>
+</div>
+
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant U as user
+  participant B as brain
+  participant C as claude
+  participant T as tools
+
+  U->>B: "what time is it in tokyo"
+  B->>C: messages + system + tools
+  C-->>B: tool_use: get_current_time({tz:"Asia/Tokyo"})
+  B->>T: dispatch
+  T-->>B: "23:14 JST"
+  B->>C: tool_result blocks (in a user msg)
+  C-->>B: tool_use: send_burst([{type:"text",text:"11:14pm in tokyo"}])
+  B->>T: dispatch (records bursts)
+  Note over B: terminator hit
+  B-->>U: bursts to channel
+</pre>
+</div>
+
+<h3>tool_choice — forcing the model's hand</h3>
+
+<table>
+  <tr><th>shape</th><th>behavior</th><th>when donna wants it</th></tr>
+  <tr><td><code>{ type: "auto" }</code></td><td>default. model decides.</td><td>every normal turn.</td></tr>
+  <tr><td><code>{ type: "any" }</code></td><td>must call some tool. cannot reply with plain text.</td><td>good guardrail when "every turn ends with send_burst" is non-negotiable.</td></tr>
+  <tr><td><code>{ type: "tool", name }</code></td><td>must call this specific tool.</td><td>specialist sub-agents — "you are the gmail summariser, your only output is <code>finalize</code>".</td></tr>
+  <tr><td><code>{ type: "none" }</code></td><td>cannot call any tool.</td><td>pure text generation modes. not a fit for donna today.</td></tr>
+</table>
+
+<h3>parallel tool calls</h3>
+
+<p>by default the model may emit multiple <code>tool_use</code> blocks in one response. donna runs them sequentially in <code>dispatchToolCalls</code> — fan-out parallelism belongs inside a dedicated sandbox tool, not the dispatch layer. set <code>disable_parallel_tool_use: true</code> inside <code>tool_choice</code> if a flow needs one at a time.</p>
+
+<h3>errors</h3>
+
+<p>when a handler throws, donna turns the throw into a <code>tool_result</code> with <code>is_error: true</code>. the model sees the failure and can adapt next iteration. don't surface errors to the user directly — let the model decide whether to retry, fall back, or admit defeat.</p>
+
+<pre>{
+  type: <span class="s">"tool_result"</span>,
+  tool_use_id: tu.id,
+  content: <span class="s">"gmail api: 429 rate limited, retry in 60s"</span>,
+  is_error: <span class="k">true</span>
+}</pre>
+
+<h3>terminators</h3>
+
+<p>donna's loop concept, not anthropic's. a terminator is a tool whose call ends the turn. <code>send_burst</code> is the only one today. the handler still runs (so the conversation is well-formed for next turn) and then <code>runTurn</code> returns. see <code>brain.ts:243</code>.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section class="dark">
+<h2 id="cache">8 · prompt caching</h2>
+
+<p class="thesis">
+the single biggest lever in the api. <em>mark a point in the request</em>, anthropic caches every byte up to it for ~5 minutes (or ~1 hour with a flag). first request pays a +25% write premium on those tokens. every subsequent request reads them back at 10% of input price.
+</p>
+
+<h3>how it works</h3>
+
+<p>you attach <code>cache_control: { type: "ephemeral" }</code> to any cacheable block — a <code>text</code> block in <code>system</code>, a <code>tool</code> definition, an early <code>text</code> in <code>messages</code>. anthropic walks the request from the start and hashes a key that includes <em>everything before that marker</em>. if the key exists in cache, the prefix is read; if not, it's written.</p>
+
+<h3>the rules</h3>
+
+<ul class="tight">
+  <li>up to <strong>four breakpoints</strong> per request. anthropic walks from the last back to the first looking for a hit, so you can layer them.</li>
+  <li>cached prefix must clear a model-specific floor or it silently won't cache: <strong>opus 4.7 / haiku 4.5: 4096 tokens</strong>; <strong>sonnet 4.6: 1024 tokens</strong>. shorter prefixes return zero in <code>cache_creation_input_tokens</code> — that's how you know it didn't take.</li>
+  <li>two ttls: <strong><code>"5m"</code> (default)</strong> at +25% write premium, <strong><code>"1h"</code></strong> at +100% (2×). reads are <strong>0.1×</strong> input price either way. specify with <code>cache_control: { type: "ephemeral", ttl: "1h" }</code>.</li>
+  <li>mixing ttls in one request is allowed, but <strong>1h breakpoints must appear before 5m breakpoints</strong>.</li>
+  <li>the cached prefix must be <em>byte-identical</em>. one character drift and you wrote a new cache.</li>
+  <li>only the prefix is cached. anything after the last breakpoint is fresh every time.</li>
+  <li>caches are <strong>workspace-scoped</strong> on the claude api (since feb 2026). org-level isolation on bedrock / vertex.</li>
+</ul>
+
+<h3>two ways to mark</h3>
+
+<p><strong>manual:</strong> attach <code>cache_control: { type: "ephemeral" }</code> to specific blocks. this is what donna does — the last tool definition carries the marker.</p>
+
+<p><strong>automatic:</strong> pass <code>cache_control: { type: "ephemeral" }</code> at the top level of <code>messages.create</code>. anthropic places the breakpoint on the last cacheable block for you and moves it forward as the conversation grows. costs one of the four slots. useful for chat-shaped workloads where the right spot to mark drifts each turn.</p>
+
+<h3>pre-warming</h3>
+
+<p>send a request with <code>max_tokens: 0</code> to load a prompt into cache without generating any completion. you pay only the write premium on the cached tokens; the response is empty with <code>stop_reason: "max_tokens"</code>. useful before a known burst of traffic — for donna, the first turn of a session pays the cache-write fee whether we want it to or not, so pre-warming buys nothing today.</p>
+
+<h3>donna today</h3>
+
+<p>in <code>brain.ts:buildPayload</code> we mark the <em>last tool definition</em> with <code>cache_control: ephemeral</code>. the breakpoint sits after all tool definitions, so anthropic caches the system prompt plus every tool. iteration 0 of a turn pays the +25% on those tokens, iterations 1-9 of the same turn — and every turn within ~5 minutes — read them back at 10%.</p>
+
+<pre><span class="c">// brain.ts</span>
+<span class="k">const</span> tools = [
+  ...agent.tools.slice(<span class="n">0</span>, -<span class="n">1</span>),
+  { ...agent.tools.at(-<span class="n">1</span>)!, cache_control: { type: <span class="s">"ephemeral"</span> } }
+];</pre>
+
+<p>we deliberately don't cache <code>messages</code>: it grows each iteration, so the breakpoint would move and the +25% write would never amortise.</p>
+
+<h3>where to add breakpoints next</h3>
+
+<table>
+  <tr><th>candidate</th><th>shape</th><th>payoff</th></tr>
+  <tr><td><strong>system prompt</strong></td><td>split into <code>[static_voice, dynamic_living_profile]</code>, mark the first with cache_control.</td><td>identical static text across users; high hit rate.</td></tr>
+  <tr><td><strong>living profile</strong></td><td>once it stabilises, treat as static-per-day. cache for the 1h ttl.</td><td>frequent reads, infrequent writes — the textbook caching shape.</td></tr>
+  <tr><td><strong>conversation history</strong></td><td>mark the last <em>user</em> message in long threads. only viable when history isn't being mutated.</td><td>1m-context turns: the prompt fee gets unbearable without this.</td></tr>
+</table>
+
+<div class="aside">
+  <strong>reading hit rate.</strong> the response's <code>usage</code> exposes <code>cache_creation_input_tokens</code> (paid 1.25×) and <code>cache_read_input_tokens</code> (paid 0.1×). divide reads by total input tokens to see hit rate. langsmith surfaces this per call.
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="stream">9 · streaming</h2>
+
+<p>same payload, different transport. instead of waiting for the whole response, you get server-sent events as the model writes. one call:</p>
+
+<pre><span class="k">const</span> stream = client.messages.stream({
+  model: <span class="s">"claude-sonnet-4-6"</span>,
+  max_tokens: <span class="n">1024</span>,
+  system: <span class="s">"you are donna."</span>,
+  messages: [...]
+});
+
+<span class="k">for await</span> (<span class="k">const</span> event <span class="k">of</span> stream) {
+  <span class="k">if</span> (event.type === <span class="s">"content_block_delta"</span> && event.delta.type === <span class="s">"text_delta"</span>) {
+    process.stdout.write(event.delta.text);
+  }
+}
+
+<span class="k">const</span> finalMessage = <span class="k">await</span> stream.finalMessage();</pre>
+
+<h3>the event types</h3>
+
+<table>
+  <tr><th>event</th><th>fires when</th></tr>
+  <tr><td><code>message_start</code></td><td>once at the top. carries the initial <code>Message</code> stub with model, id, empty content.</td></tr>
+  <tr><td><code>content_block_start</code></td><td>each new block opens. index + block stub.</td></tr>
+  <tr><td><code>content_block_delta</code></td><td>repeated. <code>text_delta</code> for text, <code>input_json_delta</code> for tool_use args streaming as partial json, <code>thinking_delta</code> for thinking.</td></tr>
+  <tr><td><code>content_block_stop</code></td><td>block closes.</td></tr>
+  <tr><td><code>message_delta</code></td><td><code>stop_reason</code> and final <code>usage</code>.</td></tr>
+  <tr><td><code>message_stop</code></td><td>the end.</td></tr>
+</table>
+
+<h3>when donna needs streaming</h3>
+
+<ul class="tight">
+  <li><strong>voice.</strong> tts wants tokens as fast as possible. the moment a sentence boundary is in the buffer, send it downstream.</li>
+  <li><strong>typing indicator.</strong> if she's writing a long burst, mobile/whatsapp can show "donna is typing…" until the first delta lands.</li>
+  <li><strong>cancellable thinking.</strong> user changes their mind mid-stream — abort the request without paying for completion you discard.</li>
+</ul>
+
+<p>for the cli loop today, non-streaming is the right call. streaming complicates tool dispatch (you'd need to wait for <code>content_block_stop</code> on a tool_use anyway). add it when the surface demands it, not before.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="thinking">10 · extended thinking</h2>
+
+<p>set <code>thinking: { type: "enabled", budget_tokens: 4096 }</code> and the model is allowed to spend up to that many tokens on private reasoning before writing the user-visible response. the reasoning comes back as <code>thinking</code> content blocks (with cryptographic signatures) interleaved with normal text and tool_use.</p>
+
+<h3>the rules</h3>
+
+<ul class="tight">
+  <li><code>budget_tokens</code> must be at least <strong>1024</strong>, and strictly less than <code>max_tokens</code>.</li>
+  <li>thinking blocks carry a <code>signature</code> field. when feeding history back you must include the block <em>with its signature unchanged</em>, or the api errors.</li>
+  <li><code>temperature</code> is forced to 1 when thinking is enabled. don't try to set it.</li>
+  <li>with the <code>interleaved-thinking-2025-05-14</code> beta, thinking blocks may appear <em>between</em> tool_use calls within one response — useful for multi-step reasoning that needs intermediate tool checks.</li>
+  <li>thinking tokens are billed as output tokens. budget accordingly.</li>
+</ul>
+
+<h3>when to enable</h3>
+
+<p>not by default. donna's chat-shaped turns don't need it. reach for thinking when:</p>
+
+<ul class="tight">
+  <li>the executor is planning a multi-day flow with branching depends-on-result logic</li>
+  <li>the overnight reflection pass is synthesising the day — "what changed, what to surface tomorrow"</li>
+  <li>a sub-agent has to choose between many specialists and needs to weigh tradeoffs</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="vision">11 · vision</h2>
+
+<p>image blocks go in user messages. two sources, same shape on the wire:</p>
+
+<pre>{
+  type: <span class="s">"image"</span>,
+  source: {
+    type: <span class="s">"url"</span>,
+    url:  <span class="s">"https://example.com/receipt.jpg"</span>
+  }
+}
+
+<span class="c">// or base64:</span>
+{
+  type: <span class="s">"image"</span>,
+  source: {
+    type: <span class="s">"base64"</span>,
+    media_type: <span class="s">"image/jpeg"</span>,         <span class="c">// jpeg, png, gif, webp</span>
+    data: <span class="s">"&lt;base64 string&gt;"</span>
+  }
+}</pre>
+
+<h3>donna cases</h3>
+
+<ul class="tight">
+  <li>"here's the menu, what should i get" — photo from imessage / whatsapp</li>
+  <li>"log this receipt" — expense capture</li>
+  <li>"check this screenshot of the calendar invite" — context capture</li>
+</ul>
+
+<p>multiple images per message is fine — pass several blocks. anthropic resizes anything over the limits transparently. the model's image-token cost is computed from the resized dimensions; rough rule of thumb is ~1.6k tokens per image at typical phone sizes.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="documents">12 · documents &amp; files</h2>
+
+<p>two flavours: pdfs inline, and the files api for reuse.</p>
+
+<h3>inline pdf</h3>
+
+<pre>{
+  type: <span class="s">"document"</span>,
+  source: {
+    type: <span class="s">"base64"</span>,
+    media_type: <span class="s">"application/pdf"</span>,
+    data: <span class="s">"&lt;base64 pdf&gt;"</span>
+  },
+  title: <span class="s">"Q4 statement"</span>,                   <span class="c">// optional, helps citations</span>
+  context: <span class="s">"bank statement from chase"</span>,    <span class="c">// optional, helps the model</span>
+  citations: { enabled: <span class="k">true</span> }                <span class="c">// see next section</span>
+}</pre>
+
+<h3>plain text document</h3>
+
+<pre>{
+  type: <span class="s">"document"</span>,
+  source: { type: <span class="s">"text"</span>, media_type: <span class="s">"text/plain"</span>, data: <span class="s">"..."</span> },
+  citations: { enabled: <span class="k">true</span> }
+}</pre>
+
+<h3>the files api</h3>
+
+<p>upload once, reference by id forever. the right shape any time donna sees the same file more than once: a journal pdf, a recurring statement, a long thread export, a dataset the code-execution sandbox will chew on.</p>
+
+<p>still beta. every files-api call needs the header:</p>
+
+<pre>anthropic-beta: files-api-2025-04-14</pre>
+
+<p>or in the typescript sdk, the same header is added automatically when you call <code>client.beta.files.*</code> and pass <code>betas: ["files-api-2025-04-14"]</code> on any messages request that references a <code>file_id</code>.</p>
+
+<h4>upload</h4>
+
+<pre><span class="k">import</span> { toFile } <span class="k">from</span> <span class="s">"@anthropic-ai/sdk"</span>;
+
+<span class="k">const</span> uploaded = <span class="k">await</span> client.beta.files.upload({
+  file: <span class="k">await</span> toFile(
+    fs.createReadStream(<span class="s">"./journal.pdf"</span>),
+    <span class="k">undefined</span>,
+    { type: <span class="s">"application/pdf"</span> }
+  ),
+});
+
+<span class="c">// uploaded = {
+//   id: "file_011CNha8iCJcU1wXNR6q4V8w",
+//   type: "file",
+//   filename: "journal.pdf",
+//   mime_type: "application/pdf",
+//   size_bytes: 1024000,
+//   created_at: "2026-05-22T...",
+//   downloadable: false
+// }</span></pre>
+
+<h4>reference in a message</h4>
+
+<pre><span class="k">const</span> response = <span class="k">await</span> client.beta.messages.create({
+  model: <span class="s">"claude-opus-4-7"</span>,
+  max_tokens: <span class="n">1024</span>,
+  betas: [<span class="s">"files-api-2025-04-14"</span>],
+  messages: [{
+    role: <span class="s">"user"</span>,
+    content: [
+      { type: <span class="s">"text"</span>, text: <span class="s">"summarize last quarter from this."</span> },
+      { type: <span class="s">"document"</span>, source: { type: <span class="s">"file"</span>, file_id: uploaded.id } }
+    ]
+  }]
+});</pre>
+
+<h4>what shape each filetype gets</h4>
+
+<table>
+  <tr><th>file type</th><th>mime</th><th>content block</th><th>good for</th></tr>
+  <tr><td>pdf</td><td><code>application/pdf</code></td><td><code>document</code></td><td>statements, receipts, contracts, the journal export. supports citations.</td></tr>
+  <tr><td>plain text</td><td><code>text/plain</code></td><td><code>document</code></td><td>large text dumps where you want citations.</td></tr>
+  <tr><td>images</td><td><code>image/jpeg / png / gif / webp</code></td><td><code>image</code></td><td>menu photos, screenshots, receipts as pictures.</td></tr>
+  <tr><td>datasets, csv, parquet, xlsx, docx, …</td><td>varies</td><td><code>container_upload</code></td><td>only inside the code-execution sandbox. claude reads them as code, not as model context.</td></tr>
+</table>
+
+<div class="aside">
+  <strong>csv / docx / xlsx don't ride as <code>document</code> blocks directly.</strong> two options: (1) convert to plaintext on your side and inline it as a <code>text</code> block, or (2) upload as a file and use it inside <code>code_execution</code> via a <code>container_upload</code> block — the sandbox can pandas/openpyxl it.
+</div>
+
+<h4>the rest of the surface</h4>
+
+<div class="kvgrid">
+  <dt>list</dt>
+  <dd><code>await client.beta.files.list()</code> — paginated listing of every file in the workspace.</dd>
+  <dt>retrieveMetadata</dt>
+  <dd><code>await client.beta.files.retrieveMetadata(file_id)</code> — just the metadata, not the bytes.</dd>
+  <dt>delete</dt>
+  <dd><code>await client.beta.files.delete(file_id)</code> — gone. cannot be recovered. may still appear briefly in in-flight requests that already had the id.</dd>
+  <dt>download</dt>
+  <dd><code>await client.beta.files.download(file_id)</code> — <strong>only for files the model created</strong> (skills output, code_execution charts/csvs). you cannot download anything you uploaded.</dd>
+</div>
+
+<h4>limits and pricing</h4>
+
+<ul class="tight">
+  <li><strong>500 mb per file</strong>, <strong>500 gb per organization</strong> total.</li>
+  <li><strong>~100 rpm</strong> on file ops during beta. ask for more if you need it.</li>
+  <li>file operations themselves are <strong>free</strong>: upload, download, list, delete, metadata.</li>
+  <li>you pay normal input-token rates when content is loaded into a <code>messages</code> call.</li>
+  <li>files are <strong>workspace-scoped</strong>: every api key in the same workspace can see the same files. persist until deleted.</li>
+  <li>files api is <strong>not zdr-eligible</strong>. if zdr is a hard constraint for any user data, the inline-base64 path is the safer one.</li>
+</ul>
+
+<h4>where donna wants this</h4>
+
+<table>
+  <tr><th>case</th><th>why files api wins over inline base64</th></tr>
+  <tr><td><strong>recurring statements / bills</strong></td><td>same pdf gets referenced over weeks. upload once on first arrival, reference by id every time the user asks "how much did i spend at blue bottle this month".</td></tr>
+  <tr><td><strong>the long-form journal</strong></td><td>the export grows monthly. upload the latest, reference it across many turns, delete the older snapshot.</td></tr>
+  <tr><td><strong>code execution dataset analyses</strong></td><td><code>container_upload</code> only works through the files api. mandatory for any "load this csv into pandas" flow.</td></tr>
+  <tr><td><strong>shared docs the user explicitly drops in</strong></td><td>onboarding form, contract, lease. donna keeps the id and recalls "you sent me your lease in march, the rent is $4200" without re-uploading.</td></tr>
+  <tr><td><strong>artefacts donna produces</strong></td><td>any chart, csv, or summary the code-execution sandbox generates lands as a downloadable file. the mobile app can render it directly via the same id.</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="citations">13 · citations</h2>
+
+<p>enable on a <code>document</code> block and the model returns a <code>citations</code> array on each text block it produces, pointing at the chunks of the source it relied on. you get verifiable grounding for free — no extra prompting, no chain-of-cite.</p>
+
+<pre>{
+  type: <span class="s">"text"</span>,
+  text: <span class="s">"the charge on the 14th was at blue bottle for $6.50."</span>,
+  citations: [
+    {
+      type: <span class="s">"char_location"</span>,
+      document_index: <span class="n">0</span>,
+      document_title: <span class="s">"Q4 statement"</span>,
+      start_char_index: <span class="n">1240</span>,
+      end_char_index: <span class="n">1290</span>,
+      cited_text: <span class="s">"2026-01-14 BLUE BOTTLE COFFEE $6.50"</span>
+    }
+  ]
+}</pre>
+
+<p>for donna: when she answers a question grounded in a doc the user shared, the cited spans are how we link back to the original in the dashboard. "here's where i got that." no hallucination story to spin.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="server-tools">14 · server tools</h2>
+
+<p>tools anthropic runs <em>for you</em>, server-side, between turns. they appear in the request like normal tools but you don't dispatch them — they're already executed by the time the response lands. relevant ones:</p>
+
+<h3>code execution</h3>
+
+<p>two versions in the wild:</p>
+
+<table>
+  <tr><th>version</th><th>capability</th><th>model support</th></tr>
+  <tr><td><code>code_execution_20250825</code></td><td>bash + python + file ops. fresh sandbox per turn.</td><td>every current model, incl. haiku 4.5.</td></tr>
+  <tr><td><code>code_execution_20260120</code></td><td>adds <strong>repl state persistence</strong> across turns and <strong>programmatic tool calling</strong> (the sandbox calls other tools).</td><td>opus 4.5+ and sonnet 4.5+ only. <em>not</em> haiku.</td></tr>
+</table>
+
+<pre>tools: [
+  { type: <span class="s">"code_execution_20260120"</span>, name: <span class="s">"code_execution"</span> }
+]</pre>
+
+<p>gives the model a sandboxed python + bash environment with <code>numpy / pandas / matplotlib / scikit-learn</code> and friends. it writes code, the server runs it, results come back as content blocks. paired with the files api (same beta header), the sandbox reads files we uploaded and emits charts / csvs we can download.</p>
+
+<div class="aside">
+  <strong>free when bundled.</strong> if a request also includes <code>web_search_20260209</code> or <code>web_fetch_20260209</code>, code_execution tool calls are free — only standard input/output tokens are billed. that turns "search the web, then post-process with code" into the cheapest shape for any data-heavy answer.
+</div>
+
+<p>donna case: "summarise my spend last quarter from this csv", "plot my sleep against caffeine for the last 30 days", "extract a calorie total from these receipt photos". with <code>20260120</code> the same sandbox can persist between turns, so a "now also break it down by week" follow-up doesn't rebuild the dataframe from scratch.</p>
+
+<h3>web search</h3>
+
+<table>
+  <tr><th>version</th><th>capability</th></tr>
+  <tr><td><code>web_search_20250305</code></td><td>basic web search. results come back as <code>web_search_tool_result</code> blocks with citations.</td></tr>
+  <tr><td><code>web_search_20260209</code></td><td>adds <strong>dynamic filtering</strong>: claude writes code (via code_execution) to filter results before they enter context. fewer tokens, sharper answers. opus 4.6+, sonnet 4.6+.</td></tr>
+</table>
+
+<pre>tools: [
+  {
+    type: <span class="s">"web_search_20260209"</span>,
+    name: <span class="s">"web_search"</span>,
+    max_uses: <span class="n">3</span>,
+    allowed_domains: [<span class="s">"news.ycombinator.com"</span>],   <span class="c">// optional whitelist</span>
+    user_location: {                          <span class="c">// optional localisation</span>
+      type: <span class="s">"approximate"</span>,
+      city: <span class="s">"San Francisco"</span>,
+      region: <span class="s">"California"</span>,
+      country: <span class="s">"US"</span>,
+      timezone: <span class="s">"America/Los_Angeles"</span>
+    }
+  }
+]</pre>
+
+<p><strong>pricing:</strong> $10 per 1000 searches plus normal token costs. errors (rate limit, max_uses exceeded) don't bill. results carry an <code>encrypted_content</code> field that must round-trip in multi-turn conversations or citations stop working.</p>
+
+<p>expect <code>stop_reason: "pause_turn"</code> partway through long search chains — feed the same message right back unchanged to resume.</p>
+
+<h3>web fetch</h3>
+
+<p><code>web_fetch_20260209</code> — give claude a url and she fetches and reads it. complements web search when the user pastes a link rather than asking a question. same billing shape, same pause_turn behaviour.</p>
+
+<h3>bash (client-side)</h3>
+
+<p><code>bash_20250124</code>. <em>not</em> a server tool despite the name — the model emits <code>{ command }</code> and your handler runs the shell. you provision, isolate, allowlist, ulimit, sanitise. anthropic just owns the protocol.</p>
+
+<pre>tools: [
+  { type: <span class="s">"bash_20250124"</span>, name: <span class="s">"bash"</span> }   <span class="c">// schema-less, the model knows the shape</span>
+]
+
+<span class="c">// model emits one of:</span>
+{ command: <span class="s">"ls -la *.py"</span> }
+{ restart: <span class="k">true</span> }                          <span class="c">// reset the session</span></pre>
+
+<p>pricing: <strong>+245 input tokens</strong> per call for the tool definition, plus normal token cost on whatever stdout/stderr you return. session state is your responsibility — keep a long-lived bash subprocess per agent thread, or spin one up per turn.</p>
+
+<div class="aside">
+  <strong>most bash-shaped urges are actually code_execution-shaped.</strong> <code>code_execution_20250825</code> already contains bash + python in an anthropic-hosted sandbox. when the question is "she needs to run a thing," that sandbox is almost always the right answer — anthropic owns the container, files api plugs in, no security on us. reach for the <em>real</em> bash tool only when you genuinely need our env vars, our network, or a file on our disk to persist between turns.
+</div>
+
+<h4>where donna might want it</h4>
+
+<ul class="tight">
+  <li><strong>media pipelines.</strong> ffmpeg on inbound voice memos before whisper, imagemagick resize on receipts before vision. but build these as <em>named</em> tools (<code>transcribe_audio</code>, <code>normalise_image</code>), not a general shell. the verb being explicit is the whole product.</li>
+  <li><strong>the executor sub-agent.</strong> if donna ever has an agent that runs ops — restart a worker, run a migration, kick a cron — bash is the primitive. developer-facing surface, not the user-facing donna.</li>
+</ul>
+
+<h3>text editor (client-side)</h3>
+
+<p><code>text_editor_20250728</code> and <code>text_editor_20241022</code>. sibling of bash: claude emits commands like <code>view</code>, <code>create</code>, <code>str_replace</code>, <code>insert</code> on file paths and your handler executes them. the memory tool reuses this exact protocol, scoped to <code>/memories</code>. for donna outside the memory case, no current need.</p>
+
+<h3>computer use</h3>
+
+<p>not a server tool — a regular client-side tool with three commands (<code>screenshot</code>, <code>mouse</code>, <code>keyboard</code>) that lets the model drive a desktop. you supply the desktop. typically that's a docker container running a virtual display (xvfb + the anthropic reference image) that you ssh / vnc into.</p>
+
+<p><em>not on donna's roadmap.</em> she doesn't need a desktop — every action she'd take has a real api behind it (gmail, calendar, plaid). computer use earns its keep when you have to drive a system that has <em>no</em> api: legacy enterprise apps, brittle web ui, things you'd otherwise scrape.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section class="dark">
+<h2 id="memory">15 · the memory tool</h2>
+
+<p class="thesis">
+the anthropic memory tool is a <em>protocol, not a store</em>. claude makes filesystem-shaped tool calls — <em>view, create, str_replace, insert, delete, rename</em> on a <code>/memories</code> directory — and your handler is what actually reads and writes the bytes. anthropic ships the contract; you ship the persistence.
+</p>
+
+<h3>shape</h3>
+
+<pre>tools: [
+  { type: <span class="s">"memory_20250818"</span>, name: <span class="s">"memory"</span> }
+]</pre>
+
+<p>that's it for the tool decl. the operations claude can call:</p>
+
+<table>
+  <tr><th>command</th><th>input</th><th>your handler returns</th></tr>
+  <tr><td><code>view</code></td><td><code>{ path, view_range? }</code></td><td>directory listing or file contents with line numbers (specific format the prompt expects).</td></tr>
+  <tr><td><code>create</code></td><td><code>{ path, file_text }</code></td><td>persist the file. error if it exists.</td></tr>
+  <tr><td><code>str_replace</code></td><td><code>{ path, old_str, new_str }</code></td><td>find/replace exactly once. error on no-match or multi-match.</td></tr>
+  <tr><td><code>insert</code></td><td><code>{ path, insert_line, insert_text }</code></td><td>splice text after the given line.</td></tr>
+  <tr><td><code>delete</code></td><td><code>{ path }</code></td><td>remove file or directory recursively.</td></tr>
+  <tr><td><code>rename</code></td><td><code>{ old_path, new_path }</code></td><td>move within <code>/memories</code>.</td></tr>
+</table>
+
+<h3>auto-included prompt</h3>
+
+<p>enabling the tool causes anthropic to prepend this to the system prompt automatically (you don't write it):</p>
+
+<pre><span class="c">// auto-prepended:</span>
+<span class="s">IMPORTANT: ALWAYS VIEW YOUR MEMORY DIRECTORY BEFORE DOING ANYTHING ELSE.
+MEMORY PROTOCOL:
+1. Use the `view` command of your `memory` tool to check for earlier progress.
+2. ... (work on the task) ...
+   - As you make progress, record status / progress / thoughts etc in your memory.
+ASSUME INTERRUPTION: Your context window might be reset at any moment ...</span></pre>
+
+<p>so on every turn where memory is in the tool list, the first tool_use you'll see is almost always <code>memory.view("/memories")</code>. budget the iteration count accordingly.</p>
+
+<h3>the rules you have to obey</h3>
+
+<ul class="tight">
+  <li>restrict all paths to <code>/memories</code>. validate every input against directory-traversal (<code>../</code>, url-encoded <code>%2e%2e</code>, canonicalised symlinks). claude is not the threat model — bad user input riding in via tool args is.</li>
+  <li>return error strings in the exact shape the protocol expects (<code>"Error: The path {path} does not exist"</code>, etc.) so claude can interpret failures and recover.</li>
+  <li>cap response size: a huge file return blows the context window. paginate via <code>view_range</code> when files get long.</li>
+  <li>pairs natively with <code>context_management</code> (next section) and server-side <code>compaction</code> — use <code>exclude_tools: ["memory"]</code> so compaction never elides memory writes.</li>
+</ul>
+
+<h3>donna's stance</h3>
+
+<p>we own the memory layer. the anthropic memory tool is the cleanest interface to it — claude already knows how to use this protocol, the sdk ships <code>BetaAbstractMemoryTool</code> / <code>betaMemoryTool</code> helpers to swap in our backend, and the auto-prompt does the "check memory first" work for free. what sits behind it is ours: pgvector for episodic facts, a structured living profile, a thread log. see <code>[[feedback_donna_memory_own_layer]]</code> — no mem0, no supermemory, we build it.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="context-mgmt">16 · context management</h2>
+
+<p>the request-level <code>context_management</code> field lets anthropic prune the conversation on the server side as it grows, without you having to roll a compaction loop yourself.</p>
+
+<pre>context_management: {
+  edits: [{
+    type: <span class="s">"clear_tool_uses_20250919"</span>,
+    trigger: { type: <span class="s">"input_tokens"</span>, value: <span class="n">50000</span> },
+    keep:    { type: <span class="s">"tool_uses"</span>, value: <span class="n">5</span> },     <span class="c">// keep the last 5 tool exchanges</span>
+    clear_at_least: { type: <span class="s">"input_tokens"</span>, value: <span class="n">10000</span> },
+    exclude_tools: [<span class="s">"memory"</span>]                       <span class="c">// never prune memory writes</span>
+  }]
+}</pre>
+
+<p>what it actually does: when the request crosses the trigger threshold, anthropic replaces old <code>tool_use</code> / <code>tool_result</code> pairs with stub placeholders that say "n results elided" — keeping the most recent ones intact. the model still sees the conversational arc; it just doesn't see the bytes of an inbox dump from 40 turns ago.</p>
+
+<p>for donna: enable this the moment we start hooking up real integrations. gmail and calendar dumps inflate tool_results fast; without compaction every turn pays for the whole history.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="batches">17 · batches</h2>
+
+<p>same request shape, fire-and-forget, ~50% off list, up to 24h sla:</p>
+
+<pre><span class="k">const</span> batch = <span class="k">await</span> client.messages.batches.create({
+  requests: [
+    {
+      custom_id: <span class="s">"reflect-2026-05-22-user-001"</span>,
+      params: {
+        model: <span class="s">"claude-opus-4-7"</span>,
+        max_tokens: <span class="n">4096</span>,
+        system: REFLECTION_PROMPT,
+        messages: [...]
+      }
+    },
+    <span class="c">// up to 100k requests per batch</span>
+  ]
+});
+
+<span class="c">// later:</span>
+<span class="k">const</span> status = <span class="k">await</span> client.messages.batches.retrieve(batch.id);
+<span class="k">if</span> (status.processing_status === <span class="s">"ended"</span>) {
+  <span class="k">const</span> results = client.messages.batches.results(batch.id);  <span class="c">// jsonl stream</span>
+  <span class="k">for await</span> (<span class="k">const</span> r <span class="k">of</span> results) { ... }
+}</pre>
+
+<h3>donna's batch shape</h3>
+
+<ul class="tight">
+  <li><strong>overnight reflection.</strong> at 3am, one batch with one request per user — opus reads the day's events, writes tomorrow's surface.</li>
+  <li><strong>retro indexing.</strong> when a new integration goes live for an existing user, batch-process the historical backfill instead of streaming.</li>
+  <li><strong>evals.</strong> a single batch can run a thousand prompt variations against held-out conversations.</li>
+</ul>
+
+<p>not for: anything interactive. anything where the user is waiting.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="counting">18 · token counting</h2>
+
+<p>before sending a fat request, ask how fat it is:</p>
+
+<pre><span class="k">const</span> count = <span class="k">await</span> client.messages.countTokens({
+  model:    <span class="s">"claude-sonnet-4-6"</span>,
+  system:   SYSTEM_PROMPT,
+  tools:    sdk_tools,
+  messages: convo
+});
+
+console.log(count.input_tokens);  <span class="c">// e.g. 4231</span></pre>
+
+<p>same accuracy as the real call, no completion cost. use it to:</p>
+
+<ul class="tight">
+  <li>decide whether to compact before sending (the brain could check before every <code>create</code> if we wanted)</li>
+  <li>cost-attribute proactive runs in the ledger before they hit the wire</li>
+  <li>gate context windows — refuse to send a 1m-context request unless the cheaper sonnet path was tried first</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="errors">19 · errors &amp; retries</h2>
+
+<p>the sdk throws typed errors. the ones donna will see:</p>
+
+<table>
+  <tr><th>error</th><th>cause</th><th>strategy</th></tr>
+  <tr><td><code>400 invalid_request_error</code></td><td>malformed payload — usually a broken tool_use/tool_result pair, or a non-alternating messages array.</td><td>do not retry. fix the request. log the payload.</td></tr>
+  <tr><td><code>401 authentication_error</code></td><td>bad api key.</td><td>do not retry.</td></tr>
+  <tr><td><code>403 permission_error</code></td><td>workspace doesn't have access to a model / beta.</td><td>do not retry.</td></tr>
+  <tr><td><code>404 not_found_error</code></td><td>model id wrong, or file_id stale.</td><td>do not retry.</td></tr>
+  <tr><td><code>413 request_too_large</code></td><td>over 32mb upload, or context overflow.</td><td>compact / split. do not retry.</td></tr>
+  <tr><td><code>429 rate_limit_error</code></td><td>over your tpm/rpm.</td><td>retry with exponential backoff. sdk does this by default up to 2 retries; configurable.</td></tr>
+  <tr><td><code>500 api_error</code></td><td>anthropic-side bug.</td><td>retry with backoff.</td></tr>
+  <tr><td><code>529 overloaded_error</code></td><td>anthropic capacity event.</td><td>retry with backoff, longer initial delay (5-10s).</td></tr>
+</table>
+
+<h3>sdk retry config</h3>
+
+<pre><span class="k">const</span> client = <span class="k">new</span> Anthropic({
+  maxRetries: <span class="n">3</span>,                <span class="c">// default 2</span>
+  timeout:    <span class="n">10</span> * <span class="n">60</span> * <span class="n">1000</span>,    <span class="c">// 10 min — long thinking budgets need long timeouts</span>
+});</pre>
+
+<p>donna today runs sdk defaults. the moment we have proactive runs from cron, we'll want explicit retry policies — proactive failures should fall to a backoff queue, not consume the user's turn budget.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="observability">20 · observability</h2>
+
+<p>two layers, both live in donna today.</p>
+
+<h3>langsmith</h3>
+
+<p><code>wrapAnthropic(client)</code> from <code>langsmith/wrappers/anthropic</code> adds a span per <code>messages.create</code>. it's a no-op when <code>LANGSMITH_TRACING</code> is unset. when set, every request — payload, response, usage, latency — is traceable in the langsmith ui.</p>
+
+<p>around it, <code>traceable</code> from <code>langsmith/traceable</code> wraps <code>runTurn</code> as the parent span and each tool handler as a child span. the trace tree mirrors the call tree.</p>
+
+<pre><span class="k">const</span> client = wrapAnthropic(<span class="k">new</span> Anthropic());
+<span class="k">export const</span> runTurn = traceable(_runTurn, { name: <span class="s">"donna.runTurn"</span>, run_type: <span class="s">"chain"</span> });
+
+<span class="c">// per turn, stamp identity onto the parent trace metadata:</span>
+tree.extra.metadata = { run_id, user_id, thread_id };</pre>
+
+<h3>the ledger</h3>
+
+<p><code>src/donna/ledger.ts</code> is donna's own structured log: one row per <code>modelCallStart</code>, <code>modelCallEnd</code>, <code>toolCalls</code>, <code>finish</code>, all keyed by <code>runId</code>. the ledger and the langsmith trace are cross-referenceable by that id. when something goes wrong you can grep the ledger by runId and replay the exact payload sent to anthropic.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="donna-today">21 · what donna runs today</h2>
+
+<div class="ladder">
+  <div class="rung">
+    <div class="name">messages.create</div>
+    <div class="what">the one network call. <code>brain.ts:209</code>. blocking, non-streaming, one call per loop iteration.</div>
+    <div class="status"><span class="pill live">live</span></div>
+  </div>
+  <div class="rung">
+    <div class="name">claude-sonnet-4-6</div>
+    <div class="what">default model for the voice loop. <code>DEFAULT_MODEL</code> in <code>brain.ts</code>.</div>
+    <div class="status"><span class="pill live">live</span></div>
+  </div>
+  <div class="rung">
+    <div class="name">tool use</div>
+    <div class="what">five tools registered: <code>get_current_time</code>, <code>create_trigger</code>, <code>list_triggers</code>, <code>cancel_trigger</code>, <code>send_burst</code>. one terminator. <code>tools/index.ts</code>.</div>
+    <div class="status"><span class="pill live">live</span></div>
+  </div>
+  <div class="rung">
+    <div class="name">prompt caching</div>
+    <div class="what">cache_control breakpoint on the last tool definition. system + all tools cached. <code>brain.ts:82</code>.</div>
+    <div class="status"><span class="pill live">live</span></div>
+  </div>
+  <div class="rung">
+    <div class="name">wrapAnthropic + traceable</div>
+    <div class="what">langsmith tracing around the client and the run loop. inert when env var is unset.</div>
+    <div class="status"><span class="pill live">live</span></div>
+  </div>
+  <div class="rung">
+    <div class="name">streaming</div>
+    <div class="what">not wired. the moment voice-call or typing indicators land, swap <code>messages.create</code> for <code>messages.stream</code> in <code>brain.ts</code>.</div>
+    <div class="status"><span class="pill next">next</span></div>
+  </div>
+  <div class="rung">
+    <div class="name">vision &amp; documents</div>
+    <div class="what">no image / document blocks yet. mobile ingress will be the first surface that needs them.</div>
+    <div class="status"><span class="pill next">next</span></div>
+  </div>
+  <div class="rung">
+    <div class="name">system prompt caching</div>
+    <div class="what">single string today. split into static + dynamic the moment a living profile lands.</div>
+    <div class="status"><span class="pill next">next</span></div>
+  </div>
+  <div class="rung">
+    <div class="name">context_management</div>
+    <div class="what">enable on the brain once integrations land. gmail/calendar dumps will push history fast.</div>
+    <div class="status"><span class="pill next">next</span></div>
+  </div>
+  <div class="rung">
+    <div class="name">memory tool</div>
+    <div class="what">anthropic memory interface, donna-owned backing store (pgvector + structured profile).</div>
+    <div class="status"><span class="pill next">next</span></div>
+  </div>
+  <div class="rung">
+    <div class="name">extended thinking</div>
+    <div class="what">opus + thinking budget for the executor agent and the overnight reflection pass.</div>
+    <div class="status"><span class="pill later">later</span></div>
+  </div>
+  <div class="rung">
+    <div class="name">batches</div>
+    <div class="what">overnight reflection job — one request per user, opus, ~3am cron.</div>
+    <div class="status"><span class="pill later">later</span></div>
+  </div>
+  <div class="rung">
+    <div class="name">files api</div>
+    <div class="what">beta header <code>files-api-2025-04-14</code>. uploads land via <code>client.beta.files.upload</code>; referenced by <code>file_id</code>. needed for code_execution and any recurring document the user shares.</div>
+    <div class="status"><span class="pill later">later</span></div>
+  </div>
+  <div class="rung">
+    <div class="name">code execution</div>
+    <div class="what"><code>code_execution_20260120</code> with repl state persistence on sonnet 4.6+. for nutrition / spend / sleep aggregates and chart generation.</div>
+    <div class="status"><span class="pill later">later</span></div>
+  </div>
+  <div class="rung">
+    <div class="name">web search</div>
+    <div class="what"><code>web_search_20260209</code> + dynamic filtering. code_execution becomes free when bundled. for "what's the weather", "is this restaurant open".</div>
+    <div class="status"><span class="pill later">later</span></div>
+  </div>
+  <div class="rung">
+    <div class="name">1m context</div>
+    <div class="what">opus 4.7 with the long-context beta. only when we genuinely need it; default is sonnet at normal context.</div>
+    <div class="status"><span class="pill later">later</span></div>
+  </div>
+</div>
+
+<h3>the discipline</h3>
+
+<p>everything on this page is one of two things: <em>a lever we already pull</em>, or <em>a lever we know we'll pull when the surface needs it</em>. nothing on this page is here because it sounded clever. when in doubt: ship the next line, watch how it behaves, write the line after.</p>
+
+<footer>
+  donna · the sdk · <code>docs/anthropic-sdk.html</code><br/>
+  see also: <code>docs/brain.html</code> (the loop) · <code>docs/architecture.md</code> (the surfaces) · <code>src/donna/brain.ts</code> (the code)
+</footer>
+
+</body>
+</html>
