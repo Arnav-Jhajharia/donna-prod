@@ -8,6 +8,8 @@
     "dev": "tsx src/index.ts",
     "server": "tsx src/server.ts",
     "inspect": "tsx src/inspect.ts",
+    "db:ping": "tsx scripts/db-ping.ts",
+    "db:pull": "drizzle-kit pull && mv src/donna/db/migrations-staging/schema.ts src/donna/db/schema.ts && mv src/donna/db/migrations-staging/relations.ts src/donna/db/relations.ts && rm -rf src/donna/db/migrations-staging",
     "typecheck": "tsc --noEmit",
     "build": "tsc"
   },
@@ -18,11 +20,14 @@
     "@anthropic-ai/sdk": "^0.93.0",
     "@hono/node-server": "^2.0.3",
     "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
     "hono": "^4.12.22",
-    "langsmith": "^0.7.1"
+    "langsmith": "^0.7.1",
+    "postgres": "^3.4.9"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
+    "drizzle-kit": "^0.31.10",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }
