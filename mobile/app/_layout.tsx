@@ -2,16 +2,26 @@ import { ClerkLoaded, ClerkProvider, useAuth, useUser } from "@clerk/clerk-expo"
 import { SplashScreen, Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { PostHogProvider, usePostHog } from "posthog-react-native";
 import { ThemeProvider, useDonnaFonts, useTheme } from "@/design";
 import { tokenCache } from "@/lib/token-cache";
 
 SplashScreen.preventAutoHideAsync();
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const POSTHOG_API_KEY = process.env.EXPO_PUBLIC_POSTHOG_API_KEY;
+const POSTHOG_HOST =
+  process.env.EXPO_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
 
 if (!CLERK_PUBLISHABLE_KEY) {
   throw new Error(
     "missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY. set it in mobile/.env or app config.",
+  );
+}
+
+if (!POSTHOG_API_KEY) {
+  console.warn(
+    "missing EXPO_PUBLIC_POSTHOG_API_KEY. analytics disabled for this session.",
   );
 }
 
@@ -24,7 +34,7 @@ export default function RootLayout() {
 
   if (!fontsReady) return null;
 
-  return (
+  const tree = (
     <ClerkProvider
       publishableKey={CLERK_PUBLISHABLE_KEY!}
       tokenCache={tokenCache}
@@ -37,6 +47,18 @@ export default function RootLayout() {
         </SafeAreaProvider>
       </ClerkLoaded>
     </ClerkProvider>
+  );
+
+  if (!POSTHOG_API_KEY) return tree;
+
+  return (
+    <PostHogProvider
+      apiKey={POSTHOG_API_KEY}
+      options={{ host: POSTHOG_HOST }}
+      autocapture
+    >
+      {tree}
+    </PostHogProvider>
   );
 }
 
@@ -55,6 +77,17 @@ function RootStack() {
   const { user } = useUser();
   const segments = useSegments();
   const router = useRouter();
+  const posthog = usePostHog();
+
+  useEffect(() => {
+    if (!posthog || !isLoaded) return;
+    if (isSignedIn && user) {
+      const email = user.primaryEmailAddress?.emailAddress;
+      posthog.identify(user.id, email ? { email } : undefined);
+    } else if (!isSignedIn) {
+      posthog.reset();
+    }
+  }, [posthog, isLoaded, isSignedIn, user]);
 
   // v1 writes from client via unsafeMetadata. once the brain backend
   // can set publicMetadata via webhook, this check moves to publicMetadata
