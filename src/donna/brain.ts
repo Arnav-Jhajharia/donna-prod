@@ -15,6 +15,7 @@ import { voiceBundle } from "./agents/voice.js";
 import { extractMessages } from "./tools/send_burst.js";
 import type { OutboundMessage } from "./messages.js";
 import { startLedger } from "./ledger.js";
+import * as context from "./context.js";
 
 export const DEFAULT_MODEL = "claude-sonnet-4-6";
 export const DEFAULT_MAX_TOKENS = 2048;
@@ -202,62 +203,74 @@ async function _runTurn(
   const convo: MessageParam[] = [...messages];
   const newMessages: MessageParam[] = [];
 
-  try {
-    for (let i = 0; i < MAX_ITERATIONS; i++) {
-      const payload = buildPayload(convo, config);
-      ledger.modelCallStart(i, payload);
+  // tools that need userId (triggers + future per-user state) read it from
+  // an AsyncLocalStorage. when config.userId is set we wrap the body in
+  // context.run so tools can find it; when unset we run unwrapped, and any
+  // tool that reaches for context.userId() throws — a clean signal that
+  // the caller forgot to set it.
+  const body = async (): Promise<RunTurnResult> => {
+    try {
+      for (let i = 0; i < MAX_ITERATIONS; i++) {
+        const payload = buildPayload(convo, config);
+        ledger.modelCallStart(i, payload);
 
-      const response = await client.messages.create(payload);
-      ledger.modelCallEnd(i, response);
+        const response = await client.messages.create(payload);
+        ledger.modelCallEnd(i, response);
 
-      const filtered = filterAssistantContent(response.content);
-      const assistantMessage: MessageParam = {
-        role: "assistant",
-        content: filtered,
-      };
-      convo.push(assistantMessage);
-      newMessages.push(assistantMessage);
+        const filtered = filterAssistantContent(response.content);
+        const assistantMessage: MessageParam = {
+          role: "assistant",
+          content: filtered,
+        };
+        convo.push(assistantMessage);
+        newMessages.push(assistantMessage);
 
-      const toolUses = filtered.filter(
-        (b): b is ToolUseBlock => b.type === "tool_use",
-      );
+        const toolUses = filtered.filter(
+          (b): b is ToolUseBlock => b.type === "tool_use",
+        );
 
-      // model emitted only text — no tool call. shouldn't happen if the prompt
-      // is doing its job (every turn must end with send_burst). bail.
-      if (toolUses.length === 0) {
-        ledger.finish("no_tool_calls", null, []);
-        return { sends: [], terminator: null, newMessages, runId };
+        // model emitted only text — no tool call. shouldn't happen if the prompt
+        // is doing its job (every turn must end with send_burst). bail.
+        if (toolUses.length === 0) {
+          ledger.finish("no_tool_calls", null, []);
+          return { sends: [], terminator: null, newMessages, runId };
+        }
+
+        // run every tool call (including terminator). this keeps the conversation
+        // well-formed: tool_use blocks always get matching tool_result blocks.
+        const toolResults = await dispatchToolCalls(toolUses, agent.handlers);
+        ledger.toolCalls(toolUses, toolResults);
+
+        const userMessage: MessageParam = {
+          role: "user",
+          content: toolResults,
+        };
+        convo.push(userMessage);
+        newMessages.push(userMessage);
+
+        const terminator = toolUses.find((tu) => agent.terminators.has(tu.name));
+        if (terminator) {
+          const sends =
+            terminator.name === "send_burst"
+              ? extractMessages(terminator.input)
+              : [];
+          ledger.finish("terminator", terminator.name, sends);
+          return { sends, terminator: terminator.name, newMessages, runId };
+        }
       }
 
-      // run every tool call (including terminator). this keeps the conversation
-      // well-formed: tool_use blocks always get matching tool_result blocks.
-      const toolResults = await dispatchToolCalls(toolUses, agent.handlers);
-      ledger.toolCalls(toolUses, toolResults);
-
-      const userMessage: MessageParam = {
-        role: "user",
-        content: toolResults,
-      };
-      convo.push(userMessage);
-      newMessages.push(userMessage);
-
-      const terminator = toolUses.find((tu) => agent.terminators.has(tu.name));
-      if (terminator) {
-        const sends =
-          terminator.name === "send_burst"
-            ? extractMessages(terminator.input)
-            : [];
-        ledger.finish("terminator", terminator.name, sends);
-        return { sends, terminator: terminator.name, newMessages, runId };
-      }
+      ledger.finish("max_iterations", null, []);
+      return { sends: [], terminator: null, newMessages, runId };
+    } catch (err) {
+      ledger.error(err);
+      throw err;
     }
+  };
 
-    ledger.finish("max_iterations", null, []);
-    return { sends: [], terminator: null, newMessages, runId };
-  } catch (err) {
-    ledger.error(err);
-    throw err;
+  if (config.userId) {
+    return context.run({ userId: config.userId, runId }, body);
   }
+  return body();
 }
 
 // public entry point. traceable wraps _runTurn as the parent span; the per-

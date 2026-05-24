@@ -1,6 +1,7 @@
 import type { Tool } from "@anthropic-ai/sdk/resources/messages";
 import { addTrigger } from "../triggers/store.js";
 import { schedule } from "../triggers/runtime.js";
+import { userId } from "../context.js";
 
 // silent tool. donna may acknowledge in voice ("got it, i'll nudge you at 4")
 // but never says "i'm creating a trigger" — the mechanism stays invisible.
@@ -40,7 +41,7 @@ interface CreateTriggerInput {
 
 export async function createTriggerHandler(input: unknown): Promise<string> {
   const { fire_at, action } = (input ?? {}) as CreateTriggerInput;
-  const t = addTrigger({ fireAt: fire_at, action });
+  const t = await addTrigger({ userId: userId(), fireAt: fire_at, action });
   // hand the timer to the runtime. without this the trigger sits in the store
   // forever — adding to store is data, scheduling is behavior.
   schedule(t);

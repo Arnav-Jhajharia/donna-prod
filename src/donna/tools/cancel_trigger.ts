@@ -1,6 +1,7 @@
 import type { Tool } from "@anthropic-ai/sdk/resources/messages";
 import { cancelTrigger } from "../triggers/store.js";
 import { unschedule } from "../triggers/runtime.js";
+import { userId } from "../context.js";
 
 // silent tool. cancels a pending trigger by id. result tells you whether
 // anything was actually cancelled — for self-cancelling pairs (the jony
@@ -33,7 +34,7 @@ interface CancelTriggerInput {
 
 export async function cancelTriggerHandler(input: unknown): Promise<string> {
   const { id } = (input ?? {}) as CancelTriggerInput;
-  const ok = cancelTrigger(id);
+  const ok = await cancelTrigger(id, userId());
   // tear down the timer too. order is store-first so we never have a live
   // setTimeout for a status that says cancelled.
   if (ok) unschedule(id);

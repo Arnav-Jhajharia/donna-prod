@@ -1,4 +1,4 @@
-import type { Trigger } from "./store.js";
+import { loadPending, type Trigger } from "./store.js";
 
 // the fire handler is supplied by whichever surface is running (cli today,
 // whatsapp/imessage/mobile later). it's responsible for turning the trigger
@@ -46,4 +46,17 @@ export function unschedule(id: string): void {
   if (!handle) return;
   clearTimeout(handle);
   scheduled.delete(id);
+}
+
+// rebind setTimeouts for every pending trigger in the db. called on boot
+// (server + cli) so deploys/restarts don't drop in-flight triggers.
+// triggers whose fireAt is already past will fire on the next tick — the
+// schedule() implementation clamps negative delays to 0.
+//
+// returns the count so the caller can log it. assumes setFireHandler has
+// already been called — without a handler the timers fire into a no-op.
+export async function reattachPending(): Promise<number> {
+  const pending = await loadPending();
+  for (const t of pending) schedule(t);
+  return pending.length;
 }

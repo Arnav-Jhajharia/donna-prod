@@ -10,8 +10,15 @@ import { createInterface } from "node:readline";
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
 import { runTurn } from "./donna/brain.js";
 import type { OutboundMessage } from "./donna/messages.js";
-import { setFireHandler } from "./donna/triggers/runtime.js";
+import { setFireHandler, reattachPending } from "./donna/triggers/runtime.js";
 import { markFired } from "./donna/triggers/store.js";
+import { db } from "./donna/db.js";
+import { users } from "./donna/db/schema.js";
+
+// the cli is single-user. we use a sentinel uuid as the dev user so the
+// trigger persistence + per-user state can flow through the same code path
+// the real surfaces use. the row is upserted on boot so it always exists.
+const DEV_USER_ID = "00000000-0000-0000-0000-000000000000";
 
 const rl = createInterface({ input: process.stdin, output: process.stdout });
 const history: MessageParam[] = [];
@@ -85,7 +92,7 @@ function ask(): void {
     history.push({ role: "user", content: text });
 
     try {
-      const result = await runTurn(history);
+      const result = await runTurn(history, { userId: DEV_USER_ID });
       history.push(...result.newMessages);
       for (const msg of result.sends) {
         await render(msg);
@@ -108,17 +115,25 @@ function ask(): void {
 // shared `history`, which is acceptable for a single-user cli; persistence
 // and serialization land when a real surface (whatsapp/imessage) is wired up.
 setFireHandler(async (t) => {
-  const updated = markFired(t.id);
+  const updated = await markFired(t.id);
   if (!updated) return; // already cancelled or fired
   console.log(`\n(trigger fired: ${t.id})`);
   history.push({ role: "user", content: t.action });
-  const result = await runTurn(history);
+  const result = await runTurn(history, { userId: DEV_USER_ID });
   history.push(...result.newMessages);
   for (const msg of result.sends) {
     await render(msg);
   }
   console.log(`(run: ${result.runId})\nyou: `);
 });
+
+// boot: ensure the dev user exists, then reattach any triggers that were
+// pending when the last process died.
+await db.insert(users).values({ id: DEV_USER_ID }).onConflictDoNothing();
+const reattached = await reattachPending();
+if (reattached > 0) {
+  console.log(`(reattached ${reattached} pending trigger(s))`);
+}
 
 rl.on("close", () => process.exit(0));
 ask();
