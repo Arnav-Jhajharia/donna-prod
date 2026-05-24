@@ -1,25 +1,45 @@
 import { randomUUID } from "node:crypto";
 import { Hono } from "hono";
+import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
+import { runTurn } from "../brain.js";
+import { getOrCreateUserByClerk } from "../users.js";
+import { loadRecentMessages, saveMessages } from "../chat.js";
 import { sendVoipPush } from "../voice/apns.js";
 import { mintCallToken } from "../voice/livekit-token.js";
 import { requireUser, userId } from "./auth.js";
 
-// mobile routes mount under /api/mobile. for now: just an echo so we can
-// smoke-test the full chain (clerk jwt -> server -> handler) end-to-end
-// from the device before wiring the brain.
+// mobile routes mount under /api/mobile. clerk jwt is verified upstream by
+// requireUser; handlers can safely call userId(c).
 export const mobile = new Hono();
 
 mobile.use("*", requireUser);
 
+// the text loop. mirrors ingress/whatsapp.ts:dispatch except:
+//   - identity resolution uses getOrCreateUserByClerk (option-B linker
+//     reads phone from clerk profile to merge with whatsapp rows).
+//   - sends come back in the json response instead of an out-of-band push,
+//     because the app rendered the user's bubble already and is waiting
+//     for donna's reply inline.
 mobile.post("/message", async (c) => {
   const body = await c.req
     .json<{ text?: string }>()
     .catch(() => ({}) as { text?: string });
-  const text = body.text ?? "";
+  const text = body.text?.trim();
+  if (!text) return c.json({ error: "text required" }, 400);
+
+  const clerkId = userId(c);
+  const user = await getOrCreateUserByClerk(clerkId);
+  const history = await loadRecentMessages(user.id);
+  const userMsg: MessageParam = { role: "user", content: text };
+
+  const result = await runTurn([...history, userMsg], { userId: user.id });
+
+  await saveMessages(user.id, [userMsg, ...result.newMessages]);
+
   return c.json({
-    ok: true,
-    userId: userId(c),
-    echo: text,
+    runId: result.runId,
+    terminator: result.terminator,
+    sends: result.sends,
   });
 });
 
