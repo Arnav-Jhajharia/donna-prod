@@ -1,3 +1,5 @@
+import { createClerkClient } from "@clerk/backend";
+import { and, eq, isNull } from "drizzle-orm";
 import { db } from "./db.js";
 import { users } from "./db/schema.js";
 
@@ -7,6 +9,17 @@ import { users } from "./db/schema.js";
 
 export interface User {
   id: string;
+}
+
+// lazy clerk client. instantiated on first call, reused after. throws if
+// CLERK_SECRET_KEY is missing — getOrCreateUserByClerk requires it.
+let _clerk: ReturnType<typeof createClerkClient> | null = null;
+function clerk() {
+  if (_clerk) return _clerk;
+  const secretKey = process.env.CLERK_SECRET_KEY;
+  if (!secretKey) throw new Error("CLERK_SECRET_KEY required for clerk auth");
+  _clerk = createClerkClient({ secretKey });
+  return _clerk;
 }
 
 // upsert by phone. one-shot insert with on-conflict-do-update set to a no-op
@@ -23,6 +36,44 @@ export async function getOrCreateUserByPhone(phone: string): Promise<User> {
     .onConflictDoUpdate({
       target: users.phone,
       set:    { phone },
+    })
+    .returning({ id: users.id });
+  return { id: rows[0]!.id };
+}
+
+// mobile resolution. fetches the clerk user profile, reads phone if present,
+// and links to an existing whatsapp-only row when one matches.
+//
+// flow:
+//   1. ask clerk for the user (gets phoneNumbers[]).
+//   2. if a phone is on the clerk profile AND a users row exists with that
+//      phone + null clerk_id: UPDATE that row to attach clerk_id → return it.
+//      this is option-B identity linking (one human = one row across surfaces).
+//   3. otherwise: upsert by clerk_id, also setting phone if we have one.
+//
+// edge case: two clerk users somehow share a phone. step 3 will hit the
+// unique(phone) constraint and throw. unlikely; refine when we hit it.
+export async function getOrCreateUserByClerk(clerkId: string): Promise<User> {
+  const clerkUser = await clerk().users.getUser(clerkId);
+  const phone = clerkUser.phoneNumbers[0]?.phoneNumber ?? null;
+
+  // try to merge into an existing whatsapp-only row.
+  if (phone) {
+    const linked = await db
+      .update(users)
+      .set({ clerkId })
+      .where(and(eq(users.phone, phone), isNull(users.clerkId)))
+      .returning({ id: users.id });
+    if (linked[0]) return { id: linked[0].id };
+  }
+
+  // otherwise upsert by clerk_id. no-op set so RETURNING fires on conflict.
+  const rows = await db
+    .insert(users)
+    .values({ clerkId, phone })
+    .onConflictDoUpdate({
+      target: users.clerkId,
+      set:    { clerkId },
     })
     .returning({ id: users.id });
   return { id: rows[0]!.id };
