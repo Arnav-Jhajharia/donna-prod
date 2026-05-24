@@ -5,6 +5,7 @@ import { runTurn } from "../brain.js";
 import { completePairing } from "../pairing.js";
 import { getOrCreateUserByPhone } from "../users.js";
 import { loadRecentMessages, saveMessages } from "../chat.js";
+import { claimWhatsAppInbound } from "../inbound.js";
 import { sendText } from "../delivery/whatsapp.js";
 
 // meta sends two kinds of requests to this endpoint:
@@ -79,6 +80,12 @@ async function handleIncoming(body: WhatsAppWebhookBody): Promise<void> {
 async function dispatch(message: WhatsAppMessage): Promise<void> {
   const phone = message.from.startsWith("+") ? message.from : `+${message.from}`;
   const text = message.text!.body;
+
+  // meta retries aggressively. claim-or-skip on the unique wa_message_id
+  // before doing any work so retries are no-ops.
+  if (!(await claimWhatsAppInbound(message.id, phone, message))) {
+    return;
+  }
 
   if (await tryPair(phone, text)) {
     await sendText(phone, "paired. donna here.").catch((err) => {
