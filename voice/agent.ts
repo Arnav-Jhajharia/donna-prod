@@ -1,11 +1,12 @@
 // donna's voice surface. one livekit agent worker process.
 //
-// on each incoming room dispatch this entry runs once. the pipeline:
+// pipeline:
 //   user mic -> silero VAD -> deepgram STT -> livekit turn detector
-//             -> claude (our adapter) -> elevenlabs TTS -> user speakers
+//             -> layered claude (haiku filler + opus brain)
+//             -> {cartesia | elevenlabs | sesame} TTS -> user speakers
 //
-// v0 scope: no tool calls, no preemptive generation, no fast frontline.
-// donna only speaks. those are layered in once the loop is proven.
+// TTS provider is selected at boot via VOICE_TTS_PROVIDER env var. see
+// selectTTS() below for the three options.
 
 import 'dotenv/config';
 import { fileURLToPath } from 'node:url';
@@ -17,12 +18,42 @@ import {
   type JobContext,
   type JobProcess,
 } from '@livekit/agents';
+import { tts } from '@livekit/agents';
 import * as deepgram from '@livekit/agents-plugin-deepgram';
+import * as elevenlabs from '@livekit/agents-plugin-elevenlabs';
 import { turnDetector } from '@livekit/agents-plugin-livekit';
 import * as silero from '@livekit/agents-plugin-silero';
-import { ClaudeLLM } from './llm/anthropic.js';
+import { LayeredClaudeLLM } from './llm/layered.js';
 import { VOICE_SYSTEM_PROMPT } from './prompt.js';
+import { CartesiaTTS } from './tts/cartesia.js';
 import { SesameTTS } from './tts/sesame.js';
+
+// pick the TTS provider via VOICE_TTS_PROVIDER env var. one runtime, three
+// engines, zero code changes to swap:
+//   cartesia (default)  — sonic-3 over wss. ~100ms TTFB. natural conversation.
+//   elevenlabs          — flash v2.5. ~75ms TTFB. polished broadcaster.
+//   sesame              — CSM-1B on modal. closer to maya. requires
+//                         voice/csm/modal_server.py deployed and a warm
+//                         SESAME_WS_URL.
+function selectTTS(): tts.TTS {
+  const provider = (process.env.VOICE_TTS_PROVIDER ?? 'cartesia').toLowerCase();
+  switch (provider) {
+    case 'elevenlabs':
+      return new elevenlabs.TTS({
+        model: 'eleven_flash_v2_5',
+        voiceId: process.env.ELEVENLABS_VOICE_ID,
+      });
+    case 'sesame':
+      return new SesameTTS();
+    case 'cartesia':
+      return new CartesiaTTS();
+    default:
+      throw new Error(
+        `unknown VOICE_TTS_PROVIDER=${provider}. ` +
+          `expected one of: cartesia, elevenlabs, sesame`,
+      );
+  }
+}
 
 export default defineAgent({
   // load silero VAD once per worker process. the model lives in proc.userData
@@ -41,14 +72,22 @@ export default defineAgent({
         interimResults: true,
         language: 'en',
       }),
-      llm: new ClaudeLLM({ systemPrompt: VOICE_SYSTEM_PROMPT }),
-      // sesame CSM-1B on a modal L4 GPU. set SESAME_WS_URL in .env to the
-      // wss:// url of your deployed modal app (see voice/csm/modal_server.py).
-      tts: new SesameTTS(),
+      // v3: two-tier brain. haiku 4.5 emits a conversational filler within
+      // ~500ms while opus 4.7 generates the real answer in parallel. user
+      // perceives an "alive" response immediately instead of dead air.
+      llm: new LayeredClaudeLLM({ systemPrompt: VOICE_SYSTEM_PROMPT }),
+      // see selectTTS() above for which provider is active. swap by setting
+      // VOICE_TTS_PROVIDER in .env — no code change needed.
+      tts: selectTTS(),
       // semantic endpointing — knows the difference between a mid-sentence
       // pause and an actual end of turn. the qwen2.5-0.5b model, distilled
       // by livekit, runs on cpu.
       turnDetection: new turnDetector.EnglishModel(),
+      // v2: predictive prefetch. fire claude on the partial transcript at
+      // high-confidence end-of-turn instead of waiting for the turn detector
+      // to confirm. if the user keeps talking, the in-flight generation gets
+      // discarded and refired. shaves ~500-1500ms off perceived latency.
+      preemptiveGeneration: true,
     });
 
     await session.start({
