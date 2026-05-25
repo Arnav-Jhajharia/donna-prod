@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>in ear voice / ivy — full teardown</title>
+<style>
+  :root {
+    --bg: #0b0b0c;
+    --bg-2: #131316;
+    --bg-3: #1a1a1f;
+    --fg: #e8e6e0;
+    --fg-2: #a8a59b;
+    --fg-3: #6a675e;
+    --accent: #e0a875;
+    --accent-2: #c97a4a;
+    --danger: #d96b6b;
+    --good: #7fb88a;
+    --rule: #2a2a30;
+    --serif: ui-serif, "iowan old style", "palatino", georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+    --mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
+  body { font-family: var(--serif); font-size: 17px; line-height: 1.65; }
+  main { max-width: 820px; margin: 0 auto; padding: 80px 28px 160px; }
+  h1 { font-family: var(--sans); font-weight: 800; font-size: 56px; line-height: 1.02; letter-spacing: -0.02em; margin: 0 0 8px; }
+  h1 .sub { display: block; font-weight: 400; font-size: 22px; color: var(--accent); margin-top: 12px; letter-spacing: 0; }
+  h2 { font-family: var(--sans); font-weight: 700; font-size: 28px; letter-spacing: -0.01em; margin: 88px 0 12px; }
+  h2::before { content: ""; display: block; width: 36px; height: 2px; background: var(--accent); margin-bottom: 16px; }
+  h3 { font-family: var(--sans); font-weight: 600; font-size: 19px; margin: 36px 0 8px; color: var(--fg); }
+  h4 { font-family: var(--sans); font-weight: 600; font-size: 15px; margin: 28px 0 6px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; }
+  p { margin: 0 0 16px; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent-2); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--bg-2); padding: 1px 6px; border-radius: 4px; color: var(--accent); }
+  pre { font-family: var(--mono); font-size: 13px; background: var(--bg-2); border: 1px solid var(--rule); border-radius: 6px; padding: 16px 20px; overflow-x: auto; line-height: 1.55; color: var(--fg-2); }
+  pre .key { color: var(--accent); }
+  blockquote { margin: 16px 0; padding: 12px 20px; border-left: 3px solid var(--accent-2); background: var(--bg-2); color: var(--fg-2); font-family: var(--sans); font-size: 15px; }
+  hr { border: none; border-top: 1px solid var(--rule); margin: 56px 0; }
+  ul, ol { padding-left: 22px; margin: 8px 0 18px; }
+  li { margin-bottom: 6px; }
+  strong { color: var(--fg); font-weight: 700; }
+  em { color: var(--fg-2); }
+
+  .meta { color: var(--fg-3); font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 80px; }
+
+  .tldr { background: var(--bg-2); border: 1px solid var(--rule); border-radius: 8px; padding: 24px 28px; margin: 32px 0 48px; font-family: var(--sans); font-size: 15px; line-height: 1.6; }
+  .tldr h4 { margin-top: 0; }
+  .tldr ul { padding-left: 18px; }
+
+  /* phone-frame grid for screenshots */
+  .frames { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin: 24px 0; }
+  .frame { background: var(--bg-2); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+  .frame img { width: 100%; display: block; }
+  .frame .cap { font-family: var(--mono); font-size: 11px; color: var(--fg-3); padding: 8px 10px 10px; border-top: 1px solid var(--rule); }
+  .frame .cap b { color: var(--accent); font-weight: 600; }
+
+  .frame-solo { display: flex; gap: 24px; align-items: flex-start; margin: 24px 0; }
+  .frame-solo .phone { flex: 0 0 240px; }
+  .frame-solo .phone img { width: 100%; border-radius: 12px; border: 1px solid var(--rule); }
+  .frame-solo .body p:first-child { margin-top: 0; }
+  @media (max-width: 640px) {
+    .frame-solo { flex-direction: column; }
+    .frame-solo .phone { flex: 1; max-width: 260px; }
+  }
+
+  .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 16px 0 24px; }
+  .twocol .card { background: var(--bg-2); border: 1px solid var(--rule); border-radius: 8px; padding: 18px 20px; font-family: var(--sans); font-size: 14.5px; line-height: 1.55; }
+  .twocol .card h4 { margin-top: 0; }
+  .twocol .card.steal { border-left: 3px solid var(--good); }
+  .twocol .card.skip { border-left: 3px solid var(--danger); }
+  @media (max-width: 640px) { .twocol { grid-template-columns: 1fr; } }
+
+  .timeline { font-family: var(--mono); font-size: 13px; line-height: 1.7; background: var(--bg-2); border: 1px solid var(--rule); border-radius: 8px; padding: 20px 24px; }
+  .timeline .row { display: grid; grid-template-columns: 70px 1fr; gap: 16px; }
+  .timeline .t { color: var(--accent); }
+  .timeline .row.skip { opacity: 0.55; }
+
+  .quote-bubble { background: var(--bg-3); border-radius: 12px; padding: 14px 18px; margin: 14px 0; font-family: var(--sans); font-size: 14.5px; color: var(--fg); border: 1px solid var(--rule); }
+  .quote-bubble .who { display: block; font-size: 11px; color: var(--fg-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; font-family: var(--mono); }
+
+  .pill { display: inline-block; font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--bg-3); color: var(--accent); border: 1px solid var(--rule); letter-spacing: 0.04em; }
+
+  table { border-collapse: collapse; width: 100%; font-family: var(--sans); font-size: 14.5px; margin: 16px 0 24px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { color: var(--accent); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .footnote { font-family: var(--mono); font-size: 12px; color: var(--fg-3); line-height: 1.6; }
+
+  .red-dot { color: var(--danger); }
+  .green-dot { color: var(--good); }
+</style>
+</head>
+<body>
+<main>
+
+<div class="meta">teardown / competitor / 2026-05-23 / source: 16:45 screen recording, 1005 sampled frames, audio dead</div>
+
+<h1>in ear voice<span class="sub">a 16-minute onboarding teardown, and what it tells us about the team behind the orb</span></h1>
+
+<p style="font-size:18px; color: var(--fg-2); margin-top: 28px;">
+  in ear voice (ivy) is a voice-first personal-ai app that opens with one of the most ambitious onboardings i've seen on a phone: 15 personality cards, a clipboard memory transfer from claude, three connectors, a mic-permission contract, and a ten-step conversation with a particle orb that walks you through the agent's privacy, quirks, and proactivity dial before it asks you about your day. it takes seventeen minutes. it tells the user the agent runs on openai. it leaks the founder's own claude chat history mid-flow. the visual identity is the most generic possible voice orb, and the strategic choices around it are some of the sharpest in the category.
+</p>
+
+<div class="tldr">
+  <h4>tl;dr</h4>
+  <ul>
+    <li><strong>positioning:</strong> "your second inner voice." companion / inner monologue framing, not assistant. evocative, brave, and not what they ship.</li>
+    <li><strong>stack (admitted):</strong> openai (almost certainly the realtime api). conversations kept on-device. optional features (health, location, photos, web search) phone home.</li>
+    <li><strong>onboarding (4 phases, ~17 min):</strong> personality cards → claude clipboard memory import → connectors → 10-step voice tour.</li>
+    <li><strong>cleverest trick:</strong> they import the user's memory from claude by having the user paste a prompt into the claude app, run it, and paste the response back. no api, no oauth, no integration. just clipboard.</li>
+    <li><strong>boldest claim:</strong> "i can stay available in the background, ready whenever you speak." an ios background-listening voice agent. either this is real and remarkable, or it's marketing language for "wake word when foregrounded."</li>
+    <li><strong>biggest risk:</strong> the entire 17-minute onboarding is talking before delivering. voice agents that won't shut up before the user gets value are the classic churn-on-day-zero failure mode.</li>
+    <li><strong>strategic implication for donna:</strong> steal the clipboard memory transfer, steal the trust ladder (privacy → quirks → voice controls before depth), do not steal the 17-minute monologue.</li>
+  </ul>
+</div>
+
+<h2>identity</h2>
+
+<div class="frame-solo">
+  <div class="phone">
+    <img src="iev-frames/0005.jpg" alt="splash screen: welcome to your second inner voice">
+  </div>
+  <div class="body">
+    <p><strong>two names, one product.</strong> the ios app identifier is <em>"in ear voice"</em>. the in-product agent is <em>"ivy"</em>. the splash says neither. instead it says <em>"your second inner voice"</em>.</p>
+    <p>this is positioning as <em>inner monologue</em>, not as assistant. nobody else in the category is using this frame. pi is "supportive companion." chatgpt voice mode is "talk to chatgpt." poke is "your messaging agent." friend is "a friend you wear." ivy is staking the most intimate possible ground: <em>the voice in your head, slot two</em>.</p>
+    <p>the brand identity, on the other hand, is the most generic possible voice ai: a tan-on-black palette, particle-cloud orb, soft typography, lowercase "i'd love to" italics. visually indistinguishable from siri, grok voice, pi, and every demo orb on every keynote since 2023. the orb is the same orb. the positioning is uniquely sharp; the costume is fully derivative.</p>
+    <p>the six dashes at the top of the splash screen are not status bars. they are an outer-phase progress indicator. ivy organizes onboarding into <strong>six macro phases</strong> before you get to the voice-tour ten-step inside-the-app sequence. you can read the entire shape of the product from how many of those dashes are filled in.</p>
+  </div>
+</div>
+
+<h2>the onboarding, in full</h2>
+
+<p>here is the full flow, reconstructed from a 16:45 screen recording sampled at 1 fps. timestamps are wall-clock from the start of the recording.</p>
+
+<div class="timeline">
+  <div class="row"><span class="t">00:00</span><span><strong>splash.</strong> "welcome to your second inner voice." swipe to continue / skip.</span></div>
+  <div class="row"><span class="t">00:19</span><span><strong>privacy matters.</strong> shield icon. explicit data flow. <span class="pill">openai admitted</span> "i understand and agree."</span></div>
+  <div class="row"><span class="t">00:30</span><span><strong>learn who you are.</strong> tinder-style swipe over 15 personality cards. agree/disagree stamps. examples: "i'm patient when others are upset" / "i love trying new foods and places" / "i enjoy thinking about big questions" / "i trust people until they prove me wrong".</span></div>
+  <div class="row"><span class="t">01:15</span><span><strong>"reading through your answers."</strong> brain icon. processing transition.</span></div>
+  <div class="row"><span class="t">01:30</span><span><strong>get to know you.</strong> connectors screen. <code>gmail</code>, <code>chatgpt</code>, <code>linkedin</code> (at least). "connect to at least 2." crystallizing-brain visual gets more colorful as you connect.</span></div>
+  <div class="row"><span class="t">01:45</span><span><strong>memory import, step 2/3 — "run the prompt."</strong> "open claude, paste the prompt, and run it. then copy the full response and come back here." big "open claude" cta.</span></div>
+  <div class="row"><span class="t">02:10</span><span><strong>memory import → claude.</strong> user is thrown into the claude ios app. their chat history is visible: <em>"real-time conversation api alternatives"</em>, <em>"is memorae banned"</em>, <em>"in ear voice startup overview"</em>, <em>"managing anthropic api costs"</em>, <em>"agentic memory"</em>. this is the founder's own session.</span></div>
+  <div class="row"><span class="t">02:25</span><span><strong>memory import, step 3/3 — "paste and import."</strong> error state: "looks like you haven't copied the response yet." then "paste & import your memories." <span class="pill">your data stays on-device. raw text is discarded after processing.</span></div>
+  <div class="row"><span class="t">02:55</span><span><strong>ios system dialog.</strong> "in ear voice wants to open claude." cancel / open. (probably re-triggered if the user backs out and retries.)</span></div>
+  <div class="row"><span class="t">03:20</span><span><strong>"now, let's talk."</strong> microphone permission screen. cartoon mic. <em>"i'm built for conversation. microphone access is needed to hear you speak. with your permission, i can stay available in the background, ready whenever you speak. you will always know when the mic is on."</em></span></div>
+  <div class="row"><span class="t">03:35</span><span><strong>ivy main app, welcome step 1: intros.</strong> "let's start with names." orb idle. "tap to start."</span></div>
+  <div class="row"><span class="t">04:00</span><span><span class="pill">listening</span> orb pulses. mic + speaker icon footer. ten-step welcome progress bar locks in at the top of every subsequent screen.</span></div>
+  <div class="row"><span class="t">04:40</span><span><strong>step 2: privacy.</strong> "know how your data is handled."</span></div>
+  <div class="row"><span class="t">05:30</span><span><strong>step 3: about me.</strong> "see how i fit into your life."</span></div>
+  <div class="row"><span class="t">08:00</span><span><strong>step 4: tool box.</strong> "let's try a few things together."</span></div>
+  <div class="row"><span class="t">10:30</span><span><strong>step 5: quirks.</strong> "rough edges i'm still working on."</span></div>
+  <div class="row"><span class="t">11:30</span><span><strong>step 6: voice controls.</strong> "control when i should speak or just listen."</span></div>
+  <div class="row"><span class="t">12:30</span><span><strong>step 7: your day.</strong> "what is it like to be you?"</span></div>
+  <div class="row skip"><span class="t">14:30</span><span><strong>steps 8, 9, 10.</strong> never seen on screen in this recording. either the user skipped or the recording ended before they unlocked.</span></div>
+  <div class="row"><span class="t">16:45</span><span>recording ends. unclear whether the user completed onboarding.</span></div>
+</div>
+
+<p style="margin-top: 24px;">the recording is full-screen mirror with no system audio captured. the audio track is flat at <code>-91 db</code> for most of the file, with sub-second bursts under <code>-50 db</code> at the seam between voice steps (probably the ios mic-toggle haptic). everything ivy <em>says</em> during steps 1 through 7 is inaudible. we are reading the orb's lips.</p>
+
+<h2>phase 1: the personality card stack</h2>
+
+<div class="frames">
+  <div class="frame"><img src="iev-frames/0030.jpg" alt=""><div class="cap"><b>card 1/15</b> "i'm patient when others are upset"</div></div>
+  <div class="frame"><img src="iev-frames/0040.jpg" alt=""><div class="cap"><b>card 4/15</b> "i trust people until they prove me wrong"</div></div>
+  <div class="frame"><img src="iev-frames/0050.jpg" alt=""><div class="cap"><b>card 6/15</b> mid-swipe with "AGREE" stamp</div></div>
+</div>
+
+<p>fifteen cards. tinder mechanic. agree stamp visible in mid-swipe. some are agreeableness-and-openness items straight from the big five inventory ("i'm patient when others are upset", "i love trying new foods and places"). some are softer life-stance probes ("i enjoy thinking about big questions", "i trust people until they prove me wrong").</p>
+
+<p><strong>why a card stack and not a voice conversation?</strong> because voice is bad at the thing this screen is doing. discrete agreement on a known statement is a forced-choice task, and forced choice over voice is a chain of <em>"so, would you say more often patient or more often impatient"</em> turns that takes ten minutes and produces noisier data than fifteen swipes. ivy is voice-first, but they correctly use the tactile surface for the part of intake where voice underperforms.</p>
+
+<p><strong>what they do with the answers.</strong> "reading through your answers" then transitions into the connectors screen. there is no big-five score shown back to the user. the personality vector is going somewhere into the system prompt or memory layer, invisible. this is the right call — exposing the trait scores would invite arguments about them. holding them invisible lets the agent simply <em>be</em> different to different users without anyone debugging it.</p>
+
+<h2>phase 2: the connectors screen</h2>
+
+<div class="frame-solo">
+  <div class="phone">
+    <img src="iev-frames/0090.jpg" alt="get to know you — connectors">
+  </div>
+  <div class="body">
+    <p><strong>"get to know you."</strong> at least three connectors: <code>gmail</code> ("i'll learn from your recent messages"), <code>chatgpt</code> ("i'll learn from your conversations"), <code>linkedin</code> ("i'll learn about your work and history"). the brain in the middle crystallizes and lights up with more colors as you connect.</p>
+    <p><strong>"connect to at least 2"</strong> is a hard floor. you cannot proceed without two oauth dances on the first run. this is the steepest dropoff cliff in the whole onboarding. most users will not oauth into linkedin from a personal-ai app on day zero. some will not have chatgpt history. gmail is the gimme. the floor of two forces a second connector that the user almost certainly didn't want to give.</p>
+    <p><strong>the chatgpt connector is a tell.</strong> openai does not publish a "give me my chat history" api. ivy either (a) handles the chatgpt connector through the same clipboard import dance as claude, (b) uses an unofficial scrape, or (c) has chatgpt history coming from openai's recently-announced "connections" surface. if it's (a), the splash of the brain just lit up for a clipboard paste. that's a tiny lie.</p>
+  </div>
+</div>
+
+<h2>phase 3: the claude clipboard import</h2>
+
+<p>this is the most interesting design choice in the product. it deserves a section.</p>
+
+<div class="frames">
+  <div class="frame"><img src="iev-frames/0105.jpg" alt=""><div class="cap"><b>step 2/3</b> "run the prompt" with "open claude" cta</div></div>
+  <div class="frame"><img src="iev-frames/0130.jpg" alt=""><div class="cap"><b>claude app</b> handed back. founder's chats visible.</div></div>
+  <div class="frame"><img src="iev-frames/0145.jpg" alt=""><div class="cap"><b>step 3/3</b> error state: "haven't copied the response yet"</div></div>
+</div>
+
+<h3>what they are doing</h3>
+
+<p>ivy wants the user's <em>existing</em> identity, the one already encoded by claude's memory of them. claude doesn't expose memory through an api. there is no oauth into claude. so ivy bridges the gap by having the user be the api.</p>
+
+<ol>
+  <li>ivy copies a <strong>system-prompt-shaped prompt</strong> onto the ios clipboard.</li>
+  <li>ivy launches the claude ios app via the universal link <code>claude://</code> (or a registered url scheme — the ios system dialog earlier confirms this is the mechanism).</li>
+  <li>the user pastes that prompt into a new claude chat and hits send.</li>
+  <li>claude responds, drawing on its <em>memory of this user</em> if memory is on, producing a structured dump (almost certainly json or a strict markdown schema).</li>
+  <li>the user copies claude's response and switches back to ivy.</li>
+  <li>ivy reads the pasteboard, parses, and seeds its memory layer.</li>
+</ol>
+
+<h3>what's clever about it</h3>
+
+<ul>
+  <li><strong>it bypasses the missing api.</strong> claude has no export. ivy doesn't need one. the user is the api call.</li>
+  <li><strong>the user gets to read the prompt.</strong> they see what they're handing over before they hand it over. that is transparent in a way that no oauth integration ever is.</li>
+  <li><strong>it inverts trust.</strong> the user trusts <em>claude</em> with their memory. ivy then transfers that trust by saying "import what claude already knows about you." this borrows credibility ivy hasn't earned yet.</li>
+  <li><strong>they don't need anthropic's permission.</strong> no partnership, no rate limit, no api key, no exposure to api price changes. zero dependency on anthropic.</li>
+  <li><strong>"raw text is discarded after processing"</strong> is a believable claim because the user can verify what they pasted in.</li>
+</ul>
+
+<h3>what's fragile about it</h3>
+
+<ul>
+  <li><strong>users without claude memory get nothing.</strong> if the user has memory off, or has never talked to claude, the response is empty or fabricated. ivy can't tell which.</li>
+  <li><strong>claude can refuse.</strong> the prompt is asking claude to dump a structured user profile. claude is increasingly cautious about identity prediction. one model update and the schema starts coming back in prose.</li>
+  <li><strong>silent format drift.</strong> claude's responses shift across versions. ivy needs to either parse with a very forgiving llm pass on the client, or accept that this import quietly breaks on every claude model bump.</li>
+  <li><strong>the clipboard is shared.</strong> any other app reading clipboard while the dance is happening sees the user's claude profile. probably fine on ios where clipboard reads now show a banner, but it is a real surface.</li>
+  <li><strong>error path is visible in the recording.</strong> "looks like you haven't copied the response yet" is the most common failure case — the user forgets to copy, comes back, and bounces off this screen. that error state existing at all suggests it happens enough to need a dedicated ui.</li>
+</ul>
+
+<h3>the obvious extension donna should ship</h3>
+
+<p><strong>do the same thing for both directions, and for both providers.</strong> ivy is one-way: claude → ivy. donna should support:</p>
+<ul>
+  <li>claude → donna (clipboard import, same trick)</li>
+  <li>chatgpt → donna (clipboard import — chatgpt also has memory now)</li>
+  <li>donna → claude / chatgpt (export a donna memory dump shaped as a prompt the other model can ingest)</li>
+</ul>
+<p>the strategic point: <strong>the user's memory is portable, and the first ai that says so out loud wins the trust round.</strong> ivy is halfway there. they accept memory in but don't yet export it. that's the gap.</p>
+
+<h2>phase 4: the privacy contract</h2>
+
+<div class="frame-solo">
+  <div class="phone">
+    <img src="iev-frames/0020.jpg" alt="privacy matters screen">
+  </div>
+  <div class="body">
+    <p>this is the one screen in the whole flow where the team's choices are exposed. read it carefully:</p>
+    <blockquote>"you control what is shared and stored. your conversations are kept on this device.<br><br>to respond, in ear voice sends your live voice and conversation text to <strong>openai</strong>. if you enable optional features (health, location, photos, web search), relevant data may also be sent to openai or those services. we never sell your data or use it for ads."</blockquote>
+    <p><strong>they say openai.</strong> not "an llm provider." not "our partner." <em>openai</em>. this is unusual. most consumer ai apps refuse to name the provider, both for brand reasons and because it lets them swap. ivy chooses transparency over flexibility, which is consistent with the rest of the trust ladder they're building (see <em>"quirks"</em> step below). it's also a clue about the stack — they're using the realtime api by name comfort, which means they're locked into openai for at least the voice path.</p>
+    <p><strong>"kept on this device."</strong> the conversation history is local-first. this is a stronger privacy claim than "encrypted in transit" — they're saying the transcript itself never lands on their server. but <em>live voice and text are streamed to openai</em>, which means the transcript exists in openai's logs for at least 30 days (the realtime api retention window). the on-device claim is true for their backend; it's false for openai's.</p>
+    <p><strong>optional features listed:</strong> health, location, photos, web search. that is the product roadmap by accident. ivy will ship integrations with apple health, core location, the photo library, and a web-search tool. the surfaces are bigger than the orb suggests.</p>
+  </div>
+</div>
+
+<h2>phase 5: the mic permission contract</h2>
+
+<div class="frame-solo">
+  <div class="phone">
+    <img src="iev-frames/0200.jpg" alt="now let's talk — mic permission">
+  </div>
+  <div class="body">
+    <p>"now, let's talk." the cartoon mic with three glowing dots in its mouth. and then:</p>
+    <blockquote>"i'm built for conversation. microphone access is needed to hear you speak.<br><br>with your permission, i can stay available in the background, ready whenever you speak. you will always know when the mic is on."</blockquote>
+    <p>this is the single most ambitious technical claim in the whole onboarding. <strong>"available in the background, ready whenever you speak"</strong> implies an always-listening wake-word agent on ios. ios doesn't really let third-party apps do this.</p>
+    <p>the realistic implementations:</p>
+    <ul>
+      <li><strong>airpods proximity-based.</strong> when airpods are connected and the user double-taps to speak, ios surfaces audio to a foreground voice intent. ivy could be claiming this and the marketing is overreaching.</li>
+      <li><strong>shortcuts + siri hand-off.</strong> they register a sirikit intent and the user says "hey siri, ivy" to wake them. background-launchable, but only by siri.</li>
+      <li><strong>callkit fake-call trick.</strong> some apps abuse callkit to stay alive in the background as if they were a voip call. apple has been pushing back on this. risky.</li>
+      <li><strong>ios live activity + voice on tap.</strong> the most likely interpretation — they stay foregrounded via live activity / dynamic island, and "background" in their copy means "no need to relaunch the app, just tap." marketing tightrope.</li>
+    </ul>
+    <p>betting markets: live activity + dynamic island + airpods double-tap, marketed as "background." it's not a lie; it's a stretch. real always-listening on ios for a third-party app is essentially not buildable without a watchful eye from apple. <span class="footnote">if they are abusing callkit, they will be pulled. if they have a real solution, it's worth a closer look — that's a moat.</span></p>
+  </div>
+</div>
+
+<h2>phase 6: the ten-step voice tour</h2>
+
+<p>this is where it gets long. seven of the ten steps are visible in the recording. each step is the same screen, refilled: <code>ivy</code> title, ten-dot progress bar, subtitle, breathing particle orb, <code>listening</code> footer, mic + speaker icons. the orb pulses size and density with the agent's speaking and listening states. that's the entire vocabulary.</p>
+
+<div class="frames">
+  <div class="frame"><img src="iev-frames/0215.jpg" alt=""><div class="cap"><b>step 1 idle</b> "let's start with names" / tap to start</div></div>
+  <div class="frame"><img src="iev-frames/0300.jpg" alt=""><div class="cap"><b>step 2</b> "know how your data is handled"</div></div>
+  <div class="frame"><img src="iev-frames/0395.jpg" alt=""><div class="cap"><b>step 3</b> "see how i fit into your life"</div></div>
+  <div class="frame"><img src="iev-frames/0515.jpg" alt=""><div class="cap"><b>step 4</b> "let's try a few things together"</div></div>
+  <div class="frame"><img src="iev-frames/0635.jpg" alt=""><div class="cap"><b>step 5</b> "rough edges i'm still working on"</div></div>
+  <div class="frame"><img src="iev-frames/0695.jpg" alt=""><div class="cap"><b>step 6</b> "control when i should speak or just listen"</div></div>
+  <div class="frame"><img src="iev-frames/0755.jpg" alt=""><div class="cap"><b>step 7</b> "what is it like to be you?"</div></div>
+</div>
+
+<h3>the trust ladder</h3>
+
+<p>read the subtitles in order:</p>
+
+<table>
+  <thead><tr><th>step</th><th>label</th><th>what it really does</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>intros</td><td>establishes that the user has a name and the agent does too. anchor.</td></tr>
+    <tr><td>2</td><td>privacy</td><td>second pass at the privacy contract, this time in voice. user can ask follow-ups.</td></tr>
+    <tr><td>3</td><td>about me</td><td>agent introduces its persona / scope. "see how i fit into your life."</td></tr>
+    <tr><td>4</td><td>tool box</td><td>practice round. user tries asking for a few things. agent demonstrates timers, reminders, the basics.</td></tr>
+    <tr><td>5</td><td>quirks</td><td>explicit self-limitation. "rough edges i'm still working on."</td></tr>
+    <tr><td>6</td><td>voice controls</td><td><strong>proactivity dial.</strong> "control when i should speak or just listen."</td></tr>
+    <tr><td>7</td><td>your day</td><td>first emotional disclosure ask. "what is it like to be you?"</td></tr>
+    <tr><td>8, 9, 10</td><td>(unseen)</td><td>best guesses: routines / triggers, memory & forget-it controls, daily check-in opt-in.</td></tr>
+  </tbody>
+</table>
+
+<p>this ordering is not an accident. each step is a rung. by the time the agent asks "what is it like to be you?" at step 7, the user has been given (a) a privacy contract, (b) an admission of the agent's quirks, and (c) a control to dial the agent's proactivity down. <strong>three concessions before the deep ask.</strong> this is the most deliberately sequenced trust ramp i've seen in a consumer ai onboarding.</p>
+
+<h3>step 6 in particular — the proactivity dial</h3>
+
+<p>"control when i should speak or just listen" is a real product surface. donna's prompt has this tension internally — proactive vs reactive, surface-the-next-move vs wait-to-be-asked. ivy is making it a user-facing control. the user gets to dial.</p>
+
+<p>this is the right architectural choice for two reasons:</p>
+<ul>
+  <li><strong>different users want different proactivity.</strong> the same agent that delights person a will annoy person b. without a dial, you ship one default and lose half of your tam.</li>
+  <li><strong>it gives the agent permission to be more proactive when set high.</strong> a default agent that interrupts you uninvited is rude. an agent you explicitly turned up to "speak up freely" is doing what you asked. the dial buys boldness.</li>
+</ul>
+
+<p><strong>donna should ship this control.</strong> the brain already has the policy variable internally; it should be on the user-facing surface as well. the framing ivy uses ("speak or just listen") is good copy.</p>
+
+<h3>step 5 — the explicit "quirks" admission</h3>
+
+<p>"rough edges i'm still working on" is the most underrated step in this whole flow. consumer ai products treat their own limitations as something to bury in a help doc. ivy treats them as a numbered step in the welcome flow. that defuses the "ai is magic" failure mode hard, and it sets expectations for the inevitable hallucinations, repetitions, missed reminders, and tone misses.</p>
+
+<p>it is also a way to apologize <em>once</em> instead of every failure. an agent that pre-emptively says "i'm still learning" gets graded on a softer curve.</p>
+
+<h2>the leaked claude history</h2>
+
+<div class="frame-solo">
+  <div class="phone">
+    <img src="iev-frames/0130.jpg" alt="claude app chat history">
+  </div>
+  <div class="body">
+    <p>at <code>02:10</code> the user is bounced from ivy into the claude ios app. claude's left rail shows the chat history of whoever recorded this. the visible titles, top to bottom:</p>
+    <pre><span class="key">real-time conversation api alternatives</span>
+startup plans with claude
+adding a recreate skill to claud...
+💬 okay serious questions. ...
+<span class="key">is memorae banned</span>
+<span class="key">managing anthropic api costs</span>
+<span class="key">in ear voice startup overview</span>
+feedback on an approach
+<span class="key">agentic memory</span></pre>
+    <p>this is almost certainly the founder's own claude session. they're using claude code or claude.ai to plan ivy. inferences:</p>
+    <ul>
+      <li><strong>"real-time conversation api alternatives"</strong> — they shopped around before locking on openai. probably considered livekit, cartesia, or a homegrown stt+llm+tts pipeline. they landed on openai realtime (consistent with the privacy screen).</li>
+      <li><strong>"is memorae banned"</strong> — they're tracking competitor memorae (another ai memory product). they care about whether claude blocklists similar tools.</li>
+      <li><strong>"managing anthropic api costs"</strong> — they pay anthropic for something. probably their backend agent layer (the part that processes the imported memory, builds the system prompt, etc) runs on anthropic, while the realtime voice runs on openai. <strong>two-provider architecture.</strong></li>
+      <li><strong>"in ear voice startup overview"</strong> — they workshop product strategy in claude. so does everyone in 2026. the meta-observation: the founder ships using exactly the tools they're competing with.</li>
+      <li><strong>"agentic memory"</strong> — they're building or have built an in-house memory layer (matches the "discard raw text after processing" claim).</li>
+    </ul>
+    <p>this entire screenshot should have been masked. it's the most candid look at a founder's tooling i've seen in a competitor recording.</p>
+  </div>
+</div>
+
+<h2>inferred architecture</h2>
+
+<p>combining the privacy screen, the mic-permission screen, the chat history, and the visible product surfaces, here is the best guess at the stack:</p>
+
+<pre><span class="key">surfaces</span>
+  ios app (swift / swiftui — native, not react native; particle orb is metal/scenekit)
+  ?web (unconfirmed)
+
+<span class="key">voice path (runtime)</span>
+  microphone → openai realtime api (gpt-4o-realtime or successor)
+  realtime api ↔ tool layer (ivy backend) for non-voice tools
+  realtime api → tts → speaker
+
+<span class="key">memory / planning path</span>
+  anthropic claude (api) for:
+    - parsing the clipboard claude-import dump into structured memory
+    - personality-card aggregation
+    - background reflection / summarization
+    - building the realtime api system prompt per session
+
+<span class="key">memory store</span>
+  on-device (sqlite or core data) for transcripts
+  ? server-side embedding store for cross-session recall (likely pgvector or pinecone)
+  "raw text discarded after processing" means: transcripts kept locally,
+    only derived structured memory ever leaves the device
+
+<span class="key">connectors</span>
+  gmail: google oauth (read-only)
+  linkedin: linkedin oauth (profile + activity)
+  chatgpt: probably clipboard-style, same trick as claude
+  claude: clipboard via url scheme + system pasteboard
+
+<span class="key">background presence</span>
+  most likely live activity + airpods double-tap intent
+  callkit-abuse trick possible but risky
+  ios shortcuts integration likely
+</pre>
+
+<h2>where they are vulnerable</h2>
+
+<ol>
+  <li><strong>17 minutes before value.</strong> the user has not received a single useful answer, set a single reminder, or learned a single fact about themselves by the end of the recording. every onboarding study i've ever read says this is the dropoff cliff.</li>
+  <li><strong>two-of-three connector floor.</strong> the hard requirement to oauth into at least two of gmail/linkedin/chatgpt will halve completion rate.</li>
+  <li><strong>openai dependency on the hot path.</strong> if openai's realtime api goes down, ivy is silent. if openai raises prices, ivy's margin moves. if openai launches a "personal ai" mode (highly likely in 2026), ivy is reselling the competitor's product.</li>
+  <li><strong>generic orb.</strong> the visual identity is the same orb as every other voice ai. there is no recognition surface. if the user installs three voice ai apps in a year, they will not remember which orb is which.</li>
+  <li><strong>silent audio in the customer's own recording.</strong> the screen recording captured no system audio. that means the user couldn't easily share their ivy session with a friend. virality is broken by default. they should consider a "share this conversation" feature with a transcript snippet card.</li>
+  <li><strong>"second inner voice" is poetic but unclear.</strong> when the user opens this app on day three, they need to remember what it's for. "voice in your head, slot two" is evocative; it does not communicate use cases. retention copy is going to be hard.</li>
+  <li><strong>the personality cards are committed forever.</strong> there is no visible mechanism to <em>change</em> the answers later. if you mis-swipe one and the agent starts treating you as more agreeable than you are, you may not know why.</li>
+</ol>
+
+<h2>where they are strong</h2>
+
+<ol>
+  <li><strong>the claude clipboard import.</strong> single best growth/trust hack in the product. real new-user activation lift for anyone who has claude.</li>
+  <li><strong>the trust ladder.</strong> privacy → quirks → voice controls before "what is it like to be you?" is a thoughtful sequence. most teams would not even know to think of it as a sequence.</li>
+  <li><strong>naming openai in the privacy screen.</strong> brave and correct. defuses 80% of the "where does my voice go" worry that consumers actually have.</li>
+  <li><strong>"i'm built for conversation" copy.</strong> the mic permission rationale is the best i've seen on ios. clear, scoped, non-creepy.</li>
+  <li><strong>positioning.</strong> "second inner voice" is unique. it's not a search bar with a face. it's not an assistant. it's a slot in the user's head.</li>
+  <li><strong>two-provider architecture.</strong> openai for voice latency, anthropic for memory and planning. correct tooling choice for both jobs.</li>
+</ol>
+
+<h2>donna implications</h2>
+
+<div class="twocol">
+  <div class="card steal">
+    <h4>take</h4>
+    <ul>
+      <li><strong>clipboard memory transfer.</strong> donna should accept clipboard imports from claude and chatgpt on day one, and produce a clipboard export the same way. portable memory is a product wedge ivy half-discovered.</li>
+      <li><strong>the trust ladder.</strong> if/when donna ships a voice surface, sequence privacy → quirks → proactivity dial before the first emotional disclosure ask. ivy proved this ordering reads well.</li>
+      <li><strong>proactivity as a user-facing dial.</strong> the policy variable exists in donna's brain prompt. surface it. "speak up freely" / "wait until i ask" is good copy.</li>
+      <li><strong>explicit quirks step.</strong> a single screen during onboarding that says "rough edges i'm still working on" defuses every future hallucination complaint by half.</li>
+      <li><strong>name the providers.</strong> donna runs on anthropic. say so. it's a position now, not a risk.</li>
+    </ul>
+  </div>
+  <div class="card skip">
+    <h4>skip</h4>
+    <ul>
+      <li><strong>17-minute onboarding monologue.</strong> donna's thesis is "act before asked, surface the next move." the inverse of an agent that talks for 17 minutes before being useful. resist the temptation.</li>
+      <li><strong>hard connector floors.</strong> "connect at least 2" gates the user. donna should let them through with zero and earn their connectors over weeks.</li>
+      <li><strong>generic orb visual.</strong> if donna ships a voice surface, the visual identity must be more than a particle cloud. there are too many particle clouds already.</li>
+      <li><strong>voice as the only or primary surface.</strong> ivy is voice-first. donna's omnipresence thesis (app + widget + whatsapp + dashboard) is correct. voice is one surface; don't let it eat the others.</li>
+      <li><strong>"deepest possible question on day one."</strong> "what is it like to be you?" in step 7 of onboarding is too much, too early. earn introspection over weeks.</li>
+    </ul>
+  </div>
+</div>
+
+<h2>the comparison table</h2>
+
+<table>
+  <thead><tr><th></th><th>ivy</th><th>poke</th><th>donna</th></tr></thead>
+  <tbody>
+    <tr><td>primary surface</td><td>voice (ios)</td><td>messaging (imessage / whatsapp)</td><td>messaging + app + widget + dashboard</td></tr>
+    <tr><td>positioning</td><td>"second inner voice"</td><td>"the messaging agent that does things"</td><td>"personal ai / chief of staff"</td></tr>
+    <tr><td>llm provider (voice)</td><td>openai realtime</td><td>(no voice)</td><td>(not yet shipped)</td></tr>
+    <tr><td>llm provider (text / planning)</td><td>anthropic (inferred from founder's claude tabs)</td><td>three-tier with claude inside</td><td>anthropic</td></tr>
+    <tr><td>memory model</td><td>local-first transcripts + derived memory; clipboard imports from claude</td><td>own-the-layer memory inside a multi-agent system</td><td>own-the-layer, pgvector + custom stores</td></tr>
+    <tr><td>onboarding length</td><td>~17 minutes</td><td>~2 minutes (messaging onboarding via imessage)</td><td>tbd; target &lt; 5 minutes</td></tr>
+    <tr><td>proactivity</td><td>dial in step 6 of welcome</td><td>aggressive proactive nudges</td><td>core thesis; not yet a user-facing dial</td></tr>
+    <tr><td>integrations gate</td><td>"connect at least 2"</td><td>opt-in over time</td><td>opt-in; bootstrapped via messaging context</td></tr>
+    <tr><td>background presence</td><td>claimed; mechanism uncertain</td><td>passive (messaging is always-on by definition)</td><td>passive (messaging surfaces)</td></tr>
+    <tr><td>cross-app memory</td><td>claude clipboard import (1-way)</td><td>integration adapters (linq etc)</td><td>(missing — should ship)</td></tr>
+  </tbody>
+</table>
+
+<h2>open questions</h2>
+
+<ol>
+  <li><strong>steps 8, 9, 10.</strong> what are they? best guess: <em>routines / triggers</em>, <em>memory & forget-it controls</em>, <em>permission to check in</em>.</li>
+  <li><strong>the import prompt itself.</strong> what does ivy ask claude to produce? we can verify next time by capturing the clipboard at the moment "open claude" is tapped.</li>
+  <li><strong>real background mechanism.</strong> live activity? callkit abuse? sirikit? worth running ivy with xcode console open to see what they're doing.</li>
+  <li><strong>pricing model.</strong> free with limit? subscription? not visible in the recording.</li>
+  <li><strong>does ivy export?</strong> they accept memory in from claude. do they let you take memory out? if not, this is a wedge.</li>
+  <li><strong>the chatgpt connector mechanism.</strong> oauth into chatgpt is not a real product. so what are they doing? probably the same clipboard trick as claude. confirmable.</li>
+  <li><strong>card stack scoring.</strong> 15 cards is exactly enough for a big-five short form (e.g. the bfi-15). are they really doing trait extraction, or is the card stack performative onboarding for a llm that's already going to ignore it?</li>
+</ol>
+
+<h2>methodology</h2>
+
+<div class="footnote">
+  <p>captured from a 16:45 ios screen mirror (1005 frames at 1 fps), <code>iev.mp4</code>. extracted with <code>scripts/watch-recording.sh</code>. each frame is jpeg q=4 scaled to 1280 long-edge for analysis.</p>
+  <p>audio track was effectively silent (mean -53 db, max -16 db pre-amplification, mean -28 db post +30 db amplification). non-silent windows are 100–800 ms bursts at section seams, almost certainly ui haptic tones rather than speech. whisper.cpp small.en transcription returned <code>[BLANK_AUDIO]</code> across the full timeline both raw and amplified.</p>
+  <p>positioning, stack inference, and step-by-step onboarding reconstruction are entirely visual. the trust-ladder analysis, the comparison table, and the take/skip lists are interpretive.</p>
+  <p>everything visible in this teardown could be re-derived by anyone who installs the app. nothing here was obtained from privileged sources. the leaked claude chat history is incidental and was captured in a customer-published recording.</p>
+</div>
+
+</main>
+</body>
+</html>

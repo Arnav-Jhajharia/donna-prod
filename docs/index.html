@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>donna — docs</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --ivory:    #FBF7F5;
+  --tan:      #F0EAE4;
+  --ink:      #1E1A18;
+  --soft:     #6B6360;
+  --rust:     #7B5544;
+  --umber:    #4A2F23;
+  --rule:     #DCD2C9;
+  --moss:     #4F5E45;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--ivory); color: var(--ink); margin: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+  line-height: 1.62;
+  letter-spacing: 0.005em;
+  padding: 80px 32px 160px;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+header { padding-bottom: 48px; border-bottom: 1px solid var(--rule); margin-bottom: 56px; }
+h1, h2, h3, h4 {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+h1 { font-size: 56px; line-height: 1.02; margin: 0 0 18px; }
+h1 em { color: var(--rust); font-style: italic; }
+h2 {
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin: 64px 0 18px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule);
+}
+p, li { font-size: 15.5px; color: var(--ink); }
+.lede { font-size: 19px; color: var(--soft); max-width: 760px; margin-top: 4px; line-height: 1.5; }
+.lede em { color: var(--rust); font-style: italic; font-family: 'EB Garamond', Georgia, serif; }
+small.kicker {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--rust);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 14px;
+}
+code, kbd {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  font-size: 12.5px;
+  background: var(--tan);
+  border-radius: 3px;
+  padding: 2px 5px;
+  color: var(--umber);
+}
+a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); transition: color .12s, border-color .12s; }
+a:hover { color: var(--rust); border-bottom-color: var(--rust); }
+
+ul.tree { list-style: none; padding: 0; margin: 0; }
+ul.tree li.doc {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--rule);
+  display: grid;
+  grid-template-columns: 1fr 110px;
+  gap: 16px;
+  align-items: baseline;
+}
+ul.tree li.doc:last-child { border-bottom: none; }
+ul.tree .title {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 22px;
+  line-height: 1.25;
+  color: var(--ink);
+  border-bottom: none;
+}
+ul.tree .title:hover { color: var(--rust); }
+ul.tree .desc {
+  display: block;
+  color: var(--soft);
+  font-size: 14px;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+ul.tree .meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--soft);
+  text-align: right;
+  letter-spacing: 0.02em;
+}
+ul.tree .file {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--rust);
+  letter-spacing: 0.02em;
+  margin-top: 6px;
+  display: block;
+}
+.section-blurb {
+  color: var(--soft);
+  font-size: 14px;
+  margin: 0 0 18px;
+  max-width: 720px;
+}
+.uncategorized {
+  background: rgba(123,85,68,0.06);
+  border-left: 3px solid var(--rust);
+  padding: 14px 20px;
+  margin: 18px 0;
+  font-size: 14px;
+  color: var(--soft);
+}
+.uncategorized strong { color: var(--ink); font-weight: 500; }
+footer {
+  margin-top: 96px;
+  padding-top: 32px;
+  border-top: 1px solid var(--rule);
+  font-size: 13px;
+  color: var(--soft);
+}
+footer code { font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <small class="kicker">docs · index</small>
+  <h1>the <em>tree</em></h1>
+  <p class="lede">every long-form artifact in <code>docs/</code>, one entry point. <em>architecture, the brain, voice, memory, the tool surface, competitor studies.</em> sorted by what's most current at top of each branch.</p>
+</header>
+
+<!-- DOCS_TREE_START -->
+
+<section>
+  <h2>00 · start here</h2>
+  <p class="section-blurb">the canonical system map. read this first.</p>
+  <ul class="tree">
+    <li class="doc">
+      <div>
+        <a class="title" href="architecture-v2.html">the architecture</a>
+        <span class="desc">the current system map — surfaces, server, brain, triggers, voice, persistence. supersedes <code>architecture-diagrams.html</code>.</span>
+        <span class="file">architecture-v2.html</span>
+      </div>
+      <div class="meta">2026-05-23<br/>44 kb</div>
+    </li>
+  </ul>
+</section>
+
+<section>
+  <h2>01 · the brain</h2>
+  <p class="section-blurb">the manual tool-call loop on the raw anthropic sdk. how it works, why it's shaped this way, every lever available to it.</p>
+  <ul class="tree">
+    <li class="doc">
+      <div>
+        <a class="title" href="brain.html">the brain</a>
+        <span class="desc">the loop today, why it's shaped this way, the shape of more — skills, complicated tools, python tool calling, sub-agents, tool layers.</span>
+        <span class="file">brain.html</span>
+      </div>
+      <div class="meta">2026-05-21<br/>72 kb</div>
+    </li>
+    <li class="doc">
+      <div>
+        <a class="title" href="anthropic-sdk.html">the anthropic sdk</a>
+        <span class="desc">every lever — the request byte-by-byte, the response block-by-block, models, system prompt, history, tools, prompt caching, extended thinking.</span>
+        <span class="file">anthropic-sdk.html</span>
+      </div>
+      <div class="meta">2026-05-22<br/>74 kb</div>
+    </li>
+  </ul>
+</section>
+
+<section>
+  <h2>02 · the voice surface</h2>
+  <p class="section-blurb">the phone-call surface — donna calls you, you call her. tap to memory, end to end.</p>
+  <ul class="tree">
+    <li class="doc">
+      <div>
+        <a class="title" href="voice-call.html">voice call architecture</a>
+        <span class="desc">five things doing five jobs. tap to memory. what happens on the iphone, what happens on the backend, what donna says exactly, what bites you.</span>
+        <span class="file">voice-call.html</span>
+      </div>
+      <div class="meta">2026-05-22<br/>33 kb</div>
+    </li>
+  </ul>
+</section>
+
+<section>
+  <h2>03 · the tool surface</h2>
+  <p class="section-blurb">what donna can do, organized by life-domain. the catalog of capabilities, current and aspirational.</p>
+  <ul class="tree">
+    <li class="doc">
+      <div>
+        <a class="title" href="donna-tool-surface.html">the tool surface</a>
+        <span class="desc">donna knows your body, manages your money, runs your home, handles communication, acts in the world, ids anything, senses what's around you, knows your taste.</span>
+        <span class="file">donna-tool-surface.html</span>
+      </div>
+      <div class="meta">2026-05-24<br/>93 kb</div>
+    </li>
+  </ul>
+</section>
+
+<section>
+  <h2>04 · memory · knowledge graph</h2>
+  <p class="section-blurb">the memory layer. one overview, three options explored in detail (v3 is the current direction).</p>
+  <ul class="tree">
+    <li class="doc">
+      <div>
+        <a class="title" href="knowledge-graph.html">knowledge graph — the thesis</a>
+        <span class="desc">the three layers, events as the only truth, daily snapshots, the graph, replay as a superpower, how the brain reads, the actually hard problems.</span>
+        <span class="file">knowledge-graph.html</span>
+      </div>
+      <div class="meta">2026-05-20<br/>24 kb</div>
+    </li>
+    <li class="doc">
+      <div>
+        <a class="title" href="kg-v3-stream.html">option 3 · moments stream</a>
+        <span class="desc">the chosen direction. one moments table, schema + write/read paths, the 5pm dentist nudge worked example, tradeoffs.</span>
+        <span class="file">kg-v3-stream.html</span>
+      </div>
+      <div class="meta">2026-05-21<br/>14 kb</div>
+    </li>
+    <li class="doc">
+      <div>
+        <a class="title" href="kg-v3-read-loop.html">option 3 · read path + loop</a>
+        <span class="desc">how the brain pulls context per turn — eager bundle, lazy tools, <code>assemble_context</code>, caching, cost per turn, failure modes.</span>
+        <span class="file">kg-v3-read-loop.html</span>
+      </div>
+      <div class="meta">2026-05-21<br/>22 kb</div>
+    </li>
+    <li class="doc">
+      <div>
+        <a class="title" href="kg-v2-replay.html">option 2 · event-first + replay</a>
+        <span class="desc">alternative considered. events as truth with snapshots derived via replay. tradeoffs and when to pick this.</span>
+        <span class="file">kg-v2-replay.html</span>
+      </div>
+      <div class="meta">2026-05-21<br/>13 kb</div>
+    </li>
+    <li class="doc">
+      <div>
+        <a class="title" href="kg-v1-ledger.html">option 1 · pure ledger</a>
+        <span class="desc">simplest option considered. ledger of everything, no replay, no projections. tradeoffs.</span>
+        <span class="file">kg-v1-ledger.html</span>
+      </div>
+      <div class="meta">2026-05-21<br/>13 kb</div>
+    </li>
+  </ul>
+</section>
+
+<section>
+  <h2>05 · competitor studies</h2>
+  <p class="section-blurb">what to learn from, what not to repeat. reading the competition tightly.</p>
+  <ul class="tree">
+    <li class="doc">
+      <div>
+        <a class="title" href="poke-architecture.html">poke — architecture</a>
+        <span class="desc">three tiers, triggers, the draft/confirm dance, invisible memory, the tappable-link trick, channel awareness, output discipline. from the leaked prompts.</span>
+        <span class="file">poke-architecture.html</span>
+      </div>
+      <div class="meta">2026-05-21<br/>24 kb</div>
+    </li>
+    <li class="doc">
+      <div>
+        <a class="title" href="iev-teardown.html">ivy / in ear voice — full teardown</a>
+        <span class="desc">voice-first competitor. identity, the onboarding in full (six phases), the ten-step voice tour. visual and architectural.</span>
+        <span class="file">iev-teardown.html</span>
+      </div>
+      <div class="meta">2026-05-23<br/>43 kb</div>
+    </li>
+  </ul>
+</section>
+
+<section>
+  <h2>archive</h2>
+  <p class="section-blurb">superseded but kept for reference. don't treat as current truth.</p>
+  <ul class="tree">
+    <li class="doc">
+      <div>
+        <a class="title" href="architecture-diagrams.html">architecture diagrams (v1)</a>
+        <span class="desc">older system diagrams — service topology, brain loop, tool tiers, scheduler, integrations. superseded by <code>architecture-v2.html</code>.</span>
+        <span class="file">architecture-diagrams.html</span>
+      </div>
+      <div class="meta">2026-05-10<br/>38 kb</div>
+    </li>
+  </ul>
+</section>
+
+<!-- DOCS_TREE_END -->
+
+<footer>
+  <p>regenerate this index with <code>/sync-docs</code>. the tree is hand-curated — new files land in an <em>uncategorized</em> section until they're placed.</p>
+  <p>markdown files (<code>architecture.md</code>, <code>mac-mini-setup.md</code>) live alongside the html docs but aren't indexed here. open them directly.</p>
+</footer>
+
+</body>
+</html>

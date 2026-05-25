@@ -1,0 +1,1767 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>donna — the tool surface</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --ivory:    #FBF7F5;
+  --tan:      #F0EAE4;
+  --ink:      #1E1A18;
+  --soft:     #6B6360;
+  --rust:     #7B5544;
+  --umber:    #4A2F23;
+  --rule:     #DCD2C9;
+  --moss:     #4F5E45;
+  --gold:     #B8860B;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--ivory); color: var(--ink); margin: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+  line-height: 1.62;
+  letter-spacing: 0.005em;
+  padding: 64px 32px 160px;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+header { padding-bottom: 40px; border-bottom: 1px solid var(--rule); margin-bottom: 48px; }
+h1, h2, h3, h4 {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0 0 12px;
+}
+h1 { font-size: 56px; line-height: 1.05; }
+h2 { font-size: 36px; line-height: 1.1; margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--rule); }
+h3 { font-size: 22px; line-height: 1.2; margin-top: 28px; color: var(--umber); }
+h4 { font-size: 16px; font-weight: 500; font-family: 'Inter', sans-serif; color: var(--rust); text-transform: uppercase; letter-spacing: 0.08em; }
+p { margin: 0 0 14px; }
+.subtitle { color: var(--soft); font-size: 19px; max-width: 720px; margin-top: 12px; font-style: italic; }
+.meta { color: var(--soft); font-size: 13px; font-family: 'JetBrains Mono', monospace; margin-top: 8px; }
+a { color: var(--rust); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 120ms ease; }
+a:hover { border-bottom-color: var(--rust); }
+code, .mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px; margin: 32px 0 48px;
+}
+.stat { background: var(--tan); border: 1px solid var(--rule); padding: 20px; }
+.stat .num { font-family: 'EB Garamond', serif; font-size: 36px; line-height: 1; color: var(--umber); }
+.stat .label { font-size: 12px; color: var(--soft); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 8px; }
+
+.toc {
+  background: var(--tan); border: 1px solid var(--rule); padding: 24px 28px;
+  margin: 32px 0 56px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px 24px;
+}
+.toc a { color: var(--ink); font-size: 14px; display: block; padding: 4px 0; }
+.toc a:hover { color: var(--rust); }
+
+.cluster {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px; margin-top: 24px;
+}
+.card {
+  background: #fff; border: 1px solid var(--rule); padding: 18px 20px;
+  display: flex; flex-direction: column;
+}
+.card .name {
+  font-family: 'EB Garamond', serif; font-size: 21px;
+  color: var(--ink); margin-bottom: 2px;
+}
+.card .name a { color: var(--ink); border-bottom: 1px dotted var(--rule); }
+.card .name a:hover { color: var(--rust); border-bottom-color: var(--rust); }
+.card .source { font-size: 11px; color: var(--soft); font-family: 'JetBrains Mono', monospace; margin-bottom: 10px; }
+.card .purpose { font-size: 14px; color: var(--ink); margin-bottom: 12px; }
+.card .uses { font-size: 13px; color: var(--soft); margin: 0; padding-left: 16px; line-height: 1.55; }
+.card .uses li { margin-bottom: 4px; }
+.card .example { background: var(--tan); padding: 10px 12px; margin-top: 12px; font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--umber); }
+.card .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.badge {
+  display: inline-block; font-size: 10px; padding: 3px 8px;
+  border: 1px solid var(--rule); text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--soft); background: var(--ivory);
+  font-family: 'JetBrains Mono', monospace;
+}
+.badge.oauth { color: var(--rust); border-color: var(--rust); }
+.badge.api   { color: var(--moss); border-color: var(--moss); }
+.badge.public { color: var(--umber); border-color: var(--umber); }
+.badge.local { color: var(--ink); border-color: var(--ink); }
+.badge.diy   { color: var(--gold); border-color: var(--gold); background: #fff9eb; }
+.badge.exp   { background: #fff0e8; color: var(--rust); border-color: var(--rust); }
+.badge.prod  { background: #ecf0e7; color: var(--moss); border-color: var(--moss); }
+.stars { color: var(--gold); font-size: 14px; letter-spacing: 1px; }
+.cluster-intro { color: var(--soft); font-size: 15px; max-width: 720px; margin-bottom: 16px; }
+
+.platform-table { width: 100%; border-collapse: collapse; margin: 16px 0 32px; font-size: 13px; }
+.platform-table th, .platform-table td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--rule); }
+.platform-table th { background: var(--tan); font-weight: 500; color: var(--umber); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+.platform-table tr:hover td { background: #fcfaf9; }
+
+.arch-box {
+  background: var(--tan); border-left: 3px solid var(--rust);
+  padding: 20px 24px; margin: 24px 0; font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; white-space: pre; overflow-x: auto;
+}
+.note { font-size: 13px; color: var(--soft); font-style: italic; margin: 12px 0; }
+footer { margin-top: 96px; padding-top: 32px; border-top: 1px solid var(--rule); color: var(--soft); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header>
+<h1>donna — the tool surface</h1>
+<p class="subtitle">every MCP server, integration, and API we've considered for donna, grouped by what she does for the user. ~300 entries across thirteen capability clusters.</p>
+<p class="meta">working document · last reviewed may 2026 · status: pre-wiring</p>
+</header>
+
+<h4>what this is</h4>
+<p>this is donna's tool universe — the complete capability surface she can draw from on day one and beyond. organized by what donna <em>does for the user</em>, not by underlying tech. auth model, production-readiness, and a relevance score (1–5 stars) are noted per entry.</p>
+<p>this is the working catalog. as we wire integrations, we'll mark them. as we discover new MCPs worth adding, they go here.</p>
+
+<h4>the scale</h4>
+<div class="stats">
+  <div class="stat"><div class="num">~25,000</div><div class="label">MCP servers indexed across all registries</div></div>
+  <div class="stat"><div class="num">~400</div><div class="label">genuinely production-grade</div></div>
+  <div class="stat"><div class="num">414</div><div class="label">vetted by anthropic in the connectors directory</div></div>
+  <div class="stat"><div class="num">~300</div><div class="label">relevant to donna (this document)</div></div>
+  <div class="stat"><div class="num">~80</div><div class="label">flagged as "magical for donna"</div></div>
+  <div class="stat"><div class="num">~12</div><div class="label">to ship day one</div></div>
+</div>
+
+<h4>how donna reaches all of this</h4>
+<p>donna does not wire each of the 300 integrations one by one. she stacks five meta-platforms that each give her hundreds of tools through a single connection, plus a handful of custom-built tools for the "magic moments" no platform delivers.</p>
+
+<div class="arch-box">stack:
+
+  klavis hosted          ~98  oauth integrations    (primary)
+  anthropic connectors  ~414  vetted oauth          (gap fillers)
+  composio              ~250  toolkits, 20k+ tools  (better tool defs)
+  pipedream MCP         3000  apps, 10k+ tools      (long tail)
+  apify MCP             3000  scrapers              (web that has no api)
+  donna-browser            1  universal browser     (logged-in actions)
+  custom tools           ~12  magic moments         (vapi, audd, plantnet, ...)
+
+  total day-one surface: ~25,000+ callable tools
+</div>
+
+<p class="note">the LLM cannot see all 25,000 tool definitions at once. tool selection happens via a hybrid pattern: ~50 "hot path" tools embedded directly, the rest reached through meta-tools or retrieval. see donna brain notes.</p>
+
+<h4>legend</h4>
+<p>
+  <span class="badge oauth">oauth</span> requires user to grant access to their account &nbsp;
+  <span class="badge api">api key</span> developer-held credential &nbsp;
+  <span class="badge public">public</span> no auth required &nbsp;
+  <span class="badge local">local</span> runs on-device or self-hosted &nbsp;
+  <span class="badge diy">diy</span> no MCP yet, build it ourselves
+</p>
+<p>
+  <span class="badge prod">prod</span> production-ready today &nbsp;
+  <span class="badge exp">experimental</span> community-grade, may break &nbsp;
+  <span class="stars">★★★★★</span> donna magic factor 1-5
+</p>
+
+<h4>jump to a cluster</h4>
+<div class="toc">
+  <a href="#body">01 · donna knows your body</a>
+  <a href="#money">02 · donna manages your money</a>
+  <a href="#home">03 · donna runs your home</a>
+  <a href="#comms">04 · donna handles communication</a>
+  <a href="#world-action">05 · donna acts in the world</a>
+  <a href="#id">06 · donna IDs anything</a>
+  <a href="#sense">07 · donna senses the world</a>
+  <a href="#taste">08 · donna knows your taste</a>
+  <a href="#knowledge">09 · donna brings world knowledge</a>
+  <a href="#joys">10 · donna handles the small joys</a>
+  <a href="#create">11 · donna creates</a>
+  <a href="#soul">12 · donna's soul</a>
+  <a href="#notes">13 · donna's notes &amp; tasks</a>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="body">01 · donna knows your body</h2>
+<p class="cluster-intro">wearables, sleep, recovery, lab panels, continuous glucose. donna physically knows how the user feels — sometimes before they do. the foundation for proactive scheduling, gentle nudges, and tone-matching her responses to the user's current state.</p>
+
+<div class="cluster">
+
+  <div class="card">
+    <div class="name"><a href="https://github.com/tomekkorbak/oura-mcp-server" target="_blank">Oura</a></div>
+    <div class="source">community MCP · github.com/tomekkorbak/oura-mcp-server</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">sleep stages, HRV, readiness score, body temperature trend, activity rings.</div>
+    <ul class="uses">
+      <li>"you slept 5h21, HRV is the lowest this month — i moved your 9am to 11am"</li>
+      <li>refuse to suggest a workout when readiness is red</li>
+      <li>spot patterns: "your readiness drops 30% on days you drink after 8pm"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name"><a href="https://github.com/ctvidic/whoop-mcp" target="_blank">Whoop</a></div>
+    <div class="source">community MCP · multiple repos</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">recovery score, strain, sleep performance, weekly trends.</div>
+    <ul class="uses">
+      <li>"recovery is red, you've trained hard 3 days — proposing a walk instead"</li>
+      <li>tie strain to morning calendar density</li>
+      <li>weekly recovery report on sunday evening</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name"><a href="https://github.com/Taxuspt/garmin_mcp" target="_blank">Garmin Connect</a></div>
+    <div class="source">community MCP · 110+ tools</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge exp">experimental</span><span class="stars">★★★★</span></div>
+    <div class="purpose">body battery, training load, race predictor, VO2max, all garmin watch data.</div>
+    <ul class="uses">
+      <li>"your body battery is at 24, suggesting a recovery day"</li>
+      <li>training load over 4 weeks → "you're in a high-fatigue zone"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name"><a href="https://github.com/the-momentum/apple-health-mcp-server" target="_blank">Apple Health</a></div>
+    <div class="source">community MCP · DuckDB over Health XML</div>
+    <div class="badges"><span class="badge local">local</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">five years of steps, sleep, HR, SpO2, HRV from a single Health export.</div>
+    <ul class="uses">
+      <li>"your resting HR has crept up 6 BPM since you started this contract"</li>
+      <li>any longitudinal health question without needing each separate app</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name"><a href="https://github.com/akutishevsky/withings-mcp" target="_blank">Withings</a></div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">weight, blood pressure, ECG, body composition.</div>
+    <ul class="uses">
+      <li>quiet trend nudges: "weight trend is up 0.4 kg/wk for 3 weeks"</li>
+      <li>BP outliers flagged for your doctor visits</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name"><a href="https://github.com/r-huijts/strava-mcp" target="_blank">Strava</a></div>
+    <div class="source">community MCP · 25 tools</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">runs, rides, swims, segments, social feed.</div>
+    <ul class="uses">
+      <li>"saturday's long run was 11% slower than your april average"</li>
+      <li>weather + strava: "good run conditions in your area at 6am tomorrow"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name"><a href="https://github.com/TheDigitalNinja/fitbit-mcp" target="_blank">Fitbit</a></div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">steps, sleep, HR for fitbit users.</div>
+    <ul class="uses"><li>same shape as oura/whoop; only wire if your user is on fitbit specifically</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Intervals.icu</div>
+    <div class="source">hosted MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">cyclist/triathlete training: TSS, fitness, fatigue, freshness.</div>
+    <ul class="uses"><li>"your CTL is climbing too fast — risk of injury"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Eight Sleep</div>
+    <div class="source">no MCP · build via pyEight</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge exp">experimental</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">bed temperature, sleep stages, snoring, HRV from the pod.</div>
+    <ul class="uses">
+      <li>"you snored 47 min last night — happens after late dinners"</li>
+      <li>"your bed warmed late, you took longer to fall asleep"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Dexcom / Levels / Nightscout</div>
+    <div class="source">no MCP · build via dexcom-share or nightscout API</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">continuous glucose monitor data in real time.</div>
+    <ul class="uses">
+      <li>"that pizza spiked you to 180 — last week's salad lunch peaked at 130"</li>
+      <li>pre-emptive nudge: "your 2pm crash is showing up again, eat something"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Function Health</div>
+    <div class="source">anthropic connectors directory</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">your full quarterly lab panel results, trended over time.</div>
+    <ul class="uses">
+      <li>"your B12 is dropping again — last 3 quarters: 480, 412, 376"</li>
+      <li>flag values that change by &gt;15% quarter-over-quarter</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Open Wearables</div>
+    <div class="source">athletedata.health</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">unified rail across Whoop/Oura/Garmin/Polar/Suunto/Apple — one adapter for "how's the body".</div>
+    <ul class="uses"><li>future-proof: when the user switches wearables, donna doesn't break</li></ul>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<h2 id="money">02 · donna manages your money</h2>
+<p class="cluster-intro">banking, spending, investing, accounting. donna sees what the user spends without being asked — categorizes it, flags drift, surfaces decisions before bills hit.</p>
+
+<div class="cluster">
+
+  <div class="card">
+    <div class="name">Plaid</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">bank, credit, loan, and investment data across thousands of US institutions.</div>
+    <ul class="uses">
+      <li>"you have $X across 4 accounts, rent is due in 6 days, you'll be ok"</li>
+      <li>spot duplicate charges across cards</li>
+      <li>investment positions across brokerages in one view</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Mercury</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">startup banking — operating accounts, treasury, virtual cards.</div>
+    <ul class="uses"><li>founder use case: runway, burn rate, vendor spend</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Brex</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">corporate cards + spend management.</div>
+    <ul class="uses"><li>"team has spent $3.2k on AI tools this month — over budget"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Ramp</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">spend mgmt + bill pay + AP automation.</div>
+    <ul class="uses"><li>upcoming bills queued for approval each monday</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name"><a href="https://github.com/akutishevsky/lunchmoney-mcp" target="_blank">Lunch Money</a></div>
+    <div class="source">community MCP · 100% API coverage</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">categorization + tagging layer for personal spending.</div>
+    <ul class="uses">
+      <li>"you've eaten out 4x more this month than last"</li>
+      <li>natural-language queries: "show all amazon spending in q1"</li>
+      <li>auto-tag recurring subscriptions</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Monarch Money</div>
+    <div class="source">community MCP · scraped session</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge exp">experimental</span><span class="stars">★★★</span></div>
+    <div class="purpose">if the user already lives in monarch.</div>
+    <ul class="uses"><li>net worth, budgets, recurring spend</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Teller</div>
+    <div class="source">no MCP · clean API, build wrapper</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">cleaner-than-plaid US bank API for one-user products.</div>
+    <ul class="uses"><li>fewer reauth prompts than plaid, simpler model</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Cash App</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">personal P2P + brokerage + bitcoin.</div>
+    <ul class="uses"><li>p2p splits with friends, balance checks</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Privacy.com</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">virtual cards — one-time, single-merchant, locked limits.</div>
+    <ul class="uses"><li>donna provisions a one-time card for a free trial signup</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">QuickBooks / Xero</div>
+    <div class="source">klavis + anthropic connectors</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">accounting — invoices, expenses, P&amp;L.</div>
+    <ul class="uses"><li>freelancers and founders only; skip for pure consumer use</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name"><a href="https://github.com/stefanoamorelli/sec-edgar-mcp" target="_blank">SEC EDGAR</a></div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">every US public-company filing, fully searchable.</div>
+    <ul class="uses">
+      <li>"AAPL just dropped their 10-K, here's what changed in risk factors vs last year"</li>
+      <li>insider trading alerts on watched tickers</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Alpha Vantage</div>
+    <div class="source">official MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">stock + forex + crypto quotes, free tier.</div>
+    <ul class="uses"><li>price your watchlist into donna's morning brief</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Yahoo Finance</div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">free quotes, no auth, surprisingly complete.</div>
+    <ul class="uses"><li>quick price checks without burning an API key</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">CoinGecko</div>
+    <div class="source">official MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">crypto market data, top-tier coverage.</div>
+    <ul class="uses"><li>portfolio quotes, alerts on threshold moves</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">DeFiLlama</div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">TVL, yields, protocol health for on-chain users.</div>
+    <ul class="uses"><li>"the yield on your USDC strategy dropped to 3.1%"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Etherscan</div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">wallet activity, gas, contract calls.</div>
+    <ul class="uses">
+      <li>"gas is 8 gwei right now — good time to consolidate"</li>
+      <li>watch a friend's wallet for suspicious activity</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Wolfram Alpha</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">deterministic computation — math, conversions, finance formulas.</div>
+    <ul class="uses">
+      <li>"what's $1000 at 7% compounded monthly for 25 years"</li>
+      <li>way more reliable than the LLM doing math itself</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<h2 id="home">03 · donna runs your home</h2>
+<p class="cluster-intro">smart devices — lights, locks, climate, speakers, cameras. one integration (home assistant) collapses most of this; the rest are direct rails for users without HA.</p>
+
+<div class="cluster">
+
+  <div class="card">
+    <div class="name"><a href="https://www.home-assistant.io/integrations/mcp_server/" target="_blank">Home Assistant</a></div>
+    <div class="source">official MCP · core 2025.2+</div>
+    <div class="badges"><span class="badge local">local</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">the single biggest integration in this whole document. lights, locks, climate, cameras, sonos, garage doors, sprinklers, smart switches — everything.</div>
+    <ul class="uses">
+      <li>"goodnight" → lights off, doors locked, thermostat set, alarm armed</li>
+      <li>"who's at the door" → camera snapshot in WhatsApp</li>
+      <li>"warm the bedroom 30 min before my alarm"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">ha-mcp (community)</div>
+    <div class="source">github.com/homeassistant-ai/ha-mcp · 95+ tools</div>
+    <div class="badges"><span class="badge local">local</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">deeper than the official one — can edit automations and dashboards.</div>
+    <ul class="uses"><li>"create an automation: when my whoop says i woke up, slowly raise bedroom lights to 40%"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">OpenHue</div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">direct Philips Hue without needing HA.</div>
+    <ul class="uses"><li>scenes, dimming, color control over LAN</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">LIFX</div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★</span></div>
+    <div class="purpose">direct LIFX control.</div>
+    <ul class="uses"><li>same shape as openhue</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Nest / Ecobee</div>
+    <div class="source">via Home Assistant</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">smart thermostats — schedule, temperature, eco mode.</div>
+    <ul class="uses"><li>"i'm leaving the house for 4 days, drop temp to 16"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Sonos</div>
+    <div class="source">via Home Assistant</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">multi-room audio control.</div>
+    <ul class="uses"><li>"play the cooking playlist in the kitchen at 40%"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">OctoEverywhere</div>
+    <div class="source">anthropic connectors directory</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★</span></div>
+    <div class="purpose">3D printer monitoring + control remotely.</div>
+    <ul class="uses"><li>"the bambu print failed at 64% — already 4hrs in"</li></ul>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<h2 id="comms">04 · donna handles communication</h2>
+<p class="cluster-intro">email, calendar, messaging, meetings, voice. donna's surface area for actually conversing on the user's behalf.</p>
+
+<div class="cluster">
+
+  <div class="card">
+    <div class="name">Gmail</div>
+    <div class="source">klavis + anthropic connectors</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">read, send, draft, reply, search, label.</div>
+    <ul class="uses">
+      <li>morning triage: "5 emails need you, 3 to skim, here's a draft for the lawyer"</li>
+      <li>auto-reply to a thread with context from past correspondence</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Outlook (Mail)</div>
+    <div class="source">klavis + microsoft official</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">same as gmail for office365 users.</div>
+    <ul class="uses"><li>identical pattern; just a different oauth provider</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Google Calendar</div>
+    <div class="source">klavis + anthropic connectors</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">events, availability, free/busy, conflicts.</div>
+    <ul class="uses">
+      <li>"can you find an hour for the founder dinner this week?"</li>
+      <li>automatic buffer time between meetings</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Fantastical / Cron / Vimcal</div>
+    <div class="source">anthropic connectors + community</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">premium calendar clients with richer NL-event parsing.</div>
+    <ul class="uses"><li>only relevant if the user lives in one</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">WhatsApp Business</div>
+    <div class="source">klavis + meta cloud API</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">donna's primary surface in this product.</div>
+    <ul class="uses"><li>send/receive on user's business number, attachments, voice notes</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">iMessage</div>
+    <div class="source">anthropic connectors + local</div>
+    <div class="badges"><span class="badge local">local</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">native message sending via macOS bridge.</div>
+    <ul class="uses"><li>only works with a mac in the loop; future native iOS bridge planned</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Telegram</div>
+    <div class="source">community MCP · chigwell</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">user-account telegram access, full read/write.</div>
+    <ul class="uses"><li>large user surface in eastern europe, central asia, india</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Slack / Discord / Teams</div>
+    <div class="source">klavis + anthropic connectors</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">work + community chat surfaces.</div>
+    <ul class="uses">
+      <li>"summarize what i missed in #product overnight"</li>
+      <li>cross-post a message to multiple channels with one ask</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Twilio SMS</div>
+    <div class="source">klavis + official MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">outbound SMS — for nudging contacts, calling tradies, OTP delivery.</div>
+    <ul class="uses">
+      <li>"text mom that you'll be 20 min late"</li>
+      <li>send the plumber the address by SMS after booking</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Vapi / Bland.ai / Retell</div>
+    <div class="source">no MCP · wrap their REST API</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">donna places real phone calls — handles conversation, captures outcome.</div>
+    <ul class="uses">
+      <li>"call the dentist, get me on the cancellation list"</li>
+      <li>"call my landlord, the geyser is broken again"</li>
+      <li>navigate IVR systems on the user's behalf</li>
+    </ul>
+    <div class="example">~$0.10/min, typical 3-min call = $0.30. the single biggest credibility moment.</div>
+  </div>
+
+  <div class="card">
+    <div class="name">Granola / Otter / Fireflies / Fathom / tl;dv / MeetGeek</div>
+    <div class="source">anthropic connectors directory</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">meeting transcripts + summaries from zoom/meet/teams.</div>
+    <ul class="uses">
+      <li>"any action items for me from this morning's calls?"</li>
+      <li>followup email drafts from the transcript</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Krisp</div>
+    <div class="source">anthropic connectors directory</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">noise-cancelled transcripts + per-speaker attribution.</div>
+    <ul class="uses"><li>same role as granola; choose one</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Inbox Zero</div>
+    <div class="source">community MCP · 11k stars</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">gmail triage automation — bulk archive, unsubscribe, reply suggestions.</div>
+    <ul class="uses"><li>nightly clean-up to keep inbox below ~10</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Superhuman</div>
+    <div class="source">anthropic connectors directory</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">email-at-speed client.</div>
+    <ul class="uses"><li>only useful if user already pays for it; otherwise gmail covers it</li></ul>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<h2 id="world-action">05 · donna acts in the world</h2>
+<p class="cluster-intro">booking, ordering, errands. the cluster where donna stops talking about doing things and actually does them. anthropic's connectors directory shines here — they've onboarded an unusually strong real-world-action set.</p>
+
+<div class="cluster">
+
+  <div class="card">
+    <div class="name">Resy</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">restaurant reservations — search, book, cancel.</div>
+    <ul class="uses">
+      <li>"book le bernardin for 4 friday at 8 if anything's open"</li>
+      <li>auto-snipe: watch for cancellations on a top spot you've been wanting</li>
+    </ul>
+    <div class="example">paired with apify's resy-booker actor → reservation sniper that grabs slots the moment they free up.</div>
+  </div>
+
+  <div class="card">
+    <div class="name">OpenTable</div>
+    <div class="source">via apify actor</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">same as resy for opentable restaurants.</div>
+    <ul class="uses"><li>donna picks whichever platform the restaurant is on</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Uber</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">request rides, surge price, ETAs.</div>
+    <ul class="uses">
+      <li>"call an uber to the airport for 6:30am tomorrow"</li>
+      <li>"surge is 1.4x, wait 8 min and it'll drop"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Uber Eats</div>
+    <div class="source">anthropic connectors directory (official) + apify</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">food delivery — search, order, track.</div>
+    <ul class="uses"><li>"you've been heads-down 4 hours, ordering your usual"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Instacart</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">grocery delivery from many stores.</div>
+    <ul class="uses">
+      <li>"my usual whole foods order, but add eggs and skip oat milk"</li>
+      <li>auto-replenish staples that are low (paired with fridge sensors via HA)</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">DoorDash</div>
+    <div class="source">via apify scraper</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge exp">experimental</span><span class="stars">★★★</span></div>
+    <div class="purpose">menus, prices, ordering via the apify wrapper.</div>
+    <ul class="uses"><li>price comparison across delivery platforms</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Booking.com</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">hotel + alt-accommodation booking.</div>
+    <ul class="uses"><li>"lisbon, may 12-15, under €200/night, sea view"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Expedia / Kiwi.com / Turkish Airlines / lastminute.com</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">flights + hotels + packages directly bookable.</div>
+    <ul class="uses">
+      <li>"JFK→LIS in 9 days under $500, flag upgrade space"</li>
+      <li>kiwi for multi-city / weird routings</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">AllTrails</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">trails, conditions, difficulty, recent reports.</div>
+    <ul class="uses">
+      <li>"the trail you wanted is muddy from yesterday's rain — try stewart falls instead"</li>
+      <li>"3 trails within 30 min of you under 5 miles, dog-friendly"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Taskrabbit / Thumbtack</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">book local pros — handyman, mover, cleaner.</div>
+    <ul class="uses">
+      <li>"someone to mount this TV tomorrow afternoon, under $80"</li>
+      <li>"book a cleaning for friday before the airbnb guests"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Tripadvisor / Trivago</div>
+    <div class="source">anthropic connectors directory</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">hotel reviews and comparisons.</div>
+    <ul class="uses"><li>cross-check before donna commits to a booking</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Apify scrapers (3000+)</div>
+    <div class="source">apify MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">single MCP endpoint exposing thousands of Actors that scrape virtually any site without an API.</div>
+    <ul class="uses">
+      <li>Instagram, TikTok, X, LinkedIn for social tracking</li>
+      <li>Zillow, Redfin for real estate</li>
+      <li>Yelp, Glassdoor for reviews</li>
+      <li>Amazon, eBay for product/pricing</li>
+      <li>Bandsintown, Songkick for events</li>
+    </ul>
+    <div class="example">$5/mo free credits forever, typical actor run $0.01-0.50</div>
+  </div>
+
+  <div class="card">
+    <div class="name">donna-browser</div>
+    <div class="source">self-hosted (this repo) ✓</div>
+    <div class="badges"><span class="badge local">local</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">universal logged-in browser actor — anything a human can do in a web browser, donna can do.</div>
+    <ul class="uses">
+      <li>persistent per-user chromium profile, sessions never expire</li>
+      <li>fallback when neither an API nor a scraper exists</li>
+      <li>fills forms, navigates dashboards, handles 2FA via stored cookies</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">StubHub / Ticket Tailor</div>
+    <div class="source">anthropic connectors directory</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">event ticketing marketplaces.</div>
+    <ul class="uses"><li>donna watches resale prices and pings when they drop</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Camelcamelcamel / Keepa</div>
+    <div class="source">community MCP + apify</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge exp">experimental</span><span class="stars">★★★</span></div>
+    <div class="purpose">amazon price history + drop alerts.</div>
+    <ul class="uses"><li>"that monitor you've been watching is at its lowest in 6 months"</li></ul>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<h2 id="id">06 · donna IDs anything</h2>
+<p class="cluster-intro">photo or audio in, identification out. the screenshot-worthy cluster — user points their camera at something, donna knows what it is.</p>
+
+<div class="cluster">
+
+  <div class="card">
+    <div class="name"><a href="https://github.com/OrHavraPerry/plantnet-mcp" target="_blank">PlantNet</a></div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">plant species ID from a photo. 50k+ species. free 500/day.</div>
+    <ul class="uses">
+      <li>"that's a fiddle leaf fig, indirect light, water every 7-10 days"</li>
+      <li>identify wildflowers on hikes</li>
+      <li>"this houseplant your mom gave you is a snake plant, basically unkillable"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">iNaturalist</div>
+    <div class="source">no MCP · clean public API</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">ID for any species — plants, animals, insects, fungi.</div>
+    <ul class="uses">
+      <li>"that bug on your wall is a house centipede, harmless, eats other pests"</li>
+      <li>"that snake in your garden is a checkered keelback, non-venomous"</li>
+      <li>"those mushrooms are likely shaggy ink cap, edible young but don't trust me alone on it"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">eBird + Merlin (Cornell)</div>
+    <div class="source">no MCP · public API</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">bird identification by sound or photo — backed by Cornell's lab.</div>
+    <ul class="uses">
+      <li>"what bird sang at the window at 6:02am" → record + send → donna IDs</li>
+      <li>"the bird you've been hearing daily is a common myna"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">AudD</div>
+    <div class="source">no MCP · public API</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">music identification from short audio clips — like Shazam as an API.</div>
+    <ul class="uses">
+      <li>"what's that song playing at the cafe" → voice note → song identified + added to discover playlist</li>
+      <li>identify soundtrack tracks from movie scenes</li>
+    </ul>
+    <div class="example">~$0.001/recognition. negligible cost, massive delight.</div>
+  </div>
+
+  <div class="card">
+    <div class="name">Plant.id</div>
+    <div class="source">community + commercial API</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">alternative to plantnet with disease detection.</div>
+    <ul class="uses"><li>"the yellowing on your monstera leaves is overwatering, not a fungus"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">PaddleOCR</div>
+    <div class="source">official MCP (baidu)</div>
+    <div class="badges"><span class="badge local">local</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">extract text from images — receipts, business cards, signs.</div>
+    <ul class="uses">
+      <li>"file this receipt under restaurants this month"</li>
+      <li>"add the contact from this business card to my CRM"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">DINO-X</div>
+    <div class="source">anthropic connectors directory</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">general-purpose object detection in images.</div>
+    <ul class="uses"><li>"how many people are in this photo from the party"</li></ul>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sense">07 · donna senses the world around you</h2>
+<p class="cluster-intro">weather, AQI, transit, earthquakes, planes overhead, severe alerts, global news. the "donna feels aware of your physical world" cluster — almost all free, no auth.</p>
+
+<div class="cluster">
+
+  <div class="card">
+    <div class="name"><a href="https://github.com/cmer81/open-meteo-mcp" target="_blank">Open-Meteo</a></div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">weather + AQI + pollen + UV in one no-auth call. global coverage.</div>
+    <ul class="uses">
+      <li>"rain in 40 min, take the umbrella"</li>
+      <li>"AQI is 340 — your asthma usually flares above 200, suggest skipping the morning run"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Purpleair / IQAir</div>
+    <div class="source">no MCP · public API</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">hyperlocal AQI from neighborhood sensors.</div>
+    <ul class="uses"><li>specifically when the city is between AQI zones and one block matters</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name"><a href="https://github.com/nitvob/nws-mcp-server" target="_blank">NWS (severe weather)</a></div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">us national weather service alerts — tornado, flood, wildfire.</div>
+    <ul class="uses"><li>"tornado warning 2 miles south, take shelter now"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">USGS Earthquake</div>
+    <div class="source">community MCP via apify</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">real-time global earthquake feed.</div>
+    <ul class="uses"><li>"did you feel that? 4.2 in oakland, 3 min ago"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">GDELT</div>
+    <div class="source">community MCP via apify</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">global events monitor refreshing every 15 min — donna catches world news before twitter.</div>
+    <ul class="uses"><li>cross-reference user's calendar/travel: "there's a strike happening in your destination city this week"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name"><a href="https://github.com/jdamcd/gtfs-mcp" target="_blank">GTFS transit feeds</a></div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">real subway/bus/train times for every major transit agency.</div>
+    <ul class="uses">
+      <li>"the L is delayed 8 min, leave in 4"</li>
+      <li>"if you leave now you can catch the 4:12, otherwise next is 4:27"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">OpenSky</div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">free real-time ADS-B feed of every commercial plane overhead.</div>
+    <ul class="uses">
+      <li>"what's that plane that woke me at 6am?" → "Lufthansa LH760 from Frankfurt, landing in 12 min"</li>
+      <li>"why all the holding patterns?" → "runway 28 has a 40-min hold for weather"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">FlightAware AeroAPI</div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">real-time flight tracking by flight number — delays, gate changes, ETAs.</div>
+    <ul class="uses">
+      <li>"your dad's flight is delayed 50 min — want me to push dinner to 10pm?"</li>
+      <li>"your second leg gate changed B7 → B14, 12 min walk"</li>
+      <li>proactive: airline schedule changes before the email arrives</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">NASA APIs (20+)</div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">APOD, ISS pass times, aurora forecast, asteroid passes, planetary positions.</div>
+    <ul class="uses">
+      <li>"the ISS passes overhead at 9:14pm tonight, look NW"</li>
+      <li>"aurora forecast says you can see northern lights from edinburgh tonight"</li>
+      <li>morning ritual: today's astronomy picture as the daily art drop</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">OpenStreetMap / Overpass</div>
+    <div class="source">no MCP · public API</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge public">public</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">any geographic query in natural language → answer.</div>
+    <ul class="uses">
+      <li>"find me a quiet park within 800m with benches under shade"</li>
+      <li>"public restroom with baby-changing table in this neighborhood"</li>
+      <li>"24-hour pharmacy within walking distance"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">JPL Horizons</div>
+    <div class="source">no MCP · public API</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge public">public</span><span class="stars">★★★</span></div>
+    <div class="purpose">authoritative solar-system ephemerides — planets, moons, comets.</div>
+    <ul class="uses"><li>"where's saturn tonight from here"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">OpenFDA</div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">drug/device adverse events, recalls, interactions.</div>
+    <ul class="uses"><li>"the medication you started has a 2026 recall notice, here's what changed"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Bluesky Jetstream firehose</div>
+    <div class="source">no MCP · public websocket</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge public">public</span><span class="stars">★★★★</span></div>
+    <div class="purpose">live stream of every public bluesky post — donna can listen for mentions of topics you care about.</div>
+    <ul class="uses">
+      <li>"alert me when [topic] gets traction in tech bluesky"</li>
+      <li>"who's posting about my company today"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Mastodon streaming</div>
+    <div class="source">per-instance public API</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge public">public</span><span class="stars">★★★</span></div>
+    <div class="purpose">same shape as bluesky for the fediverse.</div>
+    <ul class="uses"><li>per-instance, can be noisier or quieter than bluesky</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Hacker News Firebase API</div>
+    <div class="source">no MCP · public API</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge public">public</span><span class="stars">★★★</span></div>
+    <div class="purpose">complete HN data — stories, comments, scores.</div>
+    <ul class="uses"><li>"morning techmeme in donna's voice — top 5 stories with context"</li></ul>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<h2 id="taste">08 · donna knows your taste</h2>
+<p class="cluster-intro">what you read, watch, listen to. the cluster that makes donna feel like she knows <em>you</em>, not just any user.</p>
+
+<div class="cluster">
+
+  <div class="card">
+    <div class="name">Readwise</div>
+    <div class="source">official MCP · mcp2.readwise.io</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">semantic search over every article + book highlight the user has ever saved. donna can pull quotes from your reading life into ongoing conversations.</div>
+    <ul class="uses">
+      <li>"there's a quote you saved last spring about exactly this — want it?"</li>
+      <li>"remember when you highlighted this passage from <em>Status and Culture</em>? it applies here"</li>
+      <li>weekly: "5 highlights worth re-reading from the last 6 months"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Spotify</div>
+    <div class="source">klavis + anthropic connectors</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">playback control, playlists, audio features, listening history.</div>
+    <ul class="uses">
+      <li>"play the cooking playlist in the kitchen at 40%"</li>
+      <li>auto-generate a playlist from setlist.fm for a concert tomorrow</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Last.fm</div>
+    <div class="source">community MCP · cloudflare workers</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">scrobble history → donna sees what you've been actually replaying.</div>
+    <ul class="uses">
+      <li>"you've replayed that phoebe bridgers track 14x this week"</li>
+      <li>cross-ref with bandsintown: "she's playing brooklyn steel in 3 weeks"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Audible</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">audiobook library + listening progress.</div>
+    <ul class="uses">
+      <li>"queue the book your friend recommended"</li>
+      <li>"you're 73% through this one — should i queue something next?"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Splice</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">music sample library — for producers.</div>
+    <ul class="uses"><li>niche; only matters if the user produces music</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">TMDb + JustWatch</div>
+    <div class="source">community MCP · multiple repos</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">movie + TV metadata + where to stream by country.</div>
+    <ul class="uses">
+      <li>"that film your friend mentioned is on apple tv+ in india"</li>
+      <li>donna's weekly "5 things you'd actually watch tonight"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Trakt</div>
+    <div class="source">community MCP · wwiens/trakt_mcpserver</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">tv episode tracking.</div>
+    <ul class="uses">
+      <li>"severance just dropped ep 7, you're 3 behind"</li>
+      <li>"the show you started has been cancelled — last 2 eps drop in march"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Letterboxd</div>
+    <div class="source">community MCP · scraped session</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge exp">experimental</span><span class="stars">★★★★</span></div>
+    <div class="purpose">film ratings + friend reviews. the social layer of cinema.</div>
+    <ul class="uses">
+      <li>"your friend mira just rated 'the brutalist' 5 stars"</li>
+      <li>"3 friends watched this last weekend, want their takes?"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Goodreads / Open Library / Hardcover</div>
+    <div class="source">community MCP + apify</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge exp">experimental</span><span class="stars">★★★</span></div>
+    <div class="purpose">book metadata, lists, friend ratings.</div>
+    <ul class="uses"><li>"your goodreads goal is 14 books, you're at 8 with 7 months to go"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Pocket</div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">your saved-articles queue.</div>
+    <ul class="uses"><li>weekly: "5 articles from your queue, pick one to read tonight"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">MusicBrainz</div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★</span></div>
+    <div class="purpose">canonical track + album metadata, free.</div>
+    <ul class="uses"><li>cross-reference data when last.fm/spotify have stale info</li></ul>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<h2 id="knowledge">09 · donna brings world knowledge</h2>
+<p class="cluster-intro">research, fact lookup, math, translation, peer-reviewed papers. the rails donna uses to <em>be right</em> when the answer matters.</p>
+
+<div class="cluster">
+
+  <div class="card">
+    <div class="name">Wikipedia / Wikidata</div>
+    <div class="source">community MCP · multiple repos</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">facts on demand, structured + unstructured.</div>
+    <ul class="uses"><li>donna's "ground in facts" fallback when generative knowledge is fuzzy</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Wolfram Alpha</div>
+    <div class="source">anthropic connectors directory (official)</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">deterministic computation — math, conversions, physics, finance.</div>
+    <ul class="uses">
+      <li>"how long until i can retire if i save $X/month at Y%"</li>
+      <li>way more reliable than the LLM doing math itself</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">DeepL</div>
+    <div class="source">official MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">best-in-class translation, 70+ languages.</div>
+    <ul class="uses">
+      <li>translate incoming whatsapp from a non-english friend</li>
+      <li>draft replies in the user's voice in another language</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">PubMed</div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">peer-reviewed biomedical research.</div>
+    <ul class="uses"><li>"surface the actual study behind that health claim circulating on twitter"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Consensus / Scite</div>
+    <div class="source">anthropic connectors directory</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">research-synthesis layer over academic papers.</div>
+    <ul class="uses"><li>"what does the evidence say about X" with proper citations</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Tavily / Perplexity / Exa</div>
+    <div class="source">klavis + anthropic connectors</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">three flavors of AI-grade web search.</div>
+    <ul class="uses">
+      <li>tavily for cited research</li>
+      <li>exa for semantic similarity ("find me articles like this one")</li>
+      <li>perplexity for conversational answers with sources</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Brave Search / Kagi</div>
+    <div class="source">klavis + official MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">privacy-respecting general search.</div>
+    <ul class="uses"><li>cheaper than perplexity for high-volume background search</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Firecrawl</div>
+    <div class="source">klavis + official MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">clean markdown of any page, with extraction + crawl.</div>
+    <ul class="uses">
+      <li>"summarize this article for me" → firecrawl → summary</li>
+      <li>daily digest: pull yesterday's posts from your 12 favorite blogs</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Context7</div>
+    <div class="source">official MCP · upstash</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">up-to-date library/framework documentation at query time.</div>
+    <ul class="uses"><li>"how do i do X in tailwind v4" → fresh docs, not stale model knowledge</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Wiktionary / Etymonline / Datamuse</div>
+    <div class="source">community MCPs</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★</span></div>
+    <div class="purpose">word meanings, etymology, rhymes, synonyms.</div>
+    <ul class="uses"><li>useful when donna helps with writing</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">ToolUniverse</div>
+    <div class="source">anthropic connectors directory</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">600+ scientific tools wrapped as one MCP.</div>
+    <ul class="uses"><li>specialty research — chemistry, biology, math toolkits all behind one rail</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">arxiv + Scholar Gateway</div>
+    <div class="source">klavis + community MCP</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">academic paper search across disciplines.</div>
+    <ul class="uses"><li>"the paper everyone is citing about this on twitter — what does it actually say"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Government data (FRED / Census / Data.gov / NASA / NWS)</div>
+    <div class="source">community MCPs · lzinga/us-gov-open-data-mcp 40+ APIs</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">authoritative US government datasets — economic, demographic, health.</div>
+    <ul class="uses">
+      <li>"unemployment rate trend for your city over the last 5 years"</li>
+      <li>"is your industry shedding or hiring this quarter"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Court records (CourtListener / RECAP)</div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">free legal-records access — federal cases, judges, opinions.</div>
+    <ul class="uses"><li>"the judge on that case has been on the bench since…"</li></ul>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<h2 id="joys">10 · donna handles the small joys</h2>
+<p class="cluster-intro">concerts, events, sports, fantasy leagues, local happenings. the small things that make life feel attended to, not just optimized.</p>
+
+<div class="cluster">
+
+  <div class="card">
+    <div class="name">Bandsintown</div>
+    <div class="source">via apify · also embedded in spotify since 2024</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">concert listings for tracked artists.</div>
+    <ul class="uses">
+      <li>cross-ref with last.fm: "the band you scrobbled 47x this year is playing brooklyn steel in 3 weeks"</li>
+      <li>presale alerts</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Songkick</div>
+    <div class="source">via apify</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge exp">experimental</span><span class="stars">★★★</span></div>
+    <div class="purpose">concert search globally. spotify dropped songkick in 2024, so it's degraded but still useful.</div>
+    <ul class="uses"><li>secondary cross-check vs bandsintown</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Setlist.fm</div>
+    <div class="source">no MCP · public API</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">what songs a band actually played at a specific concert.</div>
+    <ul class="uses"><li>"the band you saw last night played these 18 songs in this order — here's the spotify playlist"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Ticketmaster + StubHub</div>
+    <div class="source">anthropic connectors + community</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">primary + resale ticket markets.</div>
+    <ul class="uses">
+      <li>"resale prices dropped 30% — pull the trigger?"</li>
+      <li>presale notifications routed automatically</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Eventbrite + Luma + Meetup + Fever</div>
+    <div class="source">anthropic connectors</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">local events — talks, parties, workshops, meetups.</div>
+    <ul class="uses">
+      <li>"3 things happening near you this weekend that match your interests"</li>
+      <li>founder dinner, AI meetup, that warehouse rave</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">ESPN (hidden API)</div>
+    <div class="source">community MCP · Left-Coast-Tech</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">scores, schedules, rosters across 25+ leagues — undocumented but stable endpoints, no auth.</div>
+    <ul class="uses">
+      <li>"arsenal is up 2-0 at half, you've got a 3pm meeting"</li>
+      <li>your team's full season schedule in your calendar</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">TheSportsDB / FotMob / FBref / Statmuse</div>
+    <div class="source">community MCPs</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">deeper sports statistics + analysis.</div>
+    <ul class="uses"><li>nerd-tier queries: "xG this season for the player we drafted"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Flaim (fantasy)</div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge exp">experimental</span><span class="stars">★★★</span></div>
+    <div class="purpose">fantasy leagues across ESPN/Yahoo/Sleeper.</div>
+    <ul class="uses"><li>"set your lineup, you forgot — here's what i'd start"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">OP.GG</div>
+    <div class="source">anthropic connectors directory</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★</span></div>
+    <div class="purpose">league of legends, TFT, valorant player + match data.</div>
+    <ul class="uses"><li>niche but sticky for the right user</li></ul>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<h2 id="create">11 · donna creates</h2>
+<p class="cluster-intro">images, video, voice, design, transcripts, OCR. donna's hands when the task is creative.</p>
+
+<div class="cluster">
+
+  <div class="card">
+    <div class="name">Replicate</div>
+    <div class="source">no MCP · clean REST API</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">run any open-source image/video/audio model — flux, sd, whisper, llama, kokoro tts.</div>
+    <ul class="uses">
+      <li>"draw the cocktail i described in watercolor"</li>
+      <li>"generate a reference image of this room repainted sage green"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">fal.ai</div>
+    <div class="source">no MCP · clean REST API</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">faster-than-replicate inference for image/video gen.</div>
+    <ul class="uses"><li>real-time image gen in chat without a multi-second wait</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Modal</div>
+    <div class="source">no MCP · clean SDK</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">serverless GPU + python sandbox for custom inference.</div>
+    <ul class="uses"><li>when donna needs to run something specific and reusable</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Runway / Pika</div>
+    <div class="source">no MCP · APIs</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">text-to-video + video-to-video.</div>
+    <ul class="uses"><li>"animate this photo of my dog into a 4-second clip"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">ElevenLabs</div>
+    <div class="source">official MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">TTS + voice cloning — donna can speak in <em>your</em> voice on outbound calls/messages.</div>
+    <ul class="uses">
+      <li>vapi outbound call uses your cloned voice</li>
+      <li>voice-note replies that sound like you when you don't want to record</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Cartesia</div>
+    <div class="source">no MCP · clean API</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">sub-100ms TTS — for real-time voice interactions.</div>
+    <ul class="uses"><li>only when latency really matters (live calls vs async voice notes)</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Deepgram / AssemblyAI / Whisper</div>
+    <div class="source">community MCPs + raw APIs</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">speech-to-text — for processing incoming voice notes.</div>
+    <ul class="uses"><li>whatsapp voice note → text → donna parses → response</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">HeyGen</div>
+    <div class="source">klavis + official MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">AI avatar video generation.</div>
+    <ul class="uses"><li>donna's video replies; localized clips for international users</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Adobe Creative Cloud</div>
+    <div class="source">anthropic connectors directory (official, april 2026)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">photoshop, lightroom, firefly. donna can edit your photos on command.</div>
+    <ul class="uses">
+      <li>"remove the background from this photo"</li>
+      <li>"brighten this lightroom edit, more warm"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Canva</div>
+    <div class="source">klavis + anthropic connectors</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">quick design — slides, social posts, posters.</div>
+    <ul class="uses"><li>"make a quick birthday card with this photo"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Gamma / SlideSpeak</div>
+    <div class="source">anthropic connectors directory</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">AI-generated presentations.</div>
+    <ul class="uses"><li>"draft a 6-slide deck for tomorrow's pitch from this brief"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">MarkItDown</div>
+    <div class="source">microsoft official MCP · 120k stars</div>
+    <div class="badges"><span class="badge local">local</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">convert anything (pdf, docx, pptx, audio) to markdown.</div>
+    <ul class="uses"><li>ingest a pdf the user shared → clean markdown → donna can actually read it</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">PaddleOCR</div>
+    <div class="source">baidu official MCP</div>
+    <div class="badges"><span class="badge local">local</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">OCR — receipts, business cards, signs in foreign languages.</div>
+    <ul class="uses"><li>complements DeepL for "i can't read this menu/sign"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Blender MCP</div>
+    <div class="source">community MCP · ahujasid · 22k stars</div>
+    <div class="badges"><span class="badge local">local</span><span class="badge prod">prod</span><span class="stars">★★</span></div>
+    <div class="purpose">3D scene control via natural language.</div>
+    <ul class="uses"><li>niche but wild — donna can model objects you describe</li></ul>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<h2 id="soul">12 · donna's soul</h2>
+<p class="cluster-intro">the personality cluster. daily rituals, astrology, tarot, NASA picture of the day. these don't optimize anything — they make donna feel like she has a personality. for the right user, the stickiest cluster of all.</p>
+
+<div class="cluster">
+
+  <div class="card">
+    <div class="name">NASA APOD (via NASA MCP)</div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">today's astronomy picture of the day as the daily art drop.</div>
+    <ul class="uses"><li>morning ritual at coffee time, sent with a one-line donna take</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">ISS pass prediction (NASA APIs)</div>
+    <div class="source">community MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">when the international space station passes overhead for your location.</div>
+    <ul class="uses"><li>"ISS overhead at 9:14pm tonight, low NW horizon, naked-eye visible"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">RoxyAPI</div>
+    <div class="source">hosted MCP</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">astrology, tarot, numerology, I-Ching, biorhythm, dream interpretation, angel numbers, crystals.</div>
+    <ul class="uses">
+      <li>opt-in but very sticky for the astro-curious user</li>
+      <li>"pull me a card before this meeting"</li>
+      <li>daily horoscope embedded in the morning brief</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">AstroMCP</div>
+    <div class="source">community MCP · simpolism</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">real natal chart computation from birth time + location.</div>
+    <ul class="uses"><li>"your moon is in cancer, that's why this conversation is hitting hard"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Stellarium dataset</div>
+    <div class="source">no MCP · public data</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge public">public</span><span class="stars">★★★</span></div>
+    <div class="purpose">star catalog — identify any star or constellation by location + time.</div>
+    <ul class="uses"><li>"that bright star you're pointing at is jupiter, with three of its moons visible tonight"</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">JPL Horizons</div>
+    <div class="source">no MCP · public</div>
+    <div class="badges"><span class="badge diy">diy</span><span class="badge public">public</span><span class="stars">★★★</span></div>
+    <div class="purpose">authoritative ephemerides for solar-system bodies.</div>
+    <ul class="uses"><li>donna can answer any solar-system question — comet positions, planetary alignments</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Dice Roller / I-Ching / Tarot</div>
+    <div class="source">community MCPs</div>
+    <div class="badges"><span class="badge public">public</span><span class="badge prod">prod</span><span class="stars">★★</span></div>
+    <div class="purpose">decision-making rituals when the user wants randomness in the loop.</div>
+    <ul class="uses"><li>"flip a coin for me" / "draw an I-Ching hexagram on this question"</li></ul>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<h2 id="notes">13 · donna's notes &amp; tasks</h2>
+<p class="cluster-intro">where the user's thoughts live. note systems vary wildly across users — donna should cover the major plurality.</p>
+
+<div class="cluster">
+
+  <div class="card">
+    <div class="name">Notion</div>
+    <div class="source">klavis + anthropic connectors (official)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">pages, databases, blocks, comments.</div>
+    <ul class="uses">
+      <li>capture meeting notes into the right page automatically</li>
+      <li>weekly: "5 things in your notion you said you'd revisit"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Obsidian</div>
+    <div class="source">via composio + community MCPs</div>
+    <div class="badges"><span class="badge local">local</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">local markdown vault, the most common power-user note system.</div>
+    <ul class="uses">
+      <li>read the user's vault, surface forgotten connections</li>
+      <li>write to vault — capture thoughts donna gathered from elsewhere</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Logseq / Tana / Capacities / Reflect / Roam / Mem.ai</div>
+    <div class="source">via composio + pipedream</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">second-brain alternatives. cover whichever the user lives in.</div>
+    <ul class="uses"><li>same pattern as obsidian/notion — read, write, surface</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Linear</div>
+    <div class="source">klavis + anthropic connectors (official)</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★★</span></div>
+    <div class="purpose">issue tracking + project management.</div>
+    <ul class="uses">
+      <li>"what's blocking me from shipping this week"</li>
+      <li>capture todos from chat into the right project</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Todoist / TickTick / Things</div>
+    <div class="source">anthropic connectors + community</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★★</span></div>
+    <div class="purpose">personal task managers.</div>
+    <ul class="uses">
+      <li>"what should i do today that's not in my calendar yet"</li>
+      <li>auto-defer anything not done by EOD</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Routine</div>
+    <div class="source">anthropic connectors directory</div>
+    <div class="badges"><span class="badge oauth">oauth</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">unified calendar + tasks + notes app.</div>
+    <ul class="uses"><li>if the user lives in routine, donna doesn't have to bridge between three apps</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Drafts / Bear / Craft / Noteplan</div>
+    <div class="source">anthropic connectors + local</div>
+    <div class="badges"><span class="badge local">local</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">mac/iOS-native note apps.</div>
+    <ul class="uses"><li>useful if user is an apple-stack person</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Anki / Rember</div>
+    <div class="source">community MCPs</div>
+    <div class="badges"><span class="badge api">api key</span><span class="badge prod">prod</span><span class="stars">★★★</span></div>
+    <div class="purpose">spaced repetition learning.</div>
+    <ul class="uses"><li>donna creates flashcards from things the user said they want to remember</li></ul>
+  </div>
+
+  <div class="card">
+    <div class="name">Apple Photos (via Shortcuts)</div>
+    <div class="source">via apple shortcuts bridge</div>
+    <div class="badges"><span class="badge local">local</span><span class="badge exp">experimental</span><span class="stars">★★★★</span></div>
+    <div class="purpose">search the user's photo library by content.</div>
+    <ul class="uses">
+      <li>"find the photo of the menu from that lisbon restaurant"</li>
+      <li>"photos of me and dad from last summer"</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<h2 id="platforms">the meta-platforms — how all of this connects</h2>
+<p class="cluster-intro">donna doesn't wire each integration directly. she stacks platforms that each give her many tools through one connection. this is the underlying architecture that makes the 300-tool surface tractable.</p>
+
+<table class="platform-table">
+  <thead>
+    <tr><th>platform</th><th>tools delivered</th><th>auth model</th><th>day-1 cost</th><th>role in donna</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Klavis hosted</strong></td><td>~98 OAuth integrations</td><td>OAuth (klavis-hosted by default; white-label later)</td><td>free tier</td><td>primary OAuth catalog</td></tr>
+    <tr><td><strong>Anthropic Connectors Directory</strong></td><td>414 vetted OAuth integrations</td><td>OAuth (anthropic-vetted)</td><td>free</td><td>fills klavis gaps — Plaid, Mercury, Resy, Uber, AllTrails, Audible, Wolfram</td></tr>
+    <tr><td><strong>Composio</strong></td><td>~250 toolkits, 20k+ tools</td><td>composio-managed OAuth</td><td>free 20k calls/mo, then $29/mo</td><td>backup OAuth + better tool descriptions on common tools</td></tr>
+    <tr><td><strong>Pipedream MCP</strong></td><td>3,000+ apps, 10k+ tools</td><td>pipedream-managed OAuth</td><td>free in dev</td><td>long-tail apps neither klavis nor composio cover</td></tr>
+    <tr><td><strong>Apify MCP</strong></td><td>3,000+ Actors (scrapers + agents)</td><td>API key</td><td>$5/mo free credits, perpetual</td><td>scraped data for sites without clean APIs (instagram, tiktok, zillow, doordash, yelp, booking, letterboxd, bandsintown)</td></tr>
+    <tr><td><strong>donna-browser</strong></td><td>universal browser</td><td>shared token + cloudflare tunnel</td><td>~$0/mo with AWS Activate</td><td>logged-in actions on any site, persistent per-user sessions</td></tr>
+    <tr><td><strong>Browser Use Cloud / Hyperbrowser / Steel</strong></td><td>hosted browser fallbacks</td><td>API key</td><td>$10/mo free credits stackable</td><td>backup if donna-browser is down</td></tr>
+    <tr><td><strong>Custom donna tools</strong></td><td>~12 magic-moment tools</td><td>varies</td><td>per-API cost (cents/call)</td><td>vapi, audd, plantnet, inaturalist, ebird, opensky, flightaware, oura, whoop, eight sleep, dexcom, owntracks</td></tr>
+  </tbody>
+</table>
+
+<p class="note">stacking these gives donna ~25,000 callable tools through ~8 connections. each platform is one integration job for us — the platforms do the hard work of authentication, rate limiting, and provider-specific quirks.</p>
+
+<h2>the tool-selection problem</h2>
+<p>the LLM cannot fit 25,000 tool definitions in its context. donna uses a hybrid pattern:</p>
+<ul>
+  <li><strong>direct tools (~50 hot-path)</strong> — gmail, calendar, notion, readwise, oura, plaid, browser, search, the magic tools. always in context. fast.</li>
+  <li><strong>meta-tools (the long tail)</strong> — a handful of generic invocations like <code>pipedream_call(app, action, params)</code>, <code>apify_run(actor, input)</code>, <code>composio_call(tool, params)</code>. the brain picks the platform + names the underlying action.</li>
+  <li><strong>tool retrieval (fallback)</strong> — every tool description embedded; at each turn, retrieve top-k relevant tools given the user's message and inject them dynamically.</li>
+</ul>
+
+<h2>build order</h2>
+<p>not every cluster lands on day one. ranked by impact-per-hour:</p>
+<ol>
+  <li><strong>week 1</strong> — klavis wired, donna-browser deployed ✓, gmail/calendar/notion/readwise working through klavis. one custom magic tool (audd is the cheapest first win).</li>
+  <li><strong>week 2</strong> — anthropic connectors integrated for Plaid + Mercury + Resy + Uber + AllTrails. apify wired for the social-media + booking + scraping cluster.</li>
+  <li><strong>week 3</strong> — plantnet + inaturalist + ebird + opensky + flightaware (cluster 6 + 7). these are the screenshot moments.</li>
+  <li><strong>week 4</strong> — oura/whoop (cluster 1). vapi (the phone calls moment). composio + pipedream as long-tail fallbacks.</li>
+  <li><strong>later</strong> — the custom builds: eight sleep, dexcom, owntracks, audio identification chain.</li>
+</ol>
+
+<footer>
+  donna tool surface · v1 · may 2026 · working document, expect drift<br>
+  related: <a href="./architecture-v2.html">architecture-v2</a> · <a href="./brain.html">brain</a> · <a href="./poke-architecture.html">poke architecture</a> · <a href="./iev-teardown.html">iev teardown</a>
+</footer>
+
+</body>
+</html>

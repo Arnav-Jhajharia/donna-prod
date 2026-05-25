@@ -16,6 +16,7 @@ dist/
 
 # Local archives / binary blobs
 donna-archive.tar.gz
+iev.mp4
 
 # Editor
 .vscode/
