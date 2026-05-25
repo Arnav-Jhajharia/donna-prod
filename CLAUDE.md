@@ -1,69 +1,65 @@
-# donna
+# Karpathy Guidelines
 
-donna is a personal ai. she holds one person's life — remembers what they said, follows up, surfaces next moves before they ask. not "an assistant," not a thinking partner, not a productivity tool. closer to a sharp human chief of staff.
+Behavioral guidelines to reduce common LLM coding mistakes, derived from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls.
 
-she is omnipresent, exists across surfaces. acts before you ask, is very proactive, connected to your integrations to build a real understanding of you. the surfaces she lives on today: whatsapp, imessage, mobile.
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
-## how we work
+## 1. Think Before Coding
 
-line-by-line, deliberate. the user understands every line before it gets committed. no jumping ahead, no "while we're here" additions, no batched changes spanning multiple concerns. explain what a line does and why before writing it. one small thing at a time, commit, then the next.
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
 
-this file describes **patterns and conventions**, not inventory. file counts, file lists, and feature enumerations go stale within a week and lie to whoever reads them. anything specific (a file, a count, a feature) belongs in the codebase itself, not here.
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
 
-## voice (the product, not the code)
+## 2. Simplicity First
 
-lowercase. no em dashes, no semicolons, no emojis, no markdown. short — one or two sentences per bubble. direct.
+**Minimum code that solves the problem. Nothing speculative.**
 
-every turn ends with one `send_burst`. its strings are exactly what the user reads. never put reasoning or meta-commentary inside burst strings.
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
 
-## the brain (src/donna/)
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
-a manual tool-call loop on the raw `@anthropic-ai/sdk`. the loop itself is `brain.ts`. the system prompt is `prompt.ts`. tools live in `src/donna/tools/` as one `.ts` file per tool, registered in `tools/index.ts`.
+## 3. Surgical Changes
 
-tools come in two flavors:
-- **terminators** end the turn. `send_burst.ts` is the canonical example — donna's only voice.
-- **non-terminators** continue the loop. `time.ts` is the simplest example.
+**Touch only what you must. Clean up only your own mess.**
 
-ledger writes per-turn jsonl to `.donna/` for replay. inspector lives in `src/inspect.ts`.
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
 
-to add a tool: drop a new file in `tools/`, export the def + handler, register it in `tools/index.ts`. if it's a terminator, also add to the `TERMINATORS` set there.
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
 
-## the archive
+The test: Every changed line should trace directly to the user's request.
 
-`src/_archive/`, `src/donna/_archive/`, `scripts/_archive/`, and `supabase/_archive/` hold deprecated implementations that have been retired or paused. excluded from typecheck (see `tsconfig.json`). read for reference when restoring a feature or studying past decisions. **don't import from.**
+## 4. Goal-Driven Execution
 
-if you need to know what's in there, grep. don't enumerate it here.
+**Define success criteria. Loop until verified.**
 
-## scripts
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
 
-```bash
-npm run dev         # cli loop
-npm run typecheck   # tsc --noEmit
-npm run build       # tsc
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
 ```
 
-before any commit: `npm run typecheck`.
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
-## env
 
-`.env.example` is the source of truth for what env vars exist. keep it current as new vars come in.
+------
 
-## mobile
-
-donna's third surface lives in `mobile/`. expo + react native + typescript. own `package.json`, own `node_modules`, own `tsconfig.json`. talks to the same brain via an authenticated http ingress (designed in `docs/voice-call.html`; not yet wired). cross-cutting changes (a new tool, a new message shape) touch both `src/donna/` and `mobile/` in one commit. see `mobile/CLAUDE.md` for mobile specifics.
-
-## docs
-
-`docs/` holds architecture, design, and decision artifacts as standalone html files. open them in a browser. they're long-form context — the things that don't fit in CLAUDE.md but you'd want before making a non-trivial decision.
-
-## verification protocol
-
-before committing or asserting any of these, verify via tool use (web search, `npm view <pkg>`, file read, source check):
-
-- npm package versions or names
-- specific urls
-- api surface (method names, flag names, config keys)
-- "latest" claims about anything
-- claims about what a library supports or doesn't
-
-if it can't be verified, **say "i'm guessing" or "i need to check"** instead of asserting. specific numbers that turn out to be wrong cost more than vague hedges. don't ship plausible-sounding wrongness.
