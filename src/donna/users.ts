@@ -1,6 +1,6 @@
 import { createClerkClient } from "@clerk/backend";
 import { and, eq, isNull } from "drizzle-orm";
-import { db } from "./db.js";
+import { db, sql } from "./db.js";
 import { users } from "./db/schema.js";
 
 // the canonical identity primitive. every ingress (whatsapp, mobile, imessage)
@@ -77,4 +77,27 @@ export async function getOrCreateUserByClerk(clerkId: string): Promise<User> {
     })
     .returning({ id: users.id });
   return { id: rows[0]!.id };
+}
+
+// store the apns voip device token for a user. mobile POSTs it from voipCall
+// once pushkit hands one out. raw SQL because the column isn't in schema.ts
+// until you run `npm run db:pull` after applying the migration — and we want
+// this code working before that.
+export async function setApnsVoipToken(
+  userId: string,
+  token: string,
+): Promise<void> {
+  await sql`update users set apns_voip_token = ${token} where id = ${userId}`;
+}
+
+// look up the user's apns voip token. used by /call/start when donna rings
+// a user without the mobile app having to pass the token in the request body
+// (i.e. backend-initiated proactive calls).
+export async function getApnsVoipToken(
+  userId: string,
+): Promise<string | null> {
+  const rows = await sql<
+    { apns_voip_token: string | null }[]
+  >`select apns_voip_token from users where id = ${userId} limit 1`;
+  return rows[0]?.apns_voip_token ?? null;
 }

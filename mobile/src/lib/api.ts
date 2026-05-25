@@ -4,6 +4,10 @@
 
 const BASE_URL = process.env.EXPO_PUBLIC_DONNA_API_URL ?? "http://localhost:3000";
 
+// debug: surface the resolved base url in metro logs once at module load.
+// remove after we confirm the tunnel/env wiring works.
+console.log("[api] BASE_URL =", BASE_URL);
+
 export type ApiOptions = {
   method?: "GET" | "POST";
   body?: unknown;

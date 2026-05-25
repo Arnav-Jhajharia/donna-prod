@@ -1,5 +1,5 @@
 import type { MiddlewareHandler } from "hono";
-import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
+import { clerkMiddleware, getAuth } from "@clerk/hono";
 
 // every authenticated mobile route runs through this. clerkMiddleware reads
 // CLERK_SECRET_KEY + CLERK_PUBLISHABLE_KEY from env, verifies the bearer jwt,

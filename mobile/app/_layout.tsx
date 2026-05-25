@@ -5,8 +5,14 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { PostHogProvider, usePostHog } from "posthog-react-native";
 import { ThemeProvider, useDonnaFonts, useTheme } from "@/design";
 import { tokenCache } from "@/lib/token-cache";
+import { api } from "@/lib/api";
+import { onDeviceToken, setupCallSystem } from "@/lib/voipCall";
 
 SplashScreen.preventAutoHideAsync();
+
+// register voip push + callkit + livekit globals once at app boot. lives for
+// the app's lifetime; iOS keeps the voip channel open even when suspended.
+setupCallSystem();
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 const POSTHOG_API_KEY = process.env.EXPO_PUBLIC_POSTHOG_API_KEY;
@@ -73,7 +79,7 @@ export default function RootLayout() {
  */
 function RootStack() {
   const { roles } = useTheme();
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded, getToken } = useAuth();
   const { user } = useUser();
   const segments = useSegments();
   const router = useRouter();
@@ -88,6 +94,28 @@ function RootStack() {
       posthog.reset();
     }
   }, [posthog, isLoaded, isSignedIn, user]);
+
+  // register the voip device token with the backend once both:
+  //   (a) clerk is signed in (so the request authenticates), and
+  //   (b) pushkit has handed us a token (fires once per app boot, usually
+  //       within a couple seconds of mount).
+  // we don't have to gate on onboarded — the user's row exists from clerk
+  // sign-in and the token is just a column on it.
+  useEffect(() => {
+    if (!isSignedIn) return;
+    const unsubscribe = onDeviceToken(async (token) => {
+      try {
+        await api("/api/mobile/device-token", {
+          method: "POST",
+          body: { token },
+          getToken,
+        });
+      } catch (err) {
+        console.warn("[voipCall] device-token registration failed", err);
+      }
+    });
+    return unsubscribe;
+  }, [isSignedIn, getToken]);
 
   // v1 writes from client via unsafeMetadata. once the brain backend
   // can set publicMetadata via webhook, this check moves to publicMetadata

@@ -16,10 +16,12 @@
       "@config-plugins/react-native-callkeep",
       "@config-plugins/react-native-webrtc",
       "@livekit/react-native-expo-plugin",
-      "expo-localization"
+      "expo-localization",
+      "expo-web-browser",
+      "./plugins/withVoipPushNotification"
     ],
     "ios": {
-      "bundleIdentifier": "com.donna.app",
+      "bundleIdentifier": "com.itsmedonna.app",
       "supportsTablet": false,
       "usesAppleSignIn": true,
       "infoPlist": {
@@ -36,7 +38,7 @@
       }
     },
     "android": {
-      "package": "com.donna.app"
+      "package": "com.itsmedonna.app"
     },
     "extra": {
       "router": {},

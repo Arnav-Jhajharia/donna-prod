@@ -2,7 +2,11 @@ import { randomUUID } from "node:crypto";
 import { Hono } from "hono";
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
 import { runTurn } from "../brain.js";
-import { getOrCreateUserByClerk } from "../users.js";
+import {
+  getApnsVoipToken,
+  getOrCreateUserByClerk,
+  setApnsVoipToken,
+} from "../users.js";
 import { loadRecentMessages, saveMessages } from "../chat.js";
 import { sendVoipPush } from "../voice/apns.js";
 import { mintCallToken } from "../voice/livekit-token.js";
@@ -62,27 +66,37 @@ mobile.post("/call/token", async (c) => {
 // push to the device, which wakes the app and triggers CallKit's incoming
 // call ui. the device must accept within 5s of the push.
 //
-// for v0 the mobile app passes its current apns voip device token in the
-// request body. later this moves into the db (linked to the clerk user) so
-// donna can call unprompted.
+// device token resolution:
+//   1. if the request body has `deviceToken`, use it (the mobile app passing
+//      its current cached token — used by the "ring me from donna" button)
+//   2. otherwise look it up from the user row (proactive backend-initiated
+//      call — no client involvement, donna's brain decided to ring)
 mobile.post("/call/start", async (c) => {
-  const uid = userId(c);
-  if (!uid) return c.json({ error: "unauthorized" }, 401);
+  const clerkId = userId(c);
+  if (!clerkId) return c.json({ error: "unauthorized" }, 401);
+  const user = await getOrCreateUserByClerk(clerkId);
 
   const body = await c.req
     .json<{ deviceToken?: string }>()
     .catch(() => ({}) as { deviceToken?: string });
-  if (!body.deviceToken) {
-    return c.json({ error: "deviceToken required" }, 400);
+  const deviceToken = body.deviceToken ?? (await getApnsVoipToken(user.id));
+  if (!deviceToken) {
+    return c.json(
+      {
+        error:
+          "no device token: pass deviceToken in body or register one via /api/mobile/device-token",
+      },
+      400,
+    );
   }
 
   const callId = randomUUID();
   const { token, roomName, livekitUrl } = await mintCallToken({
-    userId: uid,
-    roomName: `donna-${uid}-${callId.slice(0, 8)}`,
+    userId: user.id,
+    roomName: `donna-${user.id}-${callId.slice(0, 8)}`,
   });
 
-  await sendVoipPush(body.deviceToken, {
+  await sendVoipPush(deviceToken, {
     callId,
     roomName,
     joinToken: token,
@@ -90,4 +104,22 @@ mobile.post("/call/start", async (c) => {
   });
 
   return c.json({ callId, roomName });
+});
+
+// register the user's current apns voip device token. mobile calls this once
+// after pushkit registers (see mobile/src/lib/voipCall.ts onDeviceToken).
+// idempotent — re-registering just overwrites; tokens can rotate on os
+// updates or app reinstalls.
+mobile.post("/device-token", async (c) => {
+  const clerkId = userId(c);
+  if (!clerkId) return c.json({ error: "unauthorized" }, 401);
+
+  const body = await c.req
+    .json<{ token?: string }>()
+    .catch(() => ({}) as { token?: string });
+  if (!body.token) return c.json({ error: "token required" }, 400);
+
+  const user = await getOrCreateUserByClerk(clerkId);
+  await setApnsVoipToken(user.id, body.token);
+  return c.json({ ok: true });
 });

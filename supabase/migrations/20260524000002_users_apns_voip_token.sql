@@ -1,0 +1,12 @@
+-- store the apns voip device token per user so the backend can call them
+-- without the mobile app providing it in the request.
+--
+-- the token is what apple's push servers route the voip notification to.
+-- the app gets one from pushkit on launch (voipCall.ts setupCallSystem) and
+-- POSTs it to /api/mobile/device-token; backend stores it here. when donna
+-- decides to ring a user proactively (cron, trigger, brain decision), the
+-- backend looks up the token by user_id and sends the voip push.
+--
+-- nullable: a user can exist without ever having installed the ios app
+-- (whatsapp-only user). only mobile users have a token.
+alter table users add column apns_voip_token text;
