@@ -8,8 +8,11 @@
     "dev": "tsx src/index.ts",
     "server": "tsx src/server.ts",
     "voice": "tsx voice/agent.ts dev",
+    "voice:setup": "npx livekit-agents download-files",
     "inspect": "tsx src/inspect.ts",
     "db:ping": "tsx scripts/db-ping.ts",
+    "prune-ledger": "tsx scripts/prune-ledger.ts",
+    "audit-compliance": "tsx scripts/audit-compliance.ts",
     "db:pull": "drizzle-kit pull && mv src/donna/db/migrations-staging/schema.ts src/donna/db/schema.ts && mv src/donna/db/migrations-staging/relations.ts src/donna/db/relations.ts && rm -rf src/donna/db/migrations-staging",
     "typecheck": "tsc --noEmit",
     "build": "tsc"
@@ -20,7 +23,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.93.0",
     "@clerk/backend": "^3.4.13",
-    "@hono/clerk-auth": "^3.1.1",
+    "@clerk/hono": "^0.1.31",
     "@hono/node-server": "^2.0.3",
     "@livekit/agents": "^1.4.4",
     "@livekit/agents-plugin-deepgram": "^1.4.4",

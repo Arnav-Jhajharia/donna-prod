@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
+import { account } from "./donna/ingress/account.js";
 import { clerkAuth } from "./donna/ingress/auth.js";
 import { mobile } from "./donna/ingress/mobile.js";
 import { pairing } from "./donna/ingress/pairing.js";
@@ -18,6 +19,7 @@ app.use("*", clerkAuth);
 // returning 200 + "ok" is the minimum contract.
 app.get("/health", (c) => c.text("ok"));
 
+app.route("/api/account", account);
 app.route("/api/mobile", mobile);
 app.route("/api/pairing", pairing);
 app.route("/api/whatsapp", whatsapp);

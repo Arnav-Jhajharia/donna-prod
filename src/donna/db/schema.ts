@@ -298,3 +298,28 @@ export const integrations = pgTable("integrations", {
 	index("integrations_status_idx").using("btree", table.status.asc().nullsLast().op("text_ops"), table.provider.asc().nullsLast().op("text_ops")),
 	primaryKey({ columns: [table.userId, table.provider], name: "integrations_pkey"}),
 ]);
+
+// consent ledger. mirrors supabase/migrations/20260524000001_user_consents.sql.
+// every grant/revocation is its own row — never mutate existing rows. callers
+// insert on grant; on revocation, insert a new row with revoked_at set.
+export const userConsents = pgTable("user_consents", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	userId: uuid("user_id").notNull(),
+	consentType: text("consent_type").notNull(),
+	scopes: jsonb().default([]).notNull(),
+	policyVersion: text("policy_version").notNull(),
+	grantedAt: timestamp("granted_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	revokedAt: timestamp("revoked_at", { withTimezone: true, mode: 'string' }),
+	userAgent: text("user_agent"),
+	ipAddress: text("ip_address"),
+	appVersion: text("app_version"),
+	revokedReason: text("revoked_reason"),
+}, (table) => [
+	index("idx_user_consents_user_type").using("btree", table.userId.asc().nullsLast().op("uuid_ops"), table.consentType.asc().nullsLast().op("text_ops"), table.grantedAt.desc().nullsFirst().op("timestamptz_ops")),
+	foreignKey({
+		columns: [table.userId],
+		foreignColumns: [users.id],
+		name: "user_consents_user_id_fkey",
+	}).onDelete("cascade"),
+	check("user_consents_type_check", sql`consent_type = ANY (ARRAY['oauth_google'::text, 'oauth_notion'::text, 'oauth_spotify'::text, 'tos'::text, 'privacy_policy'::text, 'limited_use_policy'::text])`),
+]);
