@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>donna — the executor pattern</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '13px',
+      primaryColor: '#F0EAE4',
+      primaryTextColor: '#1E1A18',
+      primaryBorderColor: '#4A2F23',
+      lineColor: '#4A2F23',
+      secondaryColor: '#FBF7F5',
+      tertiaryColor: '#F0EAE4',
+      noteBkgColor: '#F0EAE4',
+      noteTextColor: '#1E1A18',
+      mainBkg: '#F0EAE4',
+    },
+    flowchart: { curve: 'basis', padding: 16, htmlLabels: true },
+    sequence: { mirrorActors: false, bottomMarginAdj: 8 },
+  });
+</script>
+<style>
+:root {
+  --ivory:    #FBF7F5;
+  --tan:      #F0EAE4;
+  --ink:      #1E1A18;
+  --soft:     #6B6360;
+  --rust:     #7B5544;
+  --umber:    #4A2F23;
+  --rule:     #DCD2C9;
+  --moss:     #4F5E45;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--ivory); color: var(--ink); margin: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+  line-height: 1.62;
+  letter-spacing: 0.005em;
+  padding: 80px 32px 160px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+header { padding-bottom: 56px; border-bottom: 1px solid var(--rule); margin-bottom: 64px; }
+h1, h2, h3, h4 {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+h1 { font-size: 60px; line-height: 1.02; margin: 0 0 22px; }
+h1 em { color: var(--rust); font-style: italic; }
+h2 { font-size: 36px; line-height: 1.15; margin: 96px 0 18px; padding-top: 28px; border-top: 1px solid var(--rule); }
+h3 { font-size: 24px; line-height: 1.2; margin: 56px 0 12px; }
+h4 { font-size: 17px; line-height: 1.3; margin: 32px 0 8px; font-weight: 500; }
+p, li { font-size: 15.5px; color: var(--ink); }
+.lede { font-size: 20px; color: var(--soft); max-width: 820px; margin-top: 4px; line-height: 1.5; }
+.lede em { color: var(--rust); font-style: italic; font-family: 'EB Garamond', Georgia, serif; }
+small.kicker {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--rust);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 14px;
+}
+code, kbd, pre {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  font-size: 13px;
+  background: var(--tan);
+  border-radius: 3px;
+  padding: 2px 5px;
+  color: var(--umber);
+}
+pre {
+  display: block;
+  padding: 18px 22px;
+  margin: 18px 0 24px;
+  overflow-x: auto;
+  background: var(--tan);
+  border-left: 3px solid var(--rust);
+  line-height: 1.55;
+  white-space: pre;
+}
+.diagram {
+  background: var(--tan);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 28px;
+  margin: 24px 0 36px;
+  overflow-x: auto;
+}
+.diagram svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+.caption {
+  color: var(--soft);
+  font-size: 13px;
+  font-style: italic;
+  margin: -18px 0 36px;
+  padding-left: 4px;
+}
+section.dark {
+  background: var(--ink);
+  color: var(--ivory);
+  margin: 96px -32px;
+  padding: 72px 32px;
+}
+section.dark h2 { color: var(--ivory); border-top-color: rgba(251,247,245,0.18); }
+section.dark h3, section.dark h4 { color: var(--ivory); }
+section.dark p, section.dark li { color: rgba(251,247,245,0.84); }
+section.dark code, section.dark pre { background: rgba(251,247,245,0.06); color: var(--ivory); border-left-color: var(--rust); }
+section.dark .diagram { background: rgba(251,247,245,0.04); border-color: rgba(251,247,245,0.16); }
+section.dark .caption { color: rgba(251,247,245,0.6); }
+section.dark .aside { background: rgba(251,247,245,0.05); color: rgba(251,247,245,0.85); }
+section.dark h1 em, section.dark .lede em, section.dark .thesis em { color: #E8C9B7; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0 36px;
+  font-size: 14px;
+}
+th, td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+th {
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rust);
+  border-bottom: 1px solid var(--umber);
+}
+tr:hover td { background: rgba(123,85,68,0.04); }
+ul.tight li { margin-bottom: 4px; }
+hr { border: none; border-top: 1px solid var(--rule); margin: 56px 0; }
+nav.toc {
+  position: sticky;
+  top: 16px;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  margin: 0 0 32px;
+  padding: 18px 22px;
+  background: var(--tan);
+  border-radius: 4px;
+  z-index: 10;
+}
+nav.toc ol { list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 32px; }
+nav.toc li { padding: 3px 0; }
+nav.toc a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; }
+nav.toc a:hover { border-bottom-color: var(--rust); color: var(--rust); }
+.aside {
+  border-left: 3px solid var(--rust);
+  padding: 14px 20px;
+  margin: 24px 0;
+  background: rgba(123,85,68,0.05);
+  font-size: 14.5px;
+  color: var(--soft);
+}
+.aside strong { color: var(--ink); font-weight: 500; }
+.pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 99px;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.pill.live    { background: rgba(79,94,69,0.18);   color: var(--moss); }
+.pill.later   { background: rgba(123,85,68,0.10);  color: var(--rust); border: 1px dashed var(--rust); }
+.thesis {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 28px;
+  line-height: 1.35;
+  color: var(--ink);
+  max-width: 820px;
+  margin: 40px 0 28px;
+}
+.thesis em { color: var(--rust); font-style: italic; }
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 24px 0 36px;
+}
+.step-card {
+  background: var(--tan);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 16px 14px;
+  font-size: 13px;
+  color: var(--ink);
+}
+.step-card .num {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 22px;
+  color: var(--rust);
+  font-style: italic;
+  display: block;
+  margin-bottom: 4px;
+}
+.step-card .name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--umber);
+  font-weight: 500;
+  display: block;
+  margin-bottom: 6px;
+}
+.step-card .desc { color: var(--soft); font-size: 12.5px; line-height: 1.4; }
+footer { margin-top: 120px; padding-top: 28px; border-top: 1px solid var(--rule); color: var(--soft); font-size: 13px; }
+footer code { background: transparent; padding: 0; color: var(--rust); }
+</style>
+</head>
+<body>
+
+<header>
+  <small class="kicker">the executor pattern · current as of 2026-05-24</small>
+  <h1>the <em>executor</em>.</h1>
+  <p class="lede">
+    voice brain holds personality. <em>executors hold work.</em> a stateless leaf agent spawned per task, given a goal, returns a structured answer. voice frames it as a user reply. one pattern, applied first to research, generalises to gmail, calendar, drafting — each just a different bundle factory.
+  </p>
+</header>
+
+<nav class="toc">
+  <ol>
+    <li>1 · <a href="#thesis">the thesis</a></li>
+    <li>2 · <a href="#shape">two-tier shape</a></li>
+    <li>3 · <a href="#contract">the dispatch contract</a></li>
+    <li>4 · <a href="#flow">the flow</a></li>
+    <li>5 · <a href="#stateless">why stateless</a></li>
+    <li>6 · <a href="#code">the four files</a></li>
+    <li>7 · <a href="#research">the research executor</a></li>
+    <li>8 · <a href="#parallel">parallel dispatch</a></li>
+    <li>9 · <a href="#next">what's next</a></li>
+  </ol>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="thesis">1 · the thesis</h2>
+
+<p class="thesis">
+the voice brain is the user-facing personality. the moment a request needs <em>current external information</em> — search, fetch, scrape, code-driven filtering — voice <em>delegates to an executor</em>. the executor has tools voice doesn't. the executor returns a clean structured answer. voice turns that answer into a burst.
+</p>
+
+<p>this is the poke pattern, adapted: voice and execution split, with one specific reason — keep the voice brain's context (and its prompt) clean while letting the executor have heavy tool surfaces it needs to do real work.</p>
+
+<div class="aside">
+  <strong>not three tiers, two.</strong> poke runs voice → execution → leaves. donna collapses voice and execution into one tier (the voice brain is itself the dispatcher); executors are the second tier. simpler, fewer hops, sufficient for now.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="shape">2 · two-tier shape</h2>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+    U([user])
+    V[voice brain<br/><i>stateful per user · chat_messages</i>]
+    R[research executor<br/><i>stateless per call</i>]
+    SS{{web_search<br/><i>anthropic server</i>}}
+    SF{{web_fetch<br/><i>anthropic server</i>}}
+    CE{{code_execution<br/><i>anthropic server</i>}}
+
+    U <-->|whatsapp / mobile| V
+    V -->|dispatch_to_executor task| R
+    R -->|server tool| SS
+    R -->|server tool| SF
+    R -->|server tool| CE
+    R -->|finalize_research<br/>answer + sources| V
+    V -->|send_burst<br/>burst of bubbles| U
+</pre>
+</div>
+<p class="caption">solid arrows are real calls; dashed conceptually means &quot;handled by anthropic, no client code involved.&quot; voice brain sits at the user boundary; executor sits between voice and the heavy server tools.</p>
+
+<h3>roles, exactly</h3>
+
+<table>
+  <tr><th>tier</th><th>state</th><th>tool surface</th><th>output</th><th>job</th></tr>
+  <tr>
+    <td><strong>voice brain</strong> (voiceBundle)</td>
+    <td>stateful per user — <code>chat_messages</code> table</td>
+    <td>get_current_time, create_trigger, list_triggers, cancel_trigger, dispatch_to_executor, send_burst</td>
+    <td>send_burst (terminator) — user-facing bubbles</td>
+    <td>personality, conversation, judgment about when to delegate, framing of executor results</td>
+  </tr>
+  <tr>
+    <td><strong>research executor</strong> (researchBundle)</td>
+    <td>stateless — no history loaded, transcript discarded after</td>
+    <td>web_search_20260209, web_fetch_20260209, code_execution_20250825, finalize_research</td>
+    <td>finalize_research (terminator) — { answer, sources }</td>
+    <td>find current external information and return a terse structured answer</td>
+  </tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="contract">3 · the dispatch contract</h2>
+
+<p>between voice and executor — the exact wire shape.</p>
+
+<h3>voice → executor</h3>
+
+<p>voice emits a tool_use:</p>
+
+<pre>{
+  type: <span style="color:var(--moss)">"tool_use"</span>,
+  name: <span style="color:var(--moss)">"dispatch_to_executor"</span>,
+  id:   <span style="color:var(--moss)">"toolu_01..."</span>,
+  input: {
+    task: <span style="color:var(--moss)">"find current opening hours for blue bottle coffee at 66 mint plaza, san francisco"</span>
+  }
+}</pre>
+
+<p>one field — <code>task</code>. the executor sees <em>only this string</em>, plus its own system prompt. it does not see voice's conversation. it does not know who the user is by name. the task must be self-contained.</p>
+
+<h3>executor → voice</h3>
+
+<p>the executor's last action is calling <code>finalize_research</code> with structured args:</p>
+
+<pre>{
+  type: <span style="color:var(--moss)">"tool_use"</span>,
+  name: <span style="color:var(--moss)">"finalize_research"</span>,
+  input: {
+    answer:  <span style="color:var(--moss)">"blue bottle at 66 mint plaza is open 7am-6pm weekdays, 8am-6pm weekends."</span>,
+    sources: [<span style="color:var(--moss)">"https://bluebottlecoffee.com/cafes/mint-plaza"</span>]
+  }
+}</pre>
+
+<p>the dispatch handler reads <code>answer</code> and <code>sources</code> directly from the assistant's tool_use input — not from the tool_result. the tool_result is just an ack. the structured args ARE the payload.</p>
+
+<p>handler returns to voice:</p>
+
+<pre>{
+  answer:  <span style="color:var(--moss)">"blue bottle at 66 mint plaza is open 7am-6pm weekdays, 8am-6pm weekends."</span>,
+  sources: [<span style="color:var(--moss)">"..."</span>],
+  runId:   <span style="color:var(--moss)">"a1b2c3d4-..."</span>
+}</pre>
+
+<p>which voice sees as a tool_result block:</p>
+
+<pre>{
+  type: <span style="color:var(--moss)">"tool_result"</span>,
+  tool_use_id: <span style="color:var(--moss)">"toolu_01..."</span>,
+  content: <span style="color:var(--moss)">"{\"answer\":\"blue bottle at...\",\"sources\":[...],\"runId\":\"...\"}"</span>
+}</pre>
+
+<p>voice's next iteration sees the answer, decides what to say to the user, calls send_burst.</p>
+
+<div class="aside">
+  <strong>why answer lives in tool_use input, not tool_result.</strong> the model already structured the answer when it called finalize_research. parsing it out of the tool_use input means we read what claude meant, not a re-encoded round-trip through the tool handler.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="flow">4 · the flow, end to end</h2>
+
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant U as user
+  participant V as voice brain<br/>runTurn(voiceBundle)
+  participant D as dispatch_to_executor<br/>handler
+  participant R as research executor<br/>runTurn(researchBundle)
+  participant A as anthropic<br/>server tools
+
+  U->>V: "what's blue bottle's hours"
+  V->>V: messages.create<br/>(voice + tools + history)
+  V-->>D: tool_use: dispatch_to_executor({ task: "..." })
+  D->>R: runTurn([{ user: task }], researchBundle)
+  R->>A: messages.create<br/>(research prompt + server tools)
+  A-->>R: tool_use: web_search({ query: "blue bottle mint plaza hours" })
+  Note over A: server-side fetch
+  A-->>R: web_search_tool_result
+  R->>A: messages.create<br/>(history + tool_result)
+  A-->>R: tool_use: finalize_research({ answer, sources })
+  R-->>D: { newMessages, terminator: "finalize_research" }
+  D->>D: pull { answer, sources } from finalize tool_use input
+  D-->>V: tool_result: '{"answer":"...","sources":[...]}'
+  V->>V: messages.create<br/>(history + tool_result)
+  V-->>V: tool_use: send_burst([{text: "open 7am-6pm weekdays"}])
+  V-->>U: bubble: "open 7am-6pm weekdays"
+</pre>
+</div>
+<p class="caption">nested runTurn. parent loop calls dispatch_to_executor; the dispatch handler invokes runTurn again with a different bundle; everything composes through the same brain primitive.</p>
+
+<div class="steps">
+  <div class="step-card">
+    <span class="num">i</span>
+    <span class="name">voice decides</span>
+    <span class="desc">model picks dispatch_to_executor because the answer needs external info it doesn't have. writes a self-contained task.</span>
+  </div>
+  <div class="step-card">
+    <span class="num">ii</span>
+    <span class="name">handler builds bundle</span>
+    <span class="desc">researchBundle(task) returns a fresh AgentBundle with the task injected into its prompt.</span>
+  </div>
+  <div class="step-card">
+    <span class="num">iii</span>
+    <span class="name">executor runs</span>
+    <span class="desc">nested runTurn — same loop, different bundle. server tools fire under the hood, anthropic does the heavy lifting.</span>
+  </div>
+  <div class="step-card">
+    <span class="num">iv</span>
+    <span class="name">voice frames</span>
+    <span class="desc">handler extracts answer + sources, returns as tool_result. voice's next iteration writes the user-facing bubble.</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section class="dark">
+<h2 id="stateless">5 · why stateless</h2>
+
+<p class="thesis">
+each dispatch starts from zero. <em>no per-user executor history is loaded.</em> the transcript exists for one dispatch then is discarded (ledger keeps an audit trail; nothing is loaded back).
+</p>
+
+<h3>the four reasons</h3>
+
+<ul class="tight">
+  <li><strong>predictable cost per call.</strong> no accumulation. every dispatch has roughly the same token budget. no surprise compounding for heavy users.</li>
+  <li><strong>parallel-safe by default.</strong> two dispatches in one voice turn can fire concurrently — they share no state, no locks needed.</li>
+  <li><strong>clean data lifecycle.</strong> "delete my account" has fewer surfaces to scrub. executor transcripts don't outlive the dispatch.</li>
+  <li><strong>the voice brain naturally holds cross-dispatch memory.</strong> voice's own chat history captures every <code>dispatch_to_executor</code> tool_use and its returned answer as a <code>tool_use</code> / <code>tool_result</code> pair. when the user asks "what was that you found earlier", voice already has it.</li>
+</ul>
+
+<h3>what we lose</h3>
+
+<ul class="tight">
+  <li>no cross-dispatch learning inside the executor. if dispatch 1 figured out which blue bottle is the right one, dispatch 2 doesn't know — unless voice puts it in the task field.</li>
+  <li>multi-turn refinement inside the executor (&quot;now sort by price&quot;) requires voice to re-dispatch with prior findings included.</li>
+  <li>partial-failure recovery is poor — a crashed mid-task starts over from scratch.</li>
+</ul>
+
+<h3>when this stops being the right call</h3>
+
+<p>three conditions, watching for any of them:</p>
+<ul class="tight">
+  <li><strong>real cross-dispatch continuity demand.</strong> if "follow up on what we discussed yesterday" becomes a high-frequency pattern, the voice-tier integration cost gets uncomfortable.</li>
+  <li><strong>long-running per-domain workflows.</strong> a gmail flow that spans hours/days (chase, follow up, escalate) outgrows the leaf shape.</li>
+  <li><strong>cross-domain coordination.</strong> "schedule with whoever emailed about X" needs a middle tier that holds the in-flight task across multiple sub-domains.</li>
+</ul>
+
+<p>when any of those land, the pattern evolves toward poke's middle tier: stateful per-domain execution agents that load per-user history before working. for now: leaves.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="code">6 · the four files</h2>
+
+<table>
+  <tr><th>file</th><th>what it owns</th></tr>
+  <tr><td><code>src/donna/agents/research.ts</code></td><td><code>researchBundle(task)</code> — factory that returns a fresh AgentBundle per task.</td></tr>
+  <tr><td><code>src/donna/tools/finalize_research.ts</code></td><td>the executor's terminator. takes <code>{ answer, sources? }</code>.</td></tr>
+  <tr><td><code>src/donna/tools/dispatch_to_executor.ts</code></td><td>the voice-side bridge. handler invokes <code>runTurn</code> with the research bundle and extracts the structured answer.</td></tr>
+  <tr><td><code>src/donna/tools/index.ts</code></td><td>registers <code>dispatch_to_executor</code> in voice's tool catalog (not a terminator).</td></tr>
+</table>
+
+<p>nothing in <code>brain.ts</code> changed. the loop is role-agnostic — it ran for voice already, it runs for the executor without any modification.</p>
+
+<pre><span style="color:var(--soft)">// research.ts (sketch)</span>
+<span style="color:var(--rust)">export function</span> researchBundle(task: <span style="color:var(--rust)">string</span>): AgentBundle {
+  <span style="color:var(--rust)">return</span> {
+    name: <span style="color:var(--moss)">"donna.research"</span>,
+    systemPrompt: <span style="color:var(--moss)">`${RESEARCH_PROMPT}\n\ntask:\n${task}`</span>,
+    tools: [
+      { type: <span style="color:var(--moss)">"web_search_20260209"</span>, name: <span style="color:var(--moss)">"web_search"</span>, max_uses: 5 },
+      { type: <span style="color:var(--moss)">"web_fetch_20260209"</span>, name: <span style="color:var(--moss)">"web_fetch"</span>, max_uses: 5 },
+      { type: <span style="color:var(--moss)">"code_execution_20250825"</span>, name: <span style="color:var(--moss)">"code_execution"</span> },
+      finalizeResearchTool,
+    ],
+    handlers: { finalize_research: finalizeResearchHandler },
+    terminators: <span style="color:var(--rust)">new</span> Set([<span style="color:var(--moss)">"finalize_research"</span>]),
+  };
+}</pre>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="research">7 · the research executor — tools</h2>
+
+<table>
+  <tr><th>tool</th><th>kind</th><th>role</th></tr>
+  <tr>
+    <td><code>web_search_20260209</code></td>
+    <td>server tool (anthropic)</td>
+    <td>open-web search. dynamic filtering on opus 4.6+ / sonnet 4.6+. citations come back automatically.</td>
+  </tr>
+  <tr>
+    <td><code>web_fetch_20260209</code></td>
+    <td>server tool (anthropic)</td>
+    <td>fetch a specific url. used when search results don't have the depth needed.</td>
+  </tr>
+  <tr>
+    <td><code>code_execution_20250825</code></td>
+    <td>server tool (anthropic)</td>
+    <td>python + bash sandbox. used for filtering, parsing, structured post-processing. <strong>free when bundled</strong> with web_search or web_fetch.</td>
+  </tr>
+  <tr>
+    <td><code>finalize_research</code></td>
+    <td>custom (our code)</td>
+    <td>terminator. takes structured answer + sources. handler is a minimal ack — the answer lives in the tool_use input.</td>
+  </tr>
+</table>
+
+<div class="aside">
+  <strong>server tools mean less of our code runs.</strong> when the executor calls <code>web_search</code>, anthropic does the fetch on their side and hands the result back in the same response. no round trip through our handler. our infrastructure burden = exactly the cost of running runTurn one extra time, no more.
+</div>
+
+<h3>why finalize_research isn't send_burst</h3>
+
+<p>send_burst emits user-facing bubbles. the executor never talks to the user. it returns a structured answer for the parent (voice) to frame.</p>
+
+<p>keeping finalize_research as a separate terminator means:</p>
+<ul class="tight">
+  <li>the executor's prompt explicitly says "you are not user-facing" — the model is trained on the shape of its output.</li>
+  <li>voice owns all personality. swap voice's prompt, every executor's output gets rewritten in the new voice automatically.</li>
+  <li>adding more executors doesn't multiply user-voice surfaces. each one has its own finalize tool; only voice has send_burst.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="parallel">8 · parallel dispatch</h2>
+
+<p>since the executor is stateless, two dispatches can run in parallel from one voice turn. anthropic's models default to parallel tool emission when calls are independent.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant V as voice brain
+  participant D as dispatch handler
+  participant R1 as research executor #1
+  participant R2 as research executor #2
+
+  V-->>D: tool_use: dispatch_to_executor({task: "weather seattle"})
+  V-->>D: tool_use: dispatch_to_executor({task: "stock price aapl"})
+  Note over D: handler runs both in parallel
+  par
+    D->>R1: runTurn(weather task, researchBundle)
+    R1-->>D: { answer: "55°F, drizzle" }
+  and
+    D->>R2: runTurn(stock task, researchBundle)
+    R2-->>D: { answer: "$185.42" }
+  end
+  D-->>V: tool_result × 2
+  V-->>V: send_burst (combines both into one reply)
+</pre>
+</div>
+
+<p class="caption">two independent lookups → one voice turn → one combined reply. nothing in the architecture serialises them.</p>
+
+<p>donna's voice prompt has an explicit "efficiency" stanza nudging this:</p>
+
+<pre><span style="color:var(--soft)">// from prompt.ts</span>
+efficiency:
+- when you need multiple independent pieces of info, request them in
+  one turn — emit multiple tool calls in the same response. chain only
+  when one depends on another's result.</pre>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<h2 id="next">9 · what's next</h2>
+
+<table>
+  <tr><th>thing</th><th>state</th><th>shape</th></tr>
+  <tr>
+    <td>research executor</td>
+    <td><span class="pill live">live</span></td>
+    <td>shipped. web_search + web_fetch + code_execution + finalize_research.</td>
+  </tr>
+  <tr>
+    <td>gmail executor</td>
+    <td><span class="pill later">later</span></td>
+    <td>different bundle factory. tools: <code>gmail_search</code>, <code>gmail_read_thread</code>, <code>gmail_draft</code>, <code>finalize_gmail</code>. server-side via composio.</td>
+  </tr>
+  <tr>
+    <td>calendar executor</td>
+    <td><span class="pill later">later</span></td>
+    <td>tools: <code>calendar_list</code>, <code>calendar_create_event</code>, <code>finalize_calendar</code>.</td>
+  </tr>
+  <tr>
+    <td>drafting executor</td>
+    <td><span class="pill later">later</span></td>
+    <td>composes long-form text (replies, summaries). returns a draft id and preview.</td>
+  </tr>
+  <tr>
+    <td>parametric tool subsetting</td>
+    <td><span class="pill later">later</span></td>
+    <td>option B from the design — bundle picks its tool subset at dispatch time from a global registry. only needed if executor types start to multiply.</td>
+  </tr>
+  <tr>
+    <td>stateful per-domain executors</td>
+    <td><span class="pill later">later</span></td>
+    <td>option B/poke pattern. only ship if leaf-style stops fitting product needs.</td>
+  </tr>
+  <tr>
+    <td>memory tool</td>
+    <td><span class="pill later">later</span></td>
+    <td>orthogonal to executors. unified per-user memory store. once executors and voice both write to it, executors don't need to be stateful themselves.</td>
+  </tr>
+</table>
+
+<h3>the dispatch_to_executor will eventually grow a type arg</h3>
+
+<p>when the second executor lands, the tool becomes:</p>
+
+<pre>dispatch_to_executor({
+  type: <span style="color:var(--moss)">"research"</span> | <span style="color:var(--moss)">"gmail"</span> | <span style="color:var(--moss)">"calendar"</span>,
+  task: <span style="color:var(--moss)">string</span>,
+})</pre>
+
+<p>handler switches on type, calls the right factory. nothing else changes. the parametric pattern (researchBundle, gmailBundle, calendarBundle as factories) is already the right shape — we just add more.</p>
+
+<footer>
+  donna · the executor pattern · <code>docs/executors.html</code><br/>
+  see also: <code>docs/brain.html</code> (the loop primitive), <code>docs/architecture-v2.html</code> (system map), <code>docs/poke-architecture.html</code> (the inspiration), <code>docs/anthropic-sdk.html</code> (server tools).
+</footer>
+
+</body>
+</html>

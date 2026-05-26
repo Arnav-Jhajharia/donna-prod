@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>donna — whatsapp to app, the conversion</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --ivory: #FBF7F5;
+  --tan:   #F0EAE4;
+  --ink:   #1E1A18;
+  --soft:  #6B6360;
+  --rust:  #7B5544;
+  --umber: #4A2F23;
+  --rule:  #DCD2C9;
+  --moss:  #4F5E45;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--ivory); color: var(--ink); margin: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+  line-height: 1.62;
+  letter-spacing: 0.005em;
+  padding: 80px 32px 160px;
+  max-width: 920px;
+  margin: 0 auto;
+}
+header { padding-bottom: 48px; border-bottom: 1px solid var(--rule); margin-bottom: 56px; }
+h1, h2, h3 {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+h1 { font-size: 56px; line-height: 1.02; margin: 0 0 18px; }
+h1 em { color: var(--rust); font-style: italic; }
+h2 { font-size: 30px; line-height: 1.15; margin: 72px 0 14px; padding-top: 24px; border-top: 1px solid var(--rule); }
+h3 { font-size: 20px; line-height: 1.2; margin: 40px 0 10px; }
+p, li { font-size: 15.5px; color: var(--ink); }
+.lede { font-size: 19px; color: var(--soft); max-width: 760px; line-height: 1.5; }
+.lede em { color: var(--rust); font-style: italic; font-family: 'EB Garamond', Georgia, serif; }
+small.kicker {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--rust);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 14px;
+}
+code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: var(--tan); padding: 1px 6px; border-radius: 3px; }
+.callout { background: var(--tan); border-left: 2px solid var(--rust); padding: 18px 22px; margin: 28px 0; font-size: 15px; }
+.callout em { color: var(--rust); font-style: italic; font-family: 'EB Garamond', Georgia, serif; }
+.tag { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--soft); font-weight: 500; }
+</style>
+</head>
+<body>
+<header>
+  <small class="kicker">parked thought · onboarding</small>
+  <h1>whatsapp <em>to</em> app</h1>
+  <p class="lede">how a user who first met donna on whatsapp ends up installing the app. parked here while we focus on app-first onboarding; come back when whatsapp ingress is a real channel.</p>
+</header>
+
+<h2>the premise</h2>
+<p>we have two surfaces, whatsapp and the app. a user can enter from either. when the user enters via whatsapp, the conversion problem is: how do we get them to install the app without it feeling like a banner ad inside an intimate conversation.</p>
+
+<h2>the proposal</h2>
+<p>make it button-driven. whatsapp supports interactive reply buttons (up to three per message) and url cta buttons. taps replace typing, deep-link straight into the app on install. lower friction, clearer affordance, faster funnel.</p>
+
+<h2>what only the app delivers</h2>
+<p>buttons are mechanics. the conversion is earned by what the app can do that whatsapp cannot.</p>
+<ul>
+  <li>voice calls via callkit — donna rings you, you answer like a real call</li>
+  <li>push notifications you can act on from the lock screen</li>
+  <li>dynamic island — donna lives on the home screen, not in a chat thread</li>
+  <li>history and dashboard — every action donna took, browsable, reversible</li>
+  <li>live mode — a place to enter things in the moment without typing into a chat</li>
+  <li>widgets — donna visible without opening anything</li>
+</ul>
+<p>whatsapp is text. the app is presence. the conversion message has to make presence felt.</p>
+
+<h2>the shape of the offer</h2>
+<p>not "install the app." that's a cold ask. the offer is donna noticing a moment where the app would help her help you — "i can ring you about this if you want, want me to?" — and the button is the answer to <em>her</em> question, not a marketing cta. the install happens because the user said yes to donna, not yes to an app.</p>
+<div class="callout">
+  the button carries the conversion. the <em>offer</em> earns it.
+</div>
+
+<h2>voice register</h2>
+<p>button labels follow donna's voice. lowercase, no exclamations, conversational. "ring me" not "Call Now". "see it" not "View Dashboard". whatsapp's default button styling already feels corporate; the labels are the only lever we have to keep her tone intact.</p>
+
+<h2>open questions</h2>
+<ul>
+  <li>which app capability is the strongest single conversion hook — voice, dashboard, widget? probably voice, but unverified.</li>
+  <li>do we deep-link into a specific app screen post-install (the call, the dashboard) or into the normal onboarding?</li>
+  <li>how do we handle android users until the android app exists?</li>
+  <li>do we ever <em>not</em> offer the app — keep some users whatsapp-only because that's their preference?</li>
+</ul>
+
+<h2>status</h2>
+<p><span class="tag">parked</span> — current focus is app-first onboarding. whatsapp ingress isn't the active surface yet. revisit when the whatsapp side is being designed for real.</p>
+
+</body>
+</html>

@@ -84,8 +84,13 @@ export async function sendVoipPush(
   const result = await provider.send(notification, deviceToken);
   if (result.failed.length > 0) {
     const first = result.failed[0]!;
+    // dump the whole failure object — node-apn's failure shape varies (status,
+    // response, error, device, reason). printing the full object surfaces
+    // whatever the lib actually populated so we can diagnose. omit only the
+    // `device` field which echoes the token.
+    const { device: _device, ...detail } = first as unknown as Record<string, unknown>;
     throw new Error(
-      `apns voip push failed: ${first.status ?? "?"} ${JSON.stringify(first.response ?? first.error)}`,
+      `apns voip push failed: ${JSON.stringify(detail, (_k, v) => (v instanceof Error ? { message: v.message, name: v.name, stack: v.stack } : v))}`,
     );
   }
 }

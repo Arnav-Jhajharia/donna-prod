@@ -155,8 +155,10 @@ export default function Dashboard() {
   // wiring all work end-to-end. once /api/mobile/device-token is wired we
   // wouldn't pass the token here — the server would look it up by user.
   async function onRingMeFromDonna() {
+    console.log("[ringMe] handler fired");
     if (calling) return;
     const deviceToken = getDeviceToken();
+    console.log("[ringMe] deviceToken =", deviceToken);
     if (!deviceToken) {
       Alert.alert(
         "no voip token yet",
@@ -166,13 +168,16 @@ export default function Dashboard() {
     }
     setCalling(true);
     try {
-      await api("/api/mobile/call/start", {
+      console.log("[ringMe] POSTing /api/mobile/call/start");
+      const res = await api("/api/mobile/call/start", {
         method: "POST",
         body: { deviceToken },
         getToken,
       });
+      console.log("[ringMe] backend response", res);
       // callkit will ring momentarily on this device — no router push needed.
     } catch (err) {
+      console.log("[ringMe] error", err);
       Alert.alert("couldn't trigger ring", String(err));
     } finally {
       setCalling(false);
