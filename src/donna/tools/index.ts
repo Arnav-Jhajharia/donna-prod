@@ -4,6 +4,10 @@ import { sendBurstTool, sendBurstHandler } from "./send_burst.js";
 import { createTriggerTool, createTriggerHandler } from "./create_trigger.js";
 import { listTriggersTool, listTriggersHandler } from "./list_triggers.js";
 import { cancelTriggerTool, cancelTriggerHandler } from "./cancel_trigger.js";
+import {
+  dispatchToExecutorTool,
+  dispatchToExecutorHandler,
+} from "./dispatch_to_executor.js";
 
 // the single registry of tools the model can call. add a new tool by:
 // 1. defining its `Tool` + handler in its own file under tools/
@@ -14,6 +18,7 @@ export const tool_definitions: Tool[] = [
   createTriggerTool,
   listTriggersTool,
   cancelTriggerTool,
+  dispatchToExecutorTool,
   sendBurstTool,
 ];
 
@@ -31,6 +36,7 @@ export const tool_handlers: Record<
   create_trigger: createTriggerHandler,
   list_triggers: listTriggersHandler,
   cancel_trigger: cancelTriggerHandler,
+  dispatch_to_executor: dispatchToExecutorHandler,
   send_burst: sendBurstHandler,
 };
 
